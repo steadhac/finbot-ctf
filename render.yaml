@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: owasp-finbot-ctf-module2
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --config gunicorn.conf.py app:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_APP
+        value: src/main.py
+      - key: PORT
+        fromService:
+          type: web
+          name: owasp-finbot-ctf-module2
+          property: port
+    healthCheckPath: /
