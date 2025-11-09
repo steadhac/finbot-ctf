@@ -106,7 +106,7 @@
     </style>
 </head>
 
-<body class="bg-portal-bg-primary text-text-primary font-sans neural-bg min-h-screen">
+<body class="bg-portal-bg-primary text-text-primary font-sans neural-bg min-h-screen flex flex-col">
     <!-- Loading Indicator -->
     <div id="loading-indicator" class="fixed inset-0 bg-portal-bg-primary/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="flex flex-col items-center space-y-4">
@@ -116,7 +116,7 @@
     </div>
 
     <!-- Main Container -->
-    <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="flex-grow flex items-center justify-center p-2 py-8">
         <div class="w-full max-w-4xl">
             <!-- Header -->
             <div class="text-center mb-12 animate-fade-in">
@@ -222,7 +222,11 @@
         </div>
     </div>
 
+    <!-- CTF Footer -->
+    {% include 'components/ctf_footer.html' %}
+
     <!-- Scripts -->
+    <script src="{{ url_for('static', path='js/common/agreement-check.js') }}"></script>
     <script src="{{ url_for('static', path='js/common/api.js') }}"></script>
     <script src="{{ url_for('static', path='js/common/utils.js') }}"></script>
 
@@ -296,12 +300,12 @@
             });
 
             // Check if we have vendors to display
-            const hasVendors = {{ available_vendors|length > 0 }};
+            const hasVendors = {{ available_vendors|length }} > 0;
             if (!hasVendors) {
                 console.log('No vendors available, redirecting to onboarding...');
                 setTimeout(() => {
                     window.location.href = '/vendor/onboarding';
-                }, 2000);
+                }, 1000);
             }
         });
     </script>
