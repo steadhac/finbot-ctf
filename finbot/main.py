@@ -75,32 +75,46 @@ async def session_status(
         "csrf_token": session_context.csrf_token,
     }
 
-
 # (TODO): add to lifecycle management
 @app.on_event("startup")
 async def startup_event():
     """Application startup tasks"""
 
-    # 1) Ensure DB schema exists before anything queries it
+    # 1) Ensure DB exists and the user_sessions table is present
     try:
-        from sqlalchemy import create_engine
+        from sqlalchemy import create_engine, text
         from finbot.config import settings
-        # Import the module that defines SQLAlchemy Base and your models
-        from finbot.core.auth import session as session_mod  # has Base & UserSession
 
         engine = create_engine(
             settings.get_database_url(),
             **settings.get_database_config(),
         )
 
-        # models must be imported (session_mod) before this call
-        Base = getattr(session_mod, "Base", None)
-        if Base is None:
-            raise RuntimeError("Could not find SQLAlchemy Base in finbot.core.auth.session")
-
-        # Create tables if they don't exist
-        Base.metadata.create_all(bind=engine)
-        print("✅ Database schema ensured/created")
+        # Create the user_sessions table if it's missing (safe on SQLite & Postgres)
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS user_sessions (
+                    session_id TEXT PRIMARY KEY,
+                    namespace TEXT,
+                    user_id TEXT,
+                    email TEXT,
+                    is_temporary BOOLEAN,
+                    session_data TEXT,
+                    signature TEXT,
+                    user_agent TEXT,
+                    last_rotation TIMESTAMP,
+                    rotation_count INTEGER,
+                    strict_fingerprint TEXT,
+                    loose_fingerprint TEXT,
+                    original_ip TEXT,
+                    current_ip TEXT,
+                    current_vendor_id TEXT,
+                    created_at TIMESTAMP,
+                    last_accessed TIMESTAMP,
+                    expires_at TIMESTAMP
+                )
+            """))
+        print("✅ Ensured user_sessions table exists")
     except Exception as e:
         raise RuntimeError(f"Database bootstrap failed: {e}") from e
 
