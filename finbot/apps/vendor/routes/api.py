@@ -34,6 +34,19 @@ class VendorRegistrationRequest(BaseModel):
     bank_account_holder_name: str
 
 
+class VendorUpdateRequest(BaseModel):
+    """Vendor profile update request model"""
+
+    # Company Information
+    company_name: str | None = None
+    services: str | None = None
+
+    # Contact Information
+    contact_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+
+
 class VendorContextResponse(BaseModel):
     """Vendor context response"""
 
@@ -102,6 +115,92 @@ async def get_my_vendors(
     }
 
 
+@router.get("/vendors/context", response_model=VendorContextResponse)
+async def get_vendor_context(
+    session_context: SessionContext = Depends(get_session_context),
+):
+    """Get current vendor context"""
+    return VendorContextResponse(
+        current_vendor=session_context.current_vendor,
+        available_vendors=session_context.available_vendors,
+        is_multi_vendor=session_context.is_multi_vendor_user(),
+    )
+
+
+@router.get("/vendors/{vendor_id}")
+async def get_vendor(
+    vendor_id: int,
+    session_context: SessionContext = Depends(get_session_context),
+):
+    """Get vendor details for a specific vendor"""
+    db = next(get_db())
+    vendor_repo = VendorRepository(db, session_context)
+    vendor = vendor_repo.get_vendor(vendor_id)
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+    return vendor.to_dict()
+
+
+@router.put("/vendors/{vendor_id}")
+async def update_vendor(
+    vendor_id: int,
+    vendor_data: VendorUpdateRequest,
+    session_context: SessionContext = Depends(get_session_context),
+):
+    """Update vendor profile"""
+    db = next(get_db())
+    vendor_repo = VendorRepository(db, session_context)
+
+    # Get vendor and verify access
+    vendor = vendor_repo.get_vendor(vendor_id)
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+
+    # Verify vendor belongs to current user and is the current vendor
+    if vendor.id != session_context.current_vendor_id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to update this vendor"
+        )
+
+    try:
+        # Update only provided fields
+        update_data = vendor_data.dict(exclude_unset=True)
+
+        # Map contact_name to the correct field if provided
+        if "contact_name" in update_data:
+            vendor.contact_name = update_data["contact_name"]
+        if "company_name" in update_data:
+            vendor.company_name = update_data["company_name"]
+        if "services" in update_data:
+            vendor.services = update_data["services"]
+        if "email" in update_data:
+            vendor.email = update_data["email"]
+        if "phone" in update_data:
+            vendor.phone = update_data["phone"]
+
+        db.commit()
+        db.refresh(vendor)
+
+        return {
+            "success": True,
+            "message": "Vendor profile updated successfully",
+            "vendor": {
+                "id": vendor.id,
+                "company_name": vendor.company_name,
+                "contact_name": vendor.contact_name,
+                "email": vendor.email,
+                "phone": vendor.phone,
+                "services": vendor.services,
+            },
+        }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, detail=f"Failed to update vendor: {str(e)}"
+        ) from e
+
+
 @router.delete("/vendors/{vendor_id}")
 async def delete_vendor(
     vendor_id: int, session_context: SessionContext = Depends(get_session_context)
@@ -116,18 +215,6 @@ async def delete_vendor(
         raise HTTPException(status_code=404, detail="Vendor not found")
 
     return {"success": True, "message": "Vendor deleted successfully"}
-
-
-@router.get("/vendors/context", response_model=VendorContextResponse)
-async def get_vendor_context(
-    session_context: SessionContext = Depends(get_session_context),
-):
-    """Get current vendor context"""
-    return VendorContextResponse(
-        current_vendor=session_context.current_vendor,
-        available_vendors=session_context.available_vendors,
-        is_multi_vendor=session_context.is_multi_vendor_user(),
-    )
 
 
 @router.post("/vendors/switch/{vendor_id}")

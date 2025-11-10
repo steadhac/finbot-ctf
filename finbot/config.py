@@ -34,8 +34,8 @@ class Settings(BaseSettings):
 
     # Database Connection settings
     DB_ECHO: bool = False
-    DB_POOL_SIZE: int = 5
-    DB_MAX_OVERFLOW: int = 10
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 20
     DB_POOL_TIMEOUT: int = 30
     DB_POOL_PRE_PING: bool = True
 
@@ -168,7 +168,16 @@ class Settings(BaseSettings):
         """Get the database specific configuration"""
         base_config = {"echo": self.DB_ECHO or self.DEBUG}
         if self.DATABASE_TYPE == "sqlite":
-            base_config.update({"connect_args": {"check_same_thread": False}})
+            base_config.update(
+                {
+                    "connect_args": {"check_same_thread": False},
+                    "pool_size": self.DB_POOL_SIZE,
+                    "max_overflow": self.DB_MAX_OVERFLOW,
+                    "pool_timeout": self.DB_POOL_TIMEOUT,
+                    "pool_pre_ping": self.DB_POOL_PRE_PING,
+                    "pool_recycle": 3600,  # 1hr
+                }
+            )
         elif self.DATABASE_TYPE == "postgresql":
             base_config.update(
                 {

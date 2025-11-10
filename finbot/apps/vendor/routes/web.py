@@ -149,3 +149,22 @@ async def vendor_messages(
             "is_multi_vendor": session_context.is_multi_vendor_user(),
         },
     )
+
+
+@router.get("/profile", response_class=HTMLResponse, name="vendor_profile")
+async def vendor_profile(
+    request: Request, session_context: SessionContext = Depends(get_session_context)
+):
+    """Vendor profile page"""
+    if not session_context.has_vendor_context():
+        return RedirectResponse(url="/vendor/select-vendor", status_code=302)
+
+    return template_response(
+        request,
+        "pages/profile.html",
+        {
+            "request": request,
+            "vendor_context": session_context.current_vendor,
+            "is_multi_vendor": session_context.is_multi_vendor_user(),
+        },
+    )

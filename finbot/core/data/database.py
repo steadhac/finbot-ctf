@@ -39,14 +39,39 @@ def create_database_engine():
             _ = connection_record
             if "sqlite" in str(dbapi_connection):
                 cursor = dbapi_connection.cursor()
-                # enable foreign key constraints
-                cursor.execute("PRAGMA foreign_keys=ON")
-                # better concurrency and performance
-                cursor.execute("PRAGMA journal_mode=WAL")
-                cursor.execute("PRAGMA synchronous=NORMAL")
-                cursor.execute("PRAGMA cache_size=10000")
-                cursor.execute("PRAGMA temp_store=MEMORY")
-                cursor.close()
+                try:
+                    # enable foreign key constraints
+                    cursor.execute("PRAGMA foreign_keys=ON")
+                    # better concurrency and performance
+                    cursor.execute("PRAGMA journal_mode=WAL")
+                    cursor.execute("PRAGMA synchronous=NORMAL")
+                    cursor.execute("PRAGMA cache_size=10000")
+                    cursor.execute("PRAGMA temp_store=MEMORY")
+                    # Reduce busy timeout for better error handling
+                    cursor.execute("PRAGMA busy_timeout=5000")
+                finally:
+                    cursor.close()
+
+    # Add pool event listeners for debugging connection issues
+    @event.listens_for(db_engine, "connect")
+    def receive_connect(dbapi_conn, connection_record):
+        _ = dbapi_conn, connection_record
+        logger.debug("Database connection established")
+
+    @event.listens_for(db_engine, "close")
+    def receive_close(dbapi_conn, connection_record):
+        _ = dbapi_conn, connection_record
+        logger.debug("Database connection closed")
+
+    @event.listens_for(db_engine, "checkin")
+    def receive_checkin(dbapi_conn, connection_record):
+        _ = dbapi_conn, connection_record
+        logger.debug("Connection returned to pool")
+
+    @event.listens_for(db_engine, "checkout")
+    def receive_checkout(dbapi_conn, connection_record, connection_proxy):
+        _ = dbapi_conn, connection_record, connection_proxy
+        logger.debug("Connection checked out from pool")
 
     logger.info("Database engine created successfully")
     return db_engine
@@ -122,6 +147,22 @@ def test_database_connection() -> bool:
         return False
 
 
+def get_pool_status() -> dict:
+    """Get connection pool status for monitoring"""
+    try:
+        pool = engine.pool
+        return {
+            "pool_size": pool.size(),
+            "checked_out": pool.checkedout(),
+            "overflow": pool.overflow(),
+            "max_overflow": settings.DB_MAX_OVERFLOW,
+            "total_connections": pool.size() + pool.overflow(),
+        }
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error("Error getting pool status: %s", e)
+        return {"error": str(e)}
+
+
 def get_database_info() -> dict:
     """Get database information for health checks etc."""
     try:
@@ -133,6 +174,7 @@ def get_database_info() -> dict:
                 else settings.get_database_url(),
                 "tables": list(Base.metadata.tables.keys()),
                 "connected": True,
+                "pool_status": get_pool_status(),
             }
             if settings.DATABASE_TYPE == "sqlite":
                 result = connection.execute(text("SELECT sqlite_version()")).fetchone()
@@ -151,6 +193,7 @@ def get_database_info() -> dict:
             "tables": [],
             "connected": False,
             "error": str(e),
+            "pool_status": get_pool_status(),
         }
 
 

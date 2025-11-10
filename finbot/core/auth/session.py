@@ -300,6 +300,7 @@ class SessionManager:
             raise RuntimeError(f"Failed to store session: {e}") from e
         finally:
             db.close()
+            logger.debug("Database connection closed in _store_session_securely")
 
     def _sign_session_data(self, session_data: str) -> str:
         """Create HMAC signature for session data"""
@@ -470,8 +471,13 @@ class SessionManager:
             db.commit()
 
             return session_context, "session_valid"
+        except Exception as e:
+            logger.error("Error in get_session: %s", e)
+            db.rollback()
+            raise
         finally:
             db.close()
+            logger.debug("Database connection closed in get_session")
 
     def _rotate_session(
         self, old_context: SessionContext, db: Session
@@ -528,8 +534,13 @@ class SessionManager:
                 db.commit()
                 return True
             return False
+        except Exception as e:
+            logger.error("Error in delete_session: %s", e)
+            db.rollback()
+            raise
         finally:
             db.close()
+            logger.debug("Database connection closed in delete_session")
 
     def cleanup_expired_sessions(self) -> int:
         """Cleanup expired sessions"""
@@ -544,8 +555,13 @@ class SessionManager:
                 db.delete(session)
             db.commit()
             return len(expired_sessions)
+        except Exception as e:
+            logger.error("Error in cleanup_expired_sessions: %s", e)
+            db.rollback()
+            raise
         finally:
             db.close()
+            logger.debug("Database connection closed in cleanup_expired_sessions")
 
     # Vendor Context Management
     def update_vendor_context(self, session_id: str, vendor_id: int | None) -> bool:
@@ -578,8 +594,13 @@ class SessionManager:
                 updated_count,
             )
             return updated_count > 0
+        except Exception as e:
+            logger.error("Error in update_vendor_context: %s", e)
+            db.rollback()
+            raise
         finally:
             db.close()
+            logger.debug("Database connection closed in update_vendor_context")
 
     def get_session_with_vendor_context(
         self, session_id: str, **kwargs
@@ -650,8 +671,13 @@ class SessionManager:
             session_context.available_vendors = available_vendors
 
             return session_context
+        except Exception as e:
+            logger.error("Error in load_vendor_context: %s", e)
+            db.rollback()
+            raise
         finally:
             db.close()
+            logger.debug("Database connection closed in load_vendor_context")
 
 
 # Global session manager instance

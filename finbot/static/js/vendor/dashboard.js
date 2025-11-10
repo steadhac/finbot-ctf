@@ -142,23 +142,25 @@ async function switchVendor(vendorId) {
 
             console.log('✅ Vendor switched successfully:', response.data.current_vendor);
 
-            // Update UI
-            updateVendorSwitcherUI();
-            closeVendorDropdown();
-
-            // Reload all data for new vendor
-            await loadDashboardData();
-
+            // Show notification
             showNotification(
                 `Switched to ${response.data.current_vendor.company_name}`,
                 'success'
             );
+
+            // Close dropdown before reload
+            closeVendorDropdown();
+
+            // Reload the entire page to get fresh data for the new vendor context
+            // This ensures all pages (dashboard, profile, invoices, etc.) show correct data
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
         }
 
     } catch (error) {
         console.error('❌ Error switching vendor:', error);
         showNotification('Failed to switch vendor', 'error');
-    } finally {
         DashboardState.isSwitchingVendor = false;
         hideLoadingState();
     }
