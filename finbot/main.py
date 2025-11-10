@@ -80,7 +80,7 @@ async def session_status(
 async def startup_event():
     """Application startup tasks"""
 
-    # 1) Ensure DB exists and the user_sessions table is present
+    # 1) Ensure DB exists and required tables are present
     try:
         from sqlalchemy import create_engine, text
         from finbot.config import settings
@@ -90,8 +90,35 @@ async def startup_event():
             **settings.get_database_config(),
         )
 
-        # Create the user_sessions table if it's missing (safe on SQLite & Postgres)
+        # Create required tables (idempotent)
         with engine.begin() as conn:
+            # --- user_sessions (needed by session cleanup) ---
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS user_sessions (
+                    session_id TEXT PRIMARY KEY,
+                    namespace TEXT,
+                    user_id TEXT,
+                    email TEXT,
+                    is_temporary BOOLEAN,
+                    session_data TEXT,
+                    signature TEXT,
+                    user_agent TEXT,
+                    last_rotation TIMESTAMP,
+                    rotation_count INTEGER,
+                    strict_fingerprint TEXT,
+                    loose_fingerprint TEXT,
+                    original_ip TEXT,
+                    current_ip TEXT,
+                    current_vendor_id TEXT,
+                    created_at TIMESTAMP,
+                    last_accessed TIMESTAMP,
+                    expires_at TIMESTAMP
+                )
+            """))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_sessions_namespace ON user_sessions(namespace)"))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_sessions_expires_at ON user_sessions(expires_at)"))
+
+            # --- vendors (your existing schema) ---
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS vendors (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -116,6 +143,8 @@ async def startup_event():
                     updated_at TIMESTAMP
                 )
             """))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_vendors_namespace ON vendors(namespace)"))
+
         print("✅ Ensured user_sessions and vendors tables exist")
     except Exception as e:
         raise RuntimeError(f"Database bootstrap failed: {e}") from e
