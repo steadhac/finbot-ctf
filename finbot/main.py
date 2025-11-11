@@ -13,6 +13,10 @@ from finbot.core.auth.csrf import CSRFProtectionMiddleware
 from finbot.core.auth.middleware import SessionMiddleware, get_session_context
 from finbot.core.auth.session import SessionContext, session_manager
 from finbot.core.error_handlers import register_error_handlers
+from finbot.logging_config import setup_logging
+
+setup_logging()
+
 
 app = FastAPI(
     title="FinBot Platform",
@@ -75,6 +79,7 @@ async def session_status(
         "csrf_token": session_context.csrf_token,
     }
 
+
 # (TODO): add to lifecycle management
 @app.on_event("startup")
 async def startup_event():
@@ -83,6 +88,7 @@ async def startup_event():
     # 1) Ensure DB exists and required tables are present
     try:
         from sqlalchemy import create_engine, text
+
         from finbot.config import settings
 
         engine = create_engine(
@@ -93,7 +99,8 @@ async def startup_event():
         # Create required tables (idempotent)
         with engine.begin() as conn:
             # --- user_sessions (needed by session cleanup) ---
-            conn.execute(text("""
+            conn.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS user_sessions (
                     session_id TEXT PRIMARY KEY,
                     namespace TEXT,
@@ -114,12 +121,22 @@ async def startup_event():
                     last_accessed TIMESTAMP,
                     expires_at TIMESTAMP
                 )
-            """))
-            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_sessions_namespace ON user_sessions(namespace)"))
-            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_sessions_expires_at ON user_sessions(expires_at)"))
+            """)
+            )
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS ix_user_sessions_namespace ON user_sessions(namespace)"
+                )
+            )
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS ix_user_sessions_expires_at ON user_sessions(expires_at)"
+                )
+            )
 
             # --- vendors (your existing schema) ---
-            conn.execute(text("""
+            conn.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS vendors (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     namespace TEXT,
@@ -142,8 +159,13 @@ async def startup_event():
                     created_at TIMESTAMP,
                     updated_at TIMESTAMP
                 )
-            """))
-            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_vendors_namespace ON vendors(namespace)"))
+            """)
+            )
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS ix_vendors_namespace ON vendors(namespace)"
+                )
+            )
 
         print("✅ Ensured user_sessions and vendors tables exist")
     except Exception as e:
@@ -153,6 +175,7 @@ async def startup_event():
     cleaned_count = session_manager.cleanup_expired_sessions()
     if cleaned_count > 0:
         print(f"🧹 Cleaned up {cleaned_count} expired sessions on startup")
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,12 +1,16 @@
 """Vendor Portal API Routes"""
 
-from fastapi import APIRouter, Depends, HTTPException
+import secrets
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
 
+from finbot.agents.runner import run_onboarding_agent
 from finbot.core.auth.middleware import get_session_context
 from finbot.core.auth.session import SessionContext
 from finbot.core.data.database import get_db
 from finbot.core.data.repositories import InvoiceRepository, VendorRepository
+from finbot.core.messaging import event_bus
 
 # Create API router
 router = APIRouter(prefix="/api/v1", tags=["vendor-api"])
@@ -68,6 +72,7 @@ class InvoiceCreateRequest(BaseModel):
 @router.post("/vendors/register")
 async def register_vendor(
     vendor_data: VendorRegistrationRequest,
+    background_tasks: BackgroundTasks,
     session_context: SessionContext = Depends(get_session_context),
 ):
     """Register a new vendor"""
@@ -91,10 +96,36 @@ async def register_vendor(
             phone=vendor_data.phone,
         )
 
+        # Run the onboarding agent
+        workflow_id = f"wf_{secrets.token_urlsafe(12)}"
+
+        # queue background task to run the onboarding agent
+        background_tasks.add_task(
+            run_onboarding_agent,
+            task_data={
+                "vendor_id": vendor.id,
+                "description": "Evaluate and onboard a new vendor with provided vendor_id",
+            },
+            session_context=session_context,
+            workflow_id=workflow_id,
+        )
+
+        await event_bus.emit_business_event(
+            event_type="vendor.created",
+            event_data={
+                "vendor_id": vendor.id,
+                "company_name": vendor.company_name,
+                "workflow_id": workflow_id,
+            },
+            session_context=session_context,
+            workflow_id=workflow_id,
+        )
+
         return {
             "success": True,
-            "message": "Vendor registered successfully",
+            "message": "Vendor registered successfully. Onboarding in progress.",
             "vendor_id": vendor.id,
+            "workflow_id": workflow_id,
         }
 
     except Exception as e:

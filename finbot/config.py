@@ -92,7 +92,7 @@ class Settings(BaseSettings):
     LLM_PROVIDER: str = "openai"
     LLM_DEFAULT_MODEL: str = "gpt-5-nano"
     LLM_DEFAULT_TEMPERATURE: float = 1
-    LLM_MAX_TOKENS: int = 1000
+    LLM_MAX_TOKENS: int = 5000
     LLM_TIMEOUT: int = 30
 
     # Agent Config
@@ -103,7 +103,7 @@ class Settings(BaseSettings):
 
     # Development Config
     RELOAD: bool = True
-    LOG_LEVEL: str = "info"
+    LOG_LEVEL: str = "debug"
 
     model_config = ConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False
