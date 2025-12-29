@@ -105,7 +105,7 @@ def get_db() -> Generator[Session, None, None]:
 
 def create_tables() -> None:
     """Create all tables in the database
-    - This is called during application startup
+    - This may be called during fresh application startup or during database reset
     """
     try:
         logger.info("Creating all database tables")

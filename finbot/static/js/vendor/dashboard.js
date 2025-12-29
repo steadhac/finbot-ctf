@@ -4,7 +4,6 @@
 
 // Dashboard state management
 const DashboardState = {
-    currentSection: 'dashboard',
     vendorContext: null,
     isLoading: false,
     isSwitchingVendor: false,
@@ -29,9 +28,8 @@ async function initializeDashboard() {
         // Initialize UI components
         initializeVendorSwitcher();
         initializeSidebar();
-        initializeNavigation();
 
-        // Load initial data
+        // Load dashboard metrics
         await loadDashboardData();
 
         console.log('✅ Dashboard initialized successfully');
@@ -314,9 +312,6 @@ async function loadDashboardData() {
         const metricsResponse = await api.get('/vendor/api/v1/dashboard/metrics');
         updateDashboardMetrics(metricsResponse.data);
 
-        // Load page-specific data
-        await loadPageData();
-
         console.log('✅ Dashboard data loaded successfully');
 
     } catch (error) {
@@ -324,42 +319,6 @@ async function loadDashboardData() {
         showNotification('Failed to load dashboard data', 'error');
     } finally {
         hideLoadingState();
-    }
-}
-
-/**
- * Load page-specific data based on current section
- */
-async function loadPageData() {
-    const section = DashboardState.currentSection;
-
-    console.log(`📄 Loading ${section} data...`);
-
-    try {
-        switch (section) {
-            case 'invoices':
-                const invoicesResponse = await api.get('/vendor/api/v1/invoices');
-                updateInvoicesUI(invoicesResponse.data);
-                break;
-
-            case 'payments':
-                const paymentsResponse = await api.get('/vendor/api/v1/payments');
-                updatePaymentsUI(paymentsResponse.data);
-                break;
-
-            case 'messages':
-                // Messages endpoint would be implemented similarly
-                console.log('Messages data loading not implemented yet');
-                break;
-
-            default:
-                // Dashboard home - metrics already loaded
-                console.log('Dashboard home - metrics loaded');
-                break;
-        }
-    } catch (error) {
-        console.error(`❌ Error loading ${section} data:`, error);
-        showNotification(`Failed to load ${section} data`, 'error');
     }
 }
 
@@ -400,105 +359,6 @@ function updateMetricCard(cardId, value) {
 }
 
 /**
- * Update invoices UI
- */
-function updateInvoicesUI(data) {
-    const { invoices, vendor_context, total_count } = data;
-
-    console.log(`📋 Updating invoices UI: ${total_count} invoices`);
-
-    const invoicesContainer = document.querySelector('.invoices-container');
-    if (!invoicesContainer) return;
-
-    if (invoices.length === 0) {
-        invoicesContainer.innerHTML = `
-            <div class="text-center py-8">
-                <p class="text-text-secondary">No invoices found for ${vendor_context.company_name}</p>
-            </div>
-        `;
-        return;
-    }
-
-    invoicesContainer.innerHTML = invoices.map(invoice => `
-        <div class="invoice-card bg-portal-surface rounded-lg p-4 border border-vendor-primary/20">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h3 class="font-medium text-text-bright">${invoice.invoice_number}</h3>
-                    <p class="text-sm text-text-secondary">${invoice.description}</p>
-                    <p class="text-xs text-text-secondary mt-1">
-                        Created: ${formatDate(invoice.created_at)}
-                    </p>
-                </div>
-                <div class="text-right">
-                    <p class="font-bold text-vendor-primary">${formatCurrency(invoice.amount)}</p>
-                    <span class="inline-block px-2 py-1 rounded text-xs ${getStatusClass(invoice.status)}">
-                        ${invoice.status.toUpperCase()}
-                    </span>
-                </div>
-            </div>
-        </div>
-    `).join('');
-}
-
-/**
- * Update payments UI
- */
-function updatePaymentsUI(data) {
-    const { payments, vendor_context, total_count } = data;
-
-    console.log(`💳 Updating payments UI: ${total_count} payments`);
-
-    const paymentsContainer = document.querySelector('.payments-container');
-    if (!paymentsContainer) return;
-
-    if (payments.length === 0) {
-        paymentsContainer.innerHTML = `
-            <div class="text-center py-8">
-                <p class="text-text-secondary">No payments found for ${vendor_context.company_name}</p>
-            </div>
-        `;
-        return;
-    }
-
-    paymentsContainer.innerHTML = payments.map(payment => `
-        <div class="payment-card bg-portal-surface rounded-lg p-4 border border-vendor-primary/20">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h3 class="font-medium text-text-bright">${payment.payment_number}</h3>
-                    <p class="text-sm text-text-secondary">${payment.description}</p>
-                    <p class="text-xs text-text-secondary mt-1">
-                        Created: ${formatDate(payment.created_at)}
-                    </p>
-                </div>
-                <div class="text-right">
-                    <p class="font-bold text-vendor-primary">${formatCurrency(payment.amount)}</p>
-                    <span class="inline-block px-2 py-1 rounded text-xs ${getStatusClass(payment.status)}">
-                        ${payment.status.toUpperCase()}
-                    </span>
-                </div>
-            </div>
-        </div>
-    `).join('');
-}
-
-/**
- * Get CSS class for status
- */
-function getStatusClass(status) {
-    switch (status.toLowerCase()) {
-        case 'paid':
-        case 'completed':
-            return 'bg-green-500/20 text-green-400';
-        case 'pending':
-            return 'bg-yellow-500/20 text-yellow-400';
-        case 'overdue':
-            return 'bg-red-500/20 text-red-400';
-        default:
-            return 'bg-gray-500/20 text-gray-400';
-    }
-}
-
-/**
  * Initialize sidebar functionality
  */
 function initializeSidebar() {
@@ -508,48 +368,6 @@ function initializeSidebar() {
     }
 
     console.log('📱 Sidebar initialized');
-}
-
-/**
- * Initialize navigation
- */
-function initializeNavigation() {
-    // Update navigation based on URL
-    updateNavigationFromURL();
-
-    // Note: Removed SPA-like navigation - now using normal browser navigation
-    // Navigation links will work normally with their href attributes
-
-    console.log('🧭 Navigation initialized');
-}
-
-/**
- * Navigate to section (programmatic navigation)
- */
-async function navigateToSection(section) {
-    console.log(`🧭 Programmatic navigation to section: ${section}`);
-
-    // Use normal browser navigation instead of SPA-like behavior
-    const newUrl = `/vendor/${section}`;
-    window.location.href = newUrl;
-}
-
-/**
- * Update navigation from URL
- */
-function updateNavigationFromURL() {
-    const path = window.location.pathname;
-    const section = path.split('/').pop() || 'dashboard';
-
-    DashboardState.currentSection = section;
-
-    // Update active nav item
-    document.querySelectorAll('[data-section]').forEach(item => {
-        item.classList.remove('active');
-        if (item.dataset.section === section) {
-            item.classList.add('active');
-        }
-    });
 }
 
 /**
@@ -577,19 +395,12 @@ function hideLoadingState() {
 }
 
 /**
- * Handle browser back/forward
- * Note: Removed SPA-like popstate handling since we're using normal navigation
- */
-
-/**
  * Export dashboard functions for external use
  */
 window.VendorDashboard = {
     switchVendor,
     handleAddNewVendor,
     loadDashboardData,
-    loadPageData,
-    navigateToSection, // Keep for programmatic navigation if needed
     state: DashboardState
 };
 

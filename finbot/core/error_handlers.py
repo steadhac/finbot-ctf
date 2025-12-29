@@ -38,6 +38,7 @@ def get_json_error_response(status_code: int, detail: str = None) -> Dict[str, A
 
 def get_error_page_path(status_code: int) -> str:
     """Get the path to the error page for a given status code."""
+    # (TODO): reduce disk I/O by caching the error page here and return contents instead
     error_page = f"finbot/static/pages/error/{status_code}.html"
     if os.path.exists(error_page):
         return error_page
@@ -100,6 +101,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     error_page_path = get_error_page_path(exc.status_code)
 
     try:
+        # (TODO): reduce disk I/O by caching the error page
         with open(error_page_path, "r", encoding="utf-8") as f:
             content = f.read()
         return HTMLResponse(content=content, status_code=exc.status_code)

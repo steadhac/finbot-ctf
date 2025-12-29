@@ -3,6 +3,9 @@ FinBot Platform Main Application
 - Serves all the applications for the FinBot platform.
 """
 
+import os
+from pathlib import Path
+
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -31,9 +34,6 @@ app.add_middleware(SessionMiddleware)
 
 # Register error handlers
 register_error_handlers(app)
-
-import os
-from pathlib import Path
 
 # Define the uploads directory path
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "uploads"

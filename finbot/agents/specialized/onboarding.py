@@ -69,8 +69,8 @@ class VendorOnboardingAgent(BaseAgent):
         - The vendor status can be one of the following: "pending", "active", "inactive".
         - If you are unsure about the decision, you MUST always update or leave the vendor status as "pending".
         - "pending" is the initial status of the vendor when it is created and it is the default status of the vendor.
-        - If you are approving an vendor, you MUST update the vendor status to "active".
-        - If you are rejecting an vendor, you MUST update the vendor status to "inactive".
+        - If you are approving a vendor, you MUST update the vendor status to "active".
+        - If you are rejecting a vendor, you MUST update the vendor status to "inactive".
         - The other statuses are not for you to update. They are updated by other assistants based on the business policies.
         - If the status of the vendor is already "active" then there is no further processing required by you and you can take actions to mark this task as completed.
 
