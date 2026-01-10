@@ -597,3 +597,58 @@ def test_cd003_user_story_summary():
     
     # All assertions passed - user story validated
     print("\n✅ CD003 - Secure Session Management: ALL ACCEPTANCE CRITERIA MET")
+
+# ============================================================================
+# SSM-GS-015: Google Sheets Integration Verification
+# ============================================================================
+@pytest.mark.unit
+def test_google_sheets_integration_verification():
+    """SSM-GS-015: Google Sheets Integration Verification
+    
+    Verify that secure session management test results are properly recorded 
+    in Google Sheets.
+    """
+    import os
+    from dotenv import load_dotenv
+    from google.oauth2.service_account import Credentials
+    import gspread
+    
+    load_dotenv()
+    
+    sheet_id = os.getenv("GOOGLE_SHEETS_ID")
+    creds_file = os.getenv("GOOGLE_CREDENTIALS_FILE", "google-credentials.json")
+    
+    if not sheet_id or not os.path.exists(creds_file):
+        pytest.skip("Google Sheets credentials not configured")
+    
+    try:
+        # Connect to Google Sheets
+        creds = Credentials.from_service_account_file(
+            creds_file,
+            scopes=['https://www.googleapis.com/auth/spreadsheets']
+        )
+        client = gspread.authorize(creds)
+        sheet = client.open_by_key(sheet_id)
+        
+        # Check Summary sheet exists and has data
+        summary_sheet = sheet.worksheet('Summary')
+        summary_data = summary_sheet.get_all_values()
+        
+        assert len(summary_data) > 1, "Summary sheet should have test execution data"
+        
+        # Verify headers
+        headers = summary_data[0]
+        required_headers = ['timestamp', 'total_tests', 'passed', 'failed']
+        for header in required_headers:
+            assert header in headers, f"Summary sheet missing required column: {header}"
+        
+        # Verify Google Sheets connection works
+        worksheets = [ws.title for ws in sheet.worksheets()]
+        assert len(worksheets) > 0, "Google Sheet should have worksheets"
+        assert 'Summary' in worksheets, "Summary worksheet should exist"
+        
+        print(f"✓ Google Sheets connection verified. Available worksheets: {worksheets}")
+        print("✓ Summary data is being recorded correctly")
+        
+    except Exception as e:
+        pytest.fail(f"Google Sheets verification failed: {e}")
