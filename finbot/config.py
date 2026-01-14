@@ -100,11 +100,6 @@ class Settings(BaseSettings):
 
     # OpenAI Config
     OPENAI_API_KEY: str = ""
-
-    # Google Sheets Config
-    GOOGLE_SHEETS_ID: str = ""
-    GOOGLE_CREDENTIALS_FILE: str = "google-credentials.json"
-
     
     # Development Config
     RELOAD: bool = True
