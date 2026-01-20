@@ -164,7 +164,6 @@ class Settings(BaseSettings):
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
-        from typing import Any, Literal
     
     def get_database_config(self) -> dict[str, Any]:
         """Get the database specific configuration"""
