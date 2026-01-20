@@ -101,6 +101,7 @@ def main() -> None:
         "--db-type",
         choices=["sqlite", "postgresql"],
         help="Database type to use (overrides DATABASE_TYPE env var)",
+        default="sqlite",
     )
     args = parser.parse_args()
 
@@ -112,7 +113,9 @@ def main() -> None:
 
         # Re-import database module to recreate engine with new settings
         import importlib
+
         from finbot.core import data
+
         importlib.reload(data.database)
 
     print("🚀 FinBot CTF Database Setup")
