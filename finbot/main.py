@@ -86,20 +86,6 @@ async def startup_event():
     """Application startup tasks"""
 
     try:
-        print("🗄️ Running database setup...")
-        # Import the existing setup function from script
-        from scripts.setup_database import main as setup_database_main
-
-        # Run the setup process (handles DB creation + tables)
-        setup_database_main()
-
-        print("✅ Database setup completed successfully")
-
-    except Exception as e:
-        raise RuntimeError(f"Database setup failed: {e}") from e
-
-    # 2) Now it's safe to access tables
-    try:
         cleaned_count = session_manager.cleanup_expired_sessions()
         if cleaned_count > 0:
             print(f"🧹 Cleaned up {cleaned_count} expired sessions on startup")
