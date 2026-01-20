@@ -9,12 +9,28 @@ See Collaborator Hub for details on this project: https://github.com/OWASP-ASI/F
 
 Please follow below instructions to test drive the current branch
 
+### Prerequisites
+
+Check if you have the required tools:
+```bash
+python scripts/check_prerequisites.py
+```
+
+### Setup
+
 ```bash
 # Install dependencies
 uv sync
 
-# Setup database
+# Setup database (defaults to sqlite)
 uv run python scripts/setup_database.py
+
+# Or specify database type explicitly
+uv run python scripts/setup_database.py --db-type sqlite
+
+# For PostgreSQL: start the database server first
+docker compose up -d postgres
+uv run python scripts/setup_database.py --db-type postgresql
 
 # Start the platform
 uv run python run.py
