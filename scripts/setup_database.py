@@ -96,28 +96,6 @@ def setup_sqlite() -> bool:
 
 def main() -> None:
     """DB Setup Script"""
-    parser = argparse.ArgumentParser(description="Setup FinBot CTF Database")
-    parser.add_argument(
-        "--db-type",
-        choices=["sqlite", "postgresql"],
-        help="Database type to use (overrides DATABASE_TYPE env var)",
-        default="sqlite",
-    )
-    args = parser.parse_args()
-
-    # Override DATABASE_TYPE if provided - BEFORE importing database module
-    if args.db_type:
-        os.environ["DATABASE_TYPE"] = args.db_type
-        settings.DATABASE_TYPE = args.db_type
-        print(f"⚙️  Using database type from command line: {args.db_type}")
-
-        # Re-import database module to recreate engine with new settings
-        import importlib
-
-        from finbot.core import data
-
-        importlib.reload(data.database)
-
     print("🚀 FinBot CTF Database Setup")
     print(f"Database Type: {settings.DATABASE_TYPE}")
     print(f"Database URL: {settings.get_database_url()}")
