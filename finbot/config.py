@@ -97,10 +97,6 @@ class Settings(BaseSettings):
 
     # Agent Config
     AGENT_MAX_ITERATIONS: int = 10
-
-    # Google Sheets Config
-    GOOGLE_SHEETS_ID: str | None = None
-    GOOGLE_CREDENTIALS_FILE: str = "google-credentials.json"
     
     # OpenAI Config
     OPENAI_API_KEY: str = ""
