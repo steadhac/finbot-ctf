@@ -291,7 +291,7 @@ class UserActivity(Base):
 
 # Non DB Models: Pydantic Models
 
-LLMProviderType = Literal["openai", "http", "mock","ollama"]
+LLMProviderType = Literal["openai", "http", "mock", "ollama"]
 
 
 class LLMRequest(BaseModel):
