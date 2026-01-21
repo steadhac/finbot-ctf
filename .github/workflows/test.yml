@@ -23,9 +23,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
         pip install pytest pytest-asyncio pytest-cov gspread google-auth google-auth-oauthlib
-        
-    - name: Initialize database with migrations
-      run: alembic upgrade head
     
     - name: Run vendor isolation tests with Google Sheets reporting
       env:
