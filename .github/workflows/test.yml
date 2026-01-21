@@ -21,8 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e ".[dev]
-        pip install pytest pytest-asyncio pytest-cov gspread google-auth
+        pip install -e ".[dev]"
     
     - name: Initialize database with migrations
       run: alembic upgrade head
