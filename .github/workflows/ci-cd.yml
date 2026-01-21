@@ -39,7 +39,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.13'
     
     # Step 3: Install dependencies
     # Upgrade pip and install project dependencies including test tools
