@@ -116,26 +116,80 @@ function updateProfileUI() {
     updateElement('profile-account-number', maskSensitiveData(vendor.bank_account_number, 'account'));
     updateElement('profile-routing-number', maskSensitiveData(vendor.bank_routing_number, 'routing'));
 
-    // Update statistics
-    updateStatistics();
+    // Update agent notes
+    updateAgentNotes();
 }
 
 /**
- * Update statistics section
+ * Update agent notes section
  */
-function updateStatistics() {
-    if (!ProfileState.vendorData || !ProfileState.vendorData.metrics) {
+function updateAgentNotes() {
+    if (!ProfileState.vendorData) {
         return;
     }
 
-    const metrics = ProfileState.vendorData.metrics;
-    const invoiceStats = metrics.invoices || {};
+    const vendor = ProfileState.vendorData;
 
-    updateElement('stats-total-invoices', invoiceStats.total_count || 0);
-    updateElement('stats-total-revenue', formatCurrency(invoiceStats.total_amount || 0));
-    updateElement('stats-pending-payments', invoiceStats.pending_count || 0);
-    updateElement('stats-completion-rate', `${Math.round(metrics.completion_rate || 0)}%`);
-    updateElement('stats-last-activity', 'Just now');
+    // Update agent notes
+    const agentNotes = vendor.agent_notes || 'No notes available.';
+    updateElement('agent-notes', agentNotes);
+
+    // Update trust level
+    const trustLevel = formatLevel(vendor.trust_level, 'trust');
+    updateElement('vendor-trust-level', trustLevel.label);
+    applyLevelStyling('vendor-trust-level', trustLevel.colorClass);
+
+    // Update risk level
+    const riskLevel = formatLevel(vendor.risk_level, 'risk');
+    updateElement('vendor-risk-level', riskLevel.label);
+    applyLevelStyling('vendor-risk-level', riskLevel.colorClass);
+
+    // Update last activity
+    updateElement('stats-last-activity', formatRelativeTime(vendor.updated_at));
+}
+
+/**
+ * Format trust/risk level for display
+ */
+function formatLevel(level, type) {
+    if (!level) {
+        return type === 'trust'
+            ? { label: 'Not Assessed', colorClass: 'text-text-secondary' }
+            : { label: 'Unknown', colorClass: 'text-text-secondary' };
+    }
+
+    const levelLower = level.toLowerCase();
+
+    if (type === 'trust') {
+        const trustMap = {
+            'high': { label: 'High', colorClass: 'text-green-400' },
+            'standard': { label: 'Standard', colorClass: 'text-vendor-primary' },
+            'low': { label: 'Low', colorClass: 'text-vendor-warning' },
+            'restricted': { label: 'Restricted', colorClass: 'text-red-400' }
+        };
+        return trustMap[levelLower] || { label: level, colorClass: 'text-vendor-primary' };
+    } else {
+        const riskMap = {
+            'low': { label: 'Low', colorClass: 'text-green-400' },
+            'medium': { label: 'Medium', colorClass: 'text-vendor-warning' },
+            'high': { label: 'High', colorClass: 'text-red-400' },
+            'critical': { label: 'Critical', colorClass: 'text-red-500' }
+        };
+        return riskMap[levelLower] || { label: level, colorClass: 'text-vendor-warning' };
+    }
+}
+
+/**
+ * Apply color styling to level element
+ */
+function applyLevelStyling(elementId, colorClass) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        // Remove existing color classes
+        element.className = element.className.replace(/text-\S+/g, '');
+        // Add new color class and base classes
+        element.className = `text-lg font-semibold ${colorClass}`;
+    }
 }
 
 /**
@@ -425,6 +479,46 @@ function formatDate(dateString) {
     }
 }
 
+/**
+ * Format date for relative time (e.g., "2 hours ago")
+ */
+function formatRelativeTime(dateString) {
+    if (!dateString) return 'N/A';
+
+    try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffSeconds = Math.floor(diffMs / 1000);
+        const diffMinutes = Math.floor(diffSeconds / 60);
+        const diffHours = Math.floor(diffMinutes / 60);
+        const diffDays = Math.floor(diffHours / 24);
+        const diffWeeks = Math.floor(diffDays / 7);
+        const diffMonths = Math.floor(diffDays / 30);
+        const diffYears = Math.floor(diffDays / 365);
+
+        if (diffSeconds < 0) {
+            return 'just now';
+        } else if (diffSeconds < 60) {
+            return diffSeconds === 1 ? '1 second ago' : `${diffSeconds} seconds ago`;
+        } else if (diffMinutes < 60) {
+            return diffMinutes === 1 ? '1 minute ago' : `${diffMinutes} minutes ago`;
+        } else if (diffHours < 24) {
+            return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+        } else if (diffDays < 7) {
+            return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+        } else if (diffWeeks < 4) {
+            return diffWeeks === 1 ? '1 week ago' : `${diffWeeks} weeks ago`;
+        } else if (diffMonths < 12) {
+            return diffMonths === 1 ? '1 month ago' : `${diffMonths} months ago`;
+        } else {
+            return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`;
+        }
+    } catch (error) {
+        console.error('Error formatting relative time:', error);
+        return 'Invalid Date';
+    }
+}
 /**
  * Format currency for display
  */
