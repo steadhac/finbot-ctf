@@ -55,7 +55,7 @@ async def update_vendor_status(
     if not vendor:
         raise ValueError("Vendor not found")
     existing_notes = vendor.agent_notes or ""
-    new_notes = f"{existing_notes}\n{agent_notes}"
+    new_notes = f"{existing_notes}\n\n{agent_notes}"
     vendor = vendor_repo.update_vendor(
         vendor_id,
         status=status,

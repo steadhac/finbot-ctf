@@ -169,6 +169,13 @@ async def get_vendor(
     vendor = vendor_repo.get_vendor(vendor_id)
     if not vendor:
         raise HTTPException(status_code=404, detail="Vendor not found")
+
+    # Verify vendor is the current vendor (vendor portal only sees current vendor)
+    if vendor.id != session_context.current_vendor_id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to view this vendor"
+        )
+
     return vendor.to_dict()
 
 
@@ -240,12 +247,84 @@ async def delete_vendor(
     db = next(get_db())
     vendor_repo = VendorRepository(db, session_context)
 
+    # Get vendor and verify access
+    vendor = vendor_repo.get_vendor(vendor_id)
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+
+    # Verify vendor belongs to current user and is the current vendor
+    if vendor.id != session_context.current_vendor_id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete this vendor"
+        )
+
     success = vendor_repo.delete_vendor(vendor_id)
 
     if not success:
-        raise HTTPException(status_code=404, detail="Vendor not found")
+        raise HTTPException(status_code=500, detail="Failed to delete vendor")
 
     return {"success": True, "message": "Vendor deleted successfully"}
+
+
+@router.post("/vendors/{vendor_id}/request-review")
+async def request_vendor_review(
+    vendor_id: int,
+    background_tasks: BackgroundTasks,
+    session_context: SessionContext = Depends(get_session_context),
+):
+    """Request a re-review of vendor status by running the onboarding workflow again"""
+    db = next(get_db())
+    vendor_repo = VendorRepository(db, session_context)
+
+    # Get vendor and verify access
+    vendor = vendor_repo.get_vendor(vendor_id)
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+
+    # Verify vendor belongs to current user and is the current vendor
+    if vendor.id != session_context.current_vendor_id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to request review for this vendor"
+        )
+
+    try:
+        # Generate workflow ID for tracking
+        workflow_id = f"wf_review_{secrets.token_urlsafe(12)}"
+
+        # Queue background task to run the onboarding agent
+        background_tasks.add_task(
+            run_onboarding_agent,
+            task_data={
+                "vendor_id": vendor.id,
+                "description": "Re-evaluate vendor profile and update status based on current data",
+            },
+            session_context=session_context,
+            workflow_id=workflow_id,
+        )
+
+        await event_bus.emit_business_event(
+            event_type="vendor.review_requested",
+            event_data={
+                "vendor_id": vendor.id,
+                "company_name": vendor.company_name,
+                "previous_status": vendor.status,
+                "workflow_id": workflow_id,
+            },
+            session_context=session_context,
+            workflow_id=workflow_id,
+        )
+
+        return {
+            "success": True,
+            "message": "Review request submitted. Your profile is being re-evaluated.",
+            "vendor_id": vendor.id,
+            "workflow_id": workflow_id,
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to submit review request: {str(e)}"
+        ) from e
 
 
 @router.post("/vendors/switch/{vendor_id}")
