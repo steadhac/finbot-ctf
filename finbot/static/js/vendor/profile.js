@@ -174,13 +174,14 @@ function renderAgentNotes(agentNotes) {
         return;
     }
 
-    // Multiple entries - render as timeline/list with visual separation
-    const entriesHtml = noteEntries.map((entry, index) => {
+    // Multiple entries - reverse to show latest first (notes are appended in DB)
+    const reversedEntries = [...noteEntries].reverse();
+    const entriesHtml = reversedEntries.map((entry, index) => {
         const isLatest = index === 0;
-        const entryNumber = noteEntries.length - index;
-        
+        const entryNumber = reversedEntries.length - index;
+
         return `
-            <div class="relative pl-6 pb-4 ${index < noteEntries.length - 1 ? 'border-l border-vendor-primary/30' : ''}">
+            <div class="relative pl-6 pb-4 ${index < reversedEntries.length - 1 ? 'border-l border-vendor-primary/30' : ''}">
                 <div class="absolute left-0 top-0 w-3 h-3 rounded-full ${isLatest ? 'bg-vendor-accent' : 'bg-vendor-primary/50'} -translate-x-1.5"></div>
                 <div class="flex items-center space-x-2 mb-1">
                     <span class="text-xs font-medium ${isLatest ? 'text-vendor-accent' : 'text-text-secondary'}">

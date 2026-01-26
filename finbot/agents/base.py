@@ -112,23 +112,17 @@ class BaseAgent(ABC):
                                     tool_call_name,
                                     tool_call["arguments"],
                                 )
+                                function_output = await callable_fn(
+                                    **tool_call["arguments"]
+                                )
+                                logger.debug("Function output: %s", function_output)
                                 if tool_call_name == "complete_task":
                                     # this will end the agent loop and
                                     # return the task status and summary
-                                    # simple fn that returns a dict - not awaitable
-                                    function_output = callable_fn(
-                                        **tool_call["arguments"]
-                                    )
                                     await self.log_task_completion(
                                         task_result=function_output
                                     )
-                                    logger.debug("Function output: %s", function_output)
                                     return function_output
-                                else:
-                                    function_output = await callable_fn(
-                                        **tool_call["arguments"]
-                                    )
-                                    logger.debug("Function output: %s", function_output)
                             except Exception as e:  # pylint: disable=broad-exception-caught
                                 logger.error(
                                     "Tool call %s failed: %s", tool_call["name"], e
@@ -270,14 +264,23 @@ class BaseAgent(ABC):
         """
         raise NotImplementedError("Configuration loading method not implemented")
 
+    async def _complete_task(
+        self, task_status: str, task_summary: str
+    ) -> dict[str, Any]:
+        """Complete the task and return the task status and summary"""
+        task_result = {
+            "task_status": task_status,
+            "task_summary": task_summary,
+        }
+        await self._on_task_completion(task_result)
+
+        return task_result
+
     def _get_final_callables(self) -> dict[str, Callable[..., Any]]:
         """Get the final dict of callables for the agent including control flow callables"""
         callables = self._get_callables()
         control_flow_callables = {
-            "complete_task": lambda task_status, task_summary: {
-                "task_status": task_status,
-                "task_summary": task_summary,
-            },
+            "complete_task": self._complete_task,
         }
         return {**callables, **control_flow_callables}
 
@@ -347,3 +350,15 @@ class BaseAgent(ABC):
             **self.llm_client.context_info,
             "agent_class": self.__class__.__name__,
         }
+
+    # Hooks for customizing the agent behavior
+    async def _on_task_completion(self, task_result: dict[str, Any]) -> None:
+        """Hook for customizing the agent behavior on task completion
+        Override this hook on specialized agents to perform additional actions on task completion.
+        Typical use case is to store the task result in the db.
+        Args:
+            task_result: The result of the task
+            - task_result is a dictionary with the following keys:
+                - task_status: The status of the task
+                - task_summary: The summary of the task
+        """

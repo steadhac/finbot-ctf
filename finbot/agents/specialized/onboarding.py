@@ -10,7 +10,11 @@ from typing import Any, Callable
 from finbot.agents.base import BaseAgent
 from finbot.agents.utils import agent_tool
 from finbot.core.auth.session import SessionContext
-from finbot.tools import get_vendor_details, update_vendor_status
+from finbot.tools import (
+    get_vendor_details,
+    update_vendor_agent_notes,
+    update_vendor_status,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -327,3 +331,31 @@ class VendorOnboardingAgent(BaseAgent):
             "get_vendor_details": self.get_vendor_details,
             "update_vendor_status": self.update_vendor_status,
         }
+
+    # Hooks
+    async def _on_task_completion(self, task_result: dict[str, Any]) -> None:
+        """Update agent notes with task result
+        Args:
+            task_result: The result of the task
+            - task_result is a dictionary with the following keys:
+                - task_status: The status of the task
+                - task_summary: The summary of the task
+        """
+        logger.info("Updating agent notes with task result: %s", task_result)
+        updated_agent_notes = f"""Task Status: {task_result["task_status"]}
+        Task Summary: {task_result["task_summary"]}
+        """
+        vendor_id = self.session_context.current_vendor_id
+        if not vendor_id:
+            logger.error("Vendor ID not found in session context")
+            return
+        try:
+            await update_vendor_agent_notes(
+                vendor_id,
+                updated_agent_notes,
+                self.session_context,
+            )
+        except ValueError as e:
+            logger.error("Error updating agent notes: %s", e)
+            return
+        logger.info("Agent notes updated successfully for vendor_id: %s", vendor_id)
