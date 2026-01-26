@@ -66,7 +66,7 @@ async function loadProfileData() {
             metrics: metricsResponse.data.metrics
         };
 
-        console.log('📊 Profile data loaded:', ProfileState.vendorData);
+        // console.log('📊 Profile data loaded:', ProfileState.vendorData);
 
         // Update UI with profile data
         updateProfileUI();
