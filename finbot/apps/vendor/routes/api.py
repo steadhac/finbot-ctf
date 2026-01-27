@@ -579,3 +579,68 @@ async def update_invoice(
             else None,
         },
     }
+
+
+@router.post("/invoices/{invoice_id}/reprocess")
+async def reprocess_invoice(
+    invoice_id: int,
+    background_tasks: BackgroundTasks,
+    session_context: SessionContext = Depends(get_session_context),
+):
+    """Request re-processing of an invoice by the AI agent"""
+    db = next(get_db())
+    invoice_repo = InvoiceRepository(db, session_context)
+
+    # Get the invoice
+    invoice = invoice_repo.get_invoice(invoice_id)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    # Verify invoice belongs to current vendor
+    if invoice.vendor_id != session_context.current_vendor_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    # Create workflow ID for tracking
+    workflow_id = f"wf_{secrets.token_urlsafe(12)}"
+
+    # Queue background task to run the invoice processing agent
+    background_tasks.add_task(
+        run_invoice_agent,
+        task_data={
+            "invoice_id": invoice.id,
+            "description": "Please re-process this invoice and update the status and review notes",
+        },
+        session_context=session_context,
+        workflow_id=workflow_id,
+    )
+
+    # Emit event for re-processing
+    await event_bus.emit_business_event(
+        event_type="invoice.reprocessed",
+        event_data={
+            "invoice_id": invoice.id,
+            "invoice_number": invoice.invoice_number,
+            "amount": float(invoice.amount),
+            "status": invoice.status,
+            "description": invoice.description,
+            "invoice_date": invoice.invoice_date.isoformat()
+            if invoice.invoice_date
+            else None,
+            "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
+            "agent_notes": invoice.agent_notes,
+            "created_at": invoice.created_at.isoformat()
+            if invoice.created_at
+            else None,
+            "updated_at": invoice.updated_at.isoformat()
+            if invoice.updated_at
+            else None,
+        },
+        session_context=session_context,
+        workflow_id=workflow_id,
+    )
+
+    return {
+        "success": True,
+        "message": "Invoice re-processing has been queued. The AI agent will review it shortly.",
+        "workflow_id": workflow_id,
+    }

@@ -55,7 +55,7 @@ async def update_invoice_status(
     if not invoice:
         raise ValueError("Invoice not found")
     existing_notes = invoice.agent_notes or ""
-    new_notes = f"{existing_notes}\n{agent_notes}"
+    new_notes = f"{existing_notes}\n\n{agent_notes}"
     invoice = invoice_repo.update_invoice(
         invoice_id, status=status, agent_notes=new_notes
     )

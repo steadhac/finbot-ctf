@@ -509,6 +509,7 @@ function initializeInvoiceSidecar() {
     const backdrop = document.getElementById('invoice-sidecar-backdrop');
     const closeBtn = document.getElementById('close-sidecar-btn');
     const editBtn = document.getElementById('sidecar-edit-btn');
+    const reprocessBtn = document.getElementById('reprocess-invoice-btn');
 
     if (!sidecar) {
         console.warn('Invoice sidecar elements not found');
@@ -536,12 +537,98 @@ function initializeInvoiceSidecar() {
         });
     }
 
+    // Re-process button handler
+    if (reprocessBtn) {
+        reprocessBtn.addEventListener('click', handleReprocessInvoice);
+    }
+
     // Close on Escape key
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && InvoiceState.isSidecarOpen) {
             closeInvoiceSidecar();
         }
     });
+}
+
+/**
+ * Handle re-process invoice button click
+ */
+async function handleReprocessInvoice() {
+    if (!InvoiceState.currentInvoice) {
+        showNotification('No invoice selected', 'warning');
+        return;
+    }
+
+    const reprocessBtn = document.getElementById('reprocess-invoice-btn');
+    const statusMessage = document.getElementById('reprocess-status-message');
+
+    try {
+        // Show loading state
+        const originalContent = reprocessBtn.innerHTML;
+        reprocessBtn.disabled = true;
+        reprocessBtn.innerHTML = `
+            <svg class="w-4 h-4 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Processing...
+        `;
+
+        // Make API request
+        const response = await api.post(
+            `/vendor/api/v1/invoices/${InvoiceState.currentInvoice.id}/reprocess`
+        );
+
+        // Show success message
+        statusMessage.className = 'mt-3 p-3 rounded-lg text-sm bg-green-500/20 border border-green-500/30 text-green-400';
+        statusMessage.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>${response.data.message || 'Re-processing request submitted!'}</span>
+            </div>
+        `;
+        statusMessage.classList.remove('hidden');
+
+        showNotification('Invoice re-processing queued!', 'success');
+
+        // Reset button after delay
+        setTimeout(() => {
+            reprocessBtn.disabled = false;
+            reprocessBtn.innerHTML = originalContent;
+        }, 3000);
+
+    } catch (error) {
+        console.error('Error requesting invoice re-processing:', error);
+
+        // Show error message
+        statusMessage.className = 'mt-3 p-3 rounded-lg text-sm bg-red-500/20 border border-red-500/30 text-red-400';
+        statusMessage.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                <span>${error.data?.detail || 'Failed to request re-processing. Please try again.'}</span>
+            </div>
+        `;
+        statusMessage.classList.remove('hidden');
+
+        // Handle API errors
+        const errorMessage = handleAPIError(error, { showAlert: true });
+
+        if (!(error.status === 403 && error.data?.error?.type === 'csrf_error')) {
+            showNotification(`Failed to re-process invoice: ${errorMessage}`, 'error');
+        }
+
+        // Reset button
+        reprocessBtn.disabled = false;
+        reprocessBtn.innerHTML = `
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Re-process
+        `;
+    }
 }
 
 /**
@@ -647,6 +734,13 @@ function populateSidecarContent(invoice) {
     const updatedAtEl = document.getElementById('sidecar-updated-at');
     if (updatedAtEl) {
         updatedAtEl.textContent = formatDateTimeLong(invoice.updated_at);
+    }
+
+    // Reset re-process status message
+    const statusMessage = document.getElementById('reprocess-status-message');
+    if (statusMessage) {
+        statusMessage.classList.add('hidden');
+        statusMessage.innerHTML = '';
     }
 }
 

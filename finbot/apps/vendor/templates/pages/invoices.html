@@ -360,6 +360,32 @@
                 </div>
             </div>
         </div>
+
+        <!-- Re-process Invoice Section -->
+        <div class="space-y-4">
+            <h4 class="text-sm font-semibold text-vendor-primary uppercase tracking-wide flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Actions
+            </h4>
+            <div id="reprocess-section" class="p-4 bg-gradient-to-r from-vendor-primary/5 to-vendor-secondary/5 rounded-xl border border-vendor-primary/20">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1 mr-4">
+                        <p class="text-sm text-text-secondary">
+                            Need the invoice reviewed again? Request AI re-processing.
+                        </p>
+                    </div>
+                    <button id="reprocess-invoice-btn" class="vendor-btn quantum-secondary whitespace-nowrap text-xs px-3 py-2">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Re-process
+                    </button>
+                </div>
+                <div id="reprocess-status-message" class="hidden mt-3 p-3 rounded-lg text-sm"></div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
