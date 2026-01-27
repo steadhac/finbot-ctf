@@ -3,6 +3,7 @@
 from finbot.tools.data import (
     get_invoice_details,
     get_vendor_details,
+    update_invoice_agent_notes,
     update_invoice_status,
     update_vendor_agent_notes,
     update_vendor_status,
@@ -16,4 +17,5 @@ __all__ = [
     "update_vendor_status",
     "update_vendor_agent_notes",
     "calculate_tax",
+    "update_invoice_agent_notes",
 ]
