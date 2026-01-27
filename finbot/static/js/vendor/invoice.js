@@ -8,7 +8,9 @@ const InvoiceState = {
     isLoading: false,
     currentFilter: 'all',
     editingInvoiceId: null,
-    isModalOpen: false
+    isModalOpen: false,
+    isSidecarOpen: false,
+    currentInvoice: null
 };
 
 // Initialize invoices when DOM is loaded
@@ -25,6 +27,7 @@ async function initializeInvoices() {
     try {
         // Initialize UI components
         initializeInvoiceModal();
+        initializeInvoiceSidecar();
         initializeCreateButtons();
 
         // Load invoices data
@@ -442,15 +445,251 @@ function escapeHtml(text) {
 }
 
 /**
- * View invoice details
+ * Initialize invoice sidecar
+ */
+function initializeInvoiceSidecar() {
+    const sidecar = document.getElementById('invoice-sidecar');
+    const backdrop = document.getElementById('invoice-sidecar-backdrop');
+    const closeBtn = document.getElementById('close-sidecar-btn');
+    const editBtn = document.getElementById('sidecar-edit-btn');
+
+    if (!sidecar) {
+        console.warn('Invoice sidecar elements not found');
+        return;
+    }
+
+    // Close sidecar handlers
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeInvoiceSidecar);
+    }
+
+    if (backdrop) {
+        backdrop.addEventListener('click', closeInvoiceSidecar);
+    }
+
+    // Edit button handler
+    if (editBtn) {
+        editBtn.addEventListener('click', () => {
+            if (InvoiceState.currentInvoice) {
+                closeInvoiceSidecar();
+                setTimeout(() => {
+                    openInvoiceModal(InvoiceState.currentInvoice);
+                }, 300);
+            }
+        });
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && InvoiceState.isSidecarOpen) {
+            closeInvoiceSidecar();
+        }
+    });
+}
+
+/**
+ * Open invoice sidecar with invoice details
+ */
+function openInvoiceSidecar(invoice) {
+    const sidecar = document.getElementById('invoice-sidecar');
+    const backdrop = document.getElementById('invoice-sidecar-backdrop');
+
+    if (!sidecar || !invoice) return;
+
+    // Store current invoice
+    InvoiceState.currentInvoice = invoice;
+    InvoiceState.isSidecarOpen = true;
+
+    // Populate sidecar content
+    populateSidecarContent(invoice);
+
+    // Show backdrop and sidecar with animation
+    backdrop.classList.remove('hidden');
+    requestAnimationFrame(() => {
+        backdrop.classList.add('open');
+        sidecar.classList.add('open');
+    });
+}
+
+/**
+ * Close invoice sidecar
+ */
+function closeInvoiceSidecar() {
+    const sidecar = document.getElementById('invoice-sidecar');
+    const backdrop = document.getElementById('invoice-sidecar-backdrop');
+
+    if (!sidecar) return;
+
+    InvoiceState.isSidecarOpen = false;
+
+    // Animate out
+    sidecar.classList.remove('open');
+    backdrop.classList.remove('open');
+
+    // Hide after animation
+    setTimeout(() => {
+        backdrop.classList.add('hidden');
+        InvoiceState.currentInvoice = null;
+    }, 300);
+}
+
+/**
+ * Populate sidecar content with invoice data
+ */
+function populateSidecarContent(invoice) {
+    // Invoice number
+    const invoiceNumberEl = document.getElementById('sidecar-invoice-number');
+    if (invoiceNumberEl) {
+        invoiceNumberEl.textContent = invoice.invoice_number || 'N/A';
+    }
+
+    // Status
+    const statusEl = document.getElementById('sidecar-status');
+    if (statusEl) {
+        const status = getStatusConfig(invoice.status);
+        statusEl.className = `status-indicator ${status.class}`;
+        statusEl.textContent = status.label;
+    }
+
+    // Amount
+    const amountEl = document.getElementById('sidecar-amount');
+    if (amountEl) {
+        amountEl.textContent = formatCurrency(invoice.amount);
+    }
+
+    // Invoice date
+    const invoiceDateEl = document.getElementById('sidecar-invoice-date');
+    if (invoiceDateEl) {
+        invoiceDateEl.textContent = formatDateLong(invoice.invoice_date);
+    }
+
+    // Due date
+    const dueDateEl = document.getElementById('sidecar-due-date');
+    if (dueDateEl) {
+        const isOverdue = new Date(invoice.due_date) < new Date() && invoice.status !== 'paid';
+        dueDateEl.textContent = formatDateLong(invoice.due_date);
+        dueDateEl.className = `text-sm font-medium ${isOverdue ? 'text-vendor-danger' : 'text-text-bright'}`;
+    }
+
+    // Description
+    const descriptionEl = document.getElementById('sidecar-description');
+    if (descriptionEl) {
+        descriptionEl.textContent = invoice.description || 'No description provided.';
+    }
+
+    // Agent notes
+    renderAgentNotes(invoice.agent_notes);
+
+    // Created at
+    const createdAtEl = document.getElementById('sidecar-created-at');
+    if (createdAtEl) {
+        createdAtEl.textContent = formatDateTimeLong(invoice.created_at);
+    }
+
+    // Updated at
+    const updatedAtEl = document.getElementById('sidecar-updated-at');
+    if (updatedAtEl) {
+        updatedAtEl.textContent = formatDateTimeLong(invoice.updated_at);
+    }
+}
+
+/**
+ * Render agent notes with visual separation for each review iteration
+ */
+function renderAgentNotes(agentNotes) {
+    const container = document.getElementById('sidecar-agent-notes');
+    if (!container) return;
+
+    if (!agentNotes || agentNotes.trim() === '') {
+        container.innerHTML = '<span class="text-text-secondary italic">No processing notes available.</span>';
+        return;
+    }
+
+    // Split notes by double newline (each review iteration)
+    const noteEntries = agentNotes.split(/\n\n+/).filter(entry => entry.trim());
+
+    if (noteEntries.length === 0) {
+        container.innerHTML = '<span class="text-text-secondary italic">No processing notes available.</span>';
+        return;
+    }
+
+    if (noteEntries.length === 1) {
+        // Single entry - render simply
+        container.innerHTML = `<p class="text-text-bright">${escapeHtml(noteEntries[0]).replace(/\n/g, '<br>')}</p>`;
+        return;
+    }
+
+    // Multiple entries - reverse to show latest first (notes are appended in DB)
+    const reversedEntries = [...noteEntries].reverse();
+    const entriesHtml = reversedEntries.map((entry, index) => {
+        const isLatest = index === 0;
+        const entryNumber = reversedEntries.length - index;
+
+        return `
+            <div class="agent-note-entry ${isLatest ? 'latest' : ''}">
+                <div class="flex items-center space-x-2 mb-1">
+                    <span class="text-xs font-medium ${isLatest ? 'text-vendor-accent' : 'text-text-secondary'}">
+                        ${isLatest ? 'Latest' : `Entry #${entryNumber}`}
+                    </span>
+                </div>
+                <p class="text-sm text-text-bright leading-relaxed">${escapeHtml(entry).replace(/\n/g, '<br>')}</p>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = `<div class="space-y-2">${entriesHtml}</div>`;
+}
+
+/**
+ * Format date for long display (e.g., "January 27, 2026")
+ */
+function formatDateLong(dateString) {
+    if (!dateString) return 'N/A';
+
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return 'Invalid Date';
+    }
+}
+
+/**
+ * Format datetime for long display (e.g., "Jan 27, 2026 at 3:45 PM")
+ */
+function formatDateTimeLong(dateString) {
+    if (!dateString) return 'N/A';
+
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    } catch (error) {
+        console.error('Error formatting datetime:', error);
+        return 'Invalid Date';
+    }
+}
+
+/**
+ * View invoice details in sidecar
  */
 async function viewInvoice(invoiceId) {
     try {
         const response = await api.get(`/vendor/api/v1/invoices/${invoiceId}`);
         const invoice = response.data.invoice;
 
-        // For now, open in edit modal (read-only view can be added later)
-        openInvoiceModal(invoice);
+        openInvoiceSidecar(invoice);
     } catch (error) {
         console.error('Error loading invoice:', error);
         showNotification('Failed to load invoice details', 'error');

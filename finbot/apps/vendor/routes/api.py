@@ -470,7 +470,9 @@ async def get_invoice(
             "description": invoice.description,
             "invoice_date": invoice.invoice_date.isoformat() if invoice.invoice_date else None,
             "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
-            "created_at": invoice.created_at.isoformat(),
+            "agent_notes": invoice.agent_notes,
+            "created_at": invoice.created_at.isoformat() if invoice.created_at else None,
+            "updated_at": invoice.updated_at.isoformat() if invoice.updated_at else None,
         }
     }
 
