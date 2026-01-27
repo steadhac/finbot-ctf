@@ -1,6 +1,7 @@
 """Vendor Portal API Routes"""
 
 import secrets
+from datetime import datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
@@ -65,8 +66,8 @@ class InvoiceCreateRequest(BaseModel):
     invoice_number: str
     amount: float
     description: str
-    due_date: str | None = None
-    status: str = "pending"
+    invoice_date: str  # ISO date string YYYY-MM-DD
+    due_date: str  # ISO date string YYYY-MM-DD
 
 
 @router.post("/vendors/register")
@@ -422,7 +423,12 @@ async def create_invoice(
     invoice_repo = InvoiceRepository(db, session_context)
 
     try:
-        invoice = invoice_repo.create_invoice_for_current_vendor(**invoice_data.dict())
+        # Parse date strings to datetime objects
+        invoice_dict = invoice_data.model_dump()
+        invoice_dict["invoice_date"] = datetime.fromisoformat(invoice_data.invoice_date)
+        invoice_dict["due_date"] = datetime.fromisoformat(invoice_data.due_date)
+
+        invoice = invoice_repo.create_invoice_for_current_vendor(**invoice_dict)
 
         return {
             "success": True,
@@ -462,7 +468,71 @@ async def get_invoice(
             "amount": float(invoice.amount),
             "status": invoice.status,
             "description": invoice.description,
+            "invoice_date": invoice.invoice_date.isoformat() if invoice.invoice_date else None,
             "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
             "created_at": invoice.created_at.isoformat(),
+        }
+    }
+
+
+class InvoiceUpdateRequest(BaseModel):
+    """Invoice update request - status not editable by vendors"""
+
+    invoice_number: str | None = None
+    amount: float | None = None
+    description: str | None = None
+    invoice_date: str | None = None
+    due_date: str | None = None
+
+
+@router.put("/invoices/{invoice_id}")
+async def update_invoice(
+    invoice_id: int,
+    invoice_data: InvoiceUpdateRequest,
+    session_context: SessionContext = Depends(get_session_context),
+):
+    """Update specific invoice"""
+    db = next(get_db())
+    invoice_repo = InvoiceRepository(db, session_context)
+
+    # First get the invoice to verify ownership
+    invoice = invoice_repo.get_invoice(invoice_id)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    # Verify invoice belongs to current vendor
+    if invoice.vendor_id != session_context.current_vendor_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    # Build update dict from non-None values (status not editable by vendors)
+    updates = {}
+    if invoice_data.invoice_number is not None:
+        updates["invoice_number"] = invoice_data.invoice_number
+    if invoice_data.amount is not None:
+        updates["amount"] = invoice_data.amount
+    if invoice_data.description is not None:
+        updates["description"] = invoice_data.description
+    if invoice_data.invoice_date is not None:
+        updates["invoice_date"] = datetime.fromisoformat(invoice_data.invoice_date)
+    if invoice_data.due_date is not None:
+        updates["due_date"] = datetime.fromisoformat(invoice_data.due_date)
+
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    # Update the invoice
+    updated_invoice = invoice_repo.update_invoice(invoice_id, **updates)
+
+    return {
+        "success": True,
+        "message": "Invoice updated successfully",
+        "invoice": {
+            "id": updated_invoice.id,
+            "invoice_number": updated_invoice.invoice_number,
+            "amount": float(updated_invoice.amount),
+            "status": updated_invoice.status,
+            "description": updated_invoice.description,
+            "invoice_date": updated_invoice.invoice_date.isoformat() if updated_invoice.invoice_date else None,
+            "due_date": updated_invoice.due_date.isoformat() if updated_invoice.due_date else None,
         }
     }
