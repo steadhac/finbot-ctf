@@ -6,7 +6,7 @@ from datetime import datetime
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
 
-from finbot.agents.runner import run_onboarding_agent
+from finbot.agents.runner import run_invoice_agent, run_onboarding_agent
 from finbot.core.auth.middleware import get_session_context
 from finbot.core.auth.session import SessionContext
 from finbot.core.data.database import get_db
@@ -416,6 +416,7 @@ async def get_invoices(
 @router.post("/invoices")
 async def create_invoice(
     invoice_data: InvoiceCreateRequest,
+    background_tasks: BackgroundTasks,
     session_context: SessionContext = Depends(get_session_context),
 ):
     """Create invoice for current vendor"""
@@ -429,6 +430,36 @@ async def create_invoice(
         invoice_dict["due_date"] = datetime.fromisoformat(invoice_data.due_date)
 
         invoice = invoice_repo.create_invoice_for_current_vendor(**invoice_dict)
+
+        # Run the invoice processing agent
+        workflow_id = f"wf_{secrets.token_urlsafe(12)}"
+
+        # queue background task to run the process invoice
+        background_tasks.add_task(
+            run_invoice_agent,
+            task_data={
+                "invoice_id": invoice.id,
+                "description": "Please process a new invoice for this vendor with provided invoice_id",
+            },
+            session_context=session_context,
+            workflow_id=workflow_id,
+        )
+
+        await event_bus.emit_business_event(
+            event_type="invoice.created",
+            event_data={
+                "invoice_id": invoice.id,
+                "invoice_number": invoice.invoice_number,
+                "amount": float(invoice.amount),
+                "description": invoice.description,
+                "invoice_date": invoice.invoice_date.isoformat()
+                if invoice.invoice_date
+                else None,
+                "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
+            },
+            session_context=session_context,
+            workflow_id=workflow_id,
+        )
 
         return {
             "success": True,
@@ -468,11 +499,17 @@ async def get_invoice(
             "amount": float(invoice.amount),
             "status": invoice.status,
             "description": invoice.description,
-            "invoice_date": invoice.invoice_date.isoformat() if invoice.invoice_date else None,
+            "invoice_date": invoice.invoice_date.isoformat()
+            if invoice.invoice_date
+            else None,
             "due_date": invoice.due_date.isoformat() if invoice.due_date else None,
             "agent_notes": invoice.agent_notes,
-            "created_at": invoice.created_at.isoformat() if invoice.created_at else None,
-            "updated_at": invoice.updated_at.isoformat() if invoice.updated_at else None,
+            "created_at": invoice.created_at.isoformat()
+            if invoice.created_at
+            else None,
+            "updated_at": invoice.updated_at.isoformat()
+            if invoice.updated_at
+            else None,
         }
     }
 
@@ -534,7 +571,11 @@ async def update_invoice(
             "amount": float(updated_invoice.amount),
             "status": updated_invoice.status,
             "description": updated_invoice.description,
-            "invoice_date": updated_invoice.invoice_date.isoformat() if updated_invoice.invoice_date else None,
-            "due_date": updated_invoice.due_date.isoformat() if updated_invoice.due_date else None,
-        }
+            "invoice_date": updated_invoice.invoice_date.isoformat()
+            if updated_invoice.invoice_date
+            else None,
+            "due_date": updated_invoice.due_date.isoformat()
+            if updated_invoice.due_date
+            else None,
+        },
     }
