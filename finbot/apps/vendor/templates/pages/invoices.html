@@ -33,48 +33,44 @@
 {% block content %}
 <!-- Invoice Stats -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    <div class="neural-metric">
+    <div class="neural-metric" data-no-animate>
         <div class="metric-icon">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
         </div>
-        <div class="metric-value">12</div>
-        <div class="metric-label">Total Invoices</div>
-        <div class="metric-change positive">+3 this month</div>
+        <div id="stat-total-count" class="metric-value">0</div>
+        <div class="metric-label">Total</div>
     </div>
 
-    <div class="neural-metric">
+    <div class="neural-metric" data-no-animate>
         <div class="metric-icon">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
             </svg>
         </div>
-        <div class="metric-value">$24,580</div>
-        <div class="metric-label">Total Amount</div>
-        <div class="metric-change positive">+$5,200</div>
+        <div id="stat-total-amount" class="metric-value">$0</div>
+        <div class="metric-label">Total Value</div>
     </div>
 
-    <div class="neural-metric">
+    <div class="neural-metric" data-no-animate>
         <div class="metric-icon">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
             </svg>
         </div>
-        <div class="metric-value">8</div>
+        <div id="stat-paid-rate" class="metric-value">0%</div>
         <div class="metric-label">Paid</div>
-        <div class="metric-change positive">67% rate</div>
     </div>
 
-    <div class="neural-metric">
+    <div class="neural-metric" data-no-animate>
         <div class="metric-icon">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
         </div>
-        <div class="metric-value">4</div>
-        <div class="metric-label">Pending</div>
-        <div class="metric-change negative">2 overdue</div>
+        <div id="stat-overdue-count" class="metric-value">0</div>
+        <div class="metric-label">Overdue</div>
     </div>
 </div>
 
@@ -200,7 +196,7 @@
             <form id="invoice-form" class="space-y-6">
                 <!-- CSRF Token -->
                 {{ csrf_token_field | safe }}
-                
+
                 <!-- Hidden field for edit mode -->
                 <input type="hidden" id="invoice-id" name="invoice_id" value="">
 
@@ -209,7 +205,7 @@
                     <h4 class="text-lg font-semibold text-vendor-primary border-b border-vendor-primary/30 pb-2">
                         Invoice Details
                     </h4>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="vendor-form-group">
                             <label for="invoice-number" class="vendor-label">Invoice Number <span class="text-vendor-danger">*</span></label>

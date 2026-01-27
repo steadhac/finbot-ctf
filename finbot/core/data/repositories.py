@@ -272,13 +272,28 @@ class InvoiceRepository(NamespacedRepository):
             or 0
         )
 
+        # Count overdue invoices (due date passed, not paid)
+        now = datetime.now(UTC)
+        overdue_query = self._add_namespace_filter(self.db.query(Invoice), Invoice)
+        overdue_query = overdue_query.filter(
+            Invoice.vendor_id == self.current_vendor_id
+        )
+        overdue_count = (
+            overdue_query.filter(Invoice.status != "paid")
+            .filter(Invoice.due_date < now)
+            .count()
+        )
+
+        pending_count = total_count - paid_count
+
         return {
             "total_count": total_count,
             "total_amount": float(total_amount),
             "paid_count": paid_count,
             "paid_amount": float(paid_amount),
-            "pending_count": total_count - paid_count,
+            "pending_count": pending_count,
             "pending_amount": float(total_amount) - float(paid_amount),
+            "overdue_count": overdue_count,
         }
 
     # Admin Portal Methods (cross-vendor within namespace)

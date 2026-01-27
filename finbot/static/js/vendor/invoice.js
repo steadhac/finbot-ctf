@@ -30,14 +30,68 @@ async function initializeInvoices() {
         initializeInvoiceSidecar();
         initializeCreateButtons();
 
-        // Load invoices data
-        await loadInvoices();
+        // Load invoices and stats in parallel
+        await Promise.all([
+            loadInvoices(),
+            loadInvoiceStats()
+        ]);
 
         console.log('✅ Invoices initialized successfully');
 
     } catch (error) {
         console.error('❌ Invoice initialization failed:', error);
         showNotification('Failed to load invoices', 'error');
+    }
+}
+
+/**
+ * Load invoice stats from API
+ */
+async function loadInvoiceStats() {
+    try {
+        const response = await api.get('/vendor/api/v1/dashboard/metrics');
+
+        // Handle both response.data and direct response structures
+        const data = response.data || response;
+        const stats = data.metrics?.invoices;
+        const completionRate = data.metrics?.completion_rate;
+
+        if (stats) {
+            updateInvoiceStats(stats, completionRate);
+        }
+    } catch (error) {
+        console.error('Error loading invoice stats:', error);
+    }
+}
+
+/**
+ * Update invoice stats UI
+ */
+function updateInvoiceStats(stats, completionRate) {
+    // Total count
+    const totalCountEl = document.getElementById('stat-total-count');
+    if (totalCountEl) {
+        totalCountEl.textContent = stats.total_count ?? 0;
+    }
+
+    // Total amount
+    const totalAmountEl = document.getElementById('stat-total-amount');
+    if (totalAmountEl) {
+        const amount = parseFloat(stats.total_amount) || 0;
+        totalAmountEl.textContent = formatCurrency(amount);
+    }
+
+    // Paid rate (percentage)
+    const paidRateEl = document.getElementById('stat-paid-rate');
+    if (paidRateEl) {
+        const rate = parseFloat(completionRate) || 0;
+        paidRateEl.textContent = `${Math.round(rate)}%`;
+    }
+
+    // Overdue count
+    const overdueCountEl = document.getElementById('stat-overdue-count');
+    if (overdueCountEl) {
+        overdueCountEl.textContent = stats.overdue_count ?? 0;
     }
 }
 
@@ -235,8 +289,11 @@ async function handleInvoiceSubmit(e) {
         // Close modal
         closeInvoiceModal();
 
-        // Reload invoices
-        await loadInvoices();
+        // Reload invoices and stats
+        await Promise.all([
+            loadInvoices(),
+            loadInvoiceStats()
+        ]);
 
     } catch (error) {
         console.error('Error saving invoice:', error);
