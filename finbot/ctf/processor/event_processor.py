@@ -3,6 +3,7 @@ Background task that processes events from Redis streams, detects
 challenge completions and awards badges.
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -18,7 +19,13 @@ from sqlalchemy.orm import Session
 
 from finbot.config import settings
 from finbot.core.data.database import SessionLocal
-from finbot.core.data.models import CTFEvent
+from finbot.core.data.models import Badge, Challenge, CTFEvent
+from finbot.core.websocket import (
+    create_activity_event,
+    create_badge_earned_event,
+    create_challenge_completed_event,
+    get_ws_manager,
+)
 from finbot.ctf.processor.badge_service import BadgeService
 from finbot.ctf.processor.challenge_service import ChallengeService
 
@@ -199,6 +206,12 @@ class CTFEventProcessor:
         # Check for badge awards
         awarded_badges = self.badge_service.check_event_for_badges(event, db)
 
+        # Push notification to WebSocket clients
+        # (TODO): take care of the blocking nature of the function
+        asyncio.create_task(
+            self._push_to_websocket(event, completed_challenges, awarded_badges, db)
+        )
+
         if completed_challenges:
             logger.info(
                 "Challenges completed: %s", [c[0] for c in completed_challenges]
@@ -266,6 +279,39 @@ class CTFEventProcessor:
 
         db.execute(stmt)
         db.commit()
+
+    async def _push_to_websocket(
+        self, event: dict, completed_challenges: list, awarded_badges: list, db: Session
+    ):
+        """Push updates to WebSocket clients"""
+        ws_manager = get_ws_manager()
+        namespace = event.get("namespace")
+        user_id = event.get("user_id")
+
+        if not namespace or not user_id:
+            return
+
+        # Push activity event
+        activity_event = create_activity_event(event)
+        await ws_manager.broadcast_activity(namespace, user_id, activity_event)
+
+        # Push challenge completions
+        for challenge_id, _ in completed_challenges:
+            challenge = db.query(Challenge).get(challenge_id)
+            if challenge:
+                ws_event = create_challenge_completed_event(
+                    challenge_id, challenge.title, challenge.points
+                )
+                await ws_manager.send_to_user(namespace, user_id, ws_event)
+
+        # Push badge awards
+        for badge_id, _ in awarded_badges:
+            badge = db.query(Badge).get(badge_id)
+            if badge:
+                ws_event = create_badge_earned_event(
+                    badge_id, badge.title, badge.rarity
+                )
+                await ws_manager.send_to_user(namespace, user_id, ws_event)
 
     def reload_definitions(self):
         """Reload detector and evaluator caches"""
