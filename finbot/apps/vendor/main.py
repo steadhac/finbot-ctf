@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from finbot.config import settings
 
-from .routes import api_router, web_router
+from .routes import api_router, ctf_router, web_router
 
 # Create Vendor Portal App
 app = FastAPI(
@@ -17,3 +17,4 @@ app = FastAPI(
 # Include routers
 app.include_router(web_router)
 app.include_router(api_router)
+app.include_router(ctf_router)
