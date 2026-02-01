@@ -10,13 +10,14 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from finbot.apps.ctf import ctf_app as ctf_app
+from finbot.apps.ctf import ctf_app
 from finbot.apps.vendor.main import app as vendor_app
 from finbot.apps.web.routes import router as web_router
 from finbot.core.auth.csrf import CSRFProtectionMiddleware
 from finbot.core.auth.middleware import SessionMiddleware, get_session_context
 from finbot.core.auth.session import SessionContext, session_manager
 from finbot.core.error_handlers import register_error_handlers
+from finbot.core.websocket import websocket_router
 from finbot.logging_config import setup_logging
 
 setup_logging()
@@ -49,6 +50,7 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 # Mount all the applications for the platform
 app.mount("/vendor", vendor_app)
 app.mount("/ctf", ctf_app)
+app.include_router(websocket_router)
 # Web application is mounted at the root of the platform
 app.include_router(web_router)
 
