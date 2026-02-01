@@ -8,7 +8,6 @@ import json
 import logging
 import os
 import socket
-import time
 from datetime import UTC, datetime
 from typing import Any
 
@@ -69,37 +68,40 @@ class CTFEventProcessor:
         self.badge_service = BadgeService()
         self._running = False
 
-    def start_sync(self):
-        """Start the event processor in synchronous mode
-        - This is a blocking operation - either run in a thread, daemon or use start_async()
-        """
+    async def start_async(self):
+        """Start the event processor as an async task"""
         if self.redis is None:
             logger.warning("Redis client not configured, CTF processor disabled")
             return
         logger.info("Starting CTF event processor (consumer: %s)", self.consumer_name)
-        self._ensure_consumer_groups()
+        await self._ensure_consumer_groups()
         self._running = True
         while self._running:
             try:
-                self._process_batch()
+                await self._process_batch()
+            except asyncio.CancelledError:
+                logger.info("CTF processor task cancelled")
+                break
             except Exception as e:  # pylint: disable=broad-exception-caught
                 logger.error("Error in CTF processor loop: %s", e)
-                time.sleep(5)  # Back off on error
+                await asyncio.sleep(5)  # Back off on error
 
     def stop(self):
         """Stop the processor"""
         self._running = False
         logger.info("CTF event processor stopped")
 
-    def _ensure_consumer_groups(self):
+    async def _ensure_consumer_groups(self):
         """Create consumer groups if they don't exist"""
+        import time  # pylint: disable=import-outside-toplevel
+
         lookback_ms = int(time.time() * 1000) - (
             self.default_lookback_hours * 3600 * 1000
         )
         start_id = f"{lookback_ms}-0"
         for stream in self.STREAMS:
             try:
-                self.redis.xgroup_create(
+                await self.redis.xgroup_create(
                     stream, self.CONSUMER_GROUP, id=start_id, mkstream=True
                 )
                 logger.info(
@@ -118,12 +120,12 @@ class CTFEventProcessor:
                 else:
                     raise
 
-    def _process_batch(self):
+    async def _process_batch(self):
         """Process a batch of events from Redis streams"""
         # Read from all streams
         streams_dict = {stream: ">" for stream in self.STREAMS}
         try:
-            results = self.redis.xreadgroup(
+            results = await self.redis.xreadgroup(
                 self.CONSUMER_GROUP,
                 self.consumer_name,
                 streams_dict,
@@ -145,9 +147,9 @@ class CTFEventProcessor:
                     try:
                         event = self._decode_event(data)
                         if event:
-                            self._process_single_event(event, db, stream)
+                            await self._process_single_event(event, db, stream)
                         # ack the message
-                        self.redis.xack(stream, self.CONSUMER_GROUP, message_id)
+                        await self.redis.xack(stream, self.CONSUMER_GROUP, message_id)
                         processed_ids.append((stream, message_id))
                     except Exception as e:  # pylint: disable=broad-exception-caught
                         logger.error("Error processing messages %s: %s", message_id, e)
@@ -156,7 +158,7 @@ class CTFEventProcessor:
             # Batch delete processed messages
             for stream, msg_id in processed_ids:
                 try:
-                    self.redis.xdel(stream, msg_id)
+                    await self.redis.xdel(stream, msg_id)
                 except Exception as e:  # pylint: disable=broad-exception-caught
                     logger.warning("Failed to delete message %s: %s", msg_id, e)
         finally:
@@ -185,7 +187,9 @@ class CTFEventProcessor:
             logger.error("Failed to decode event: %s", e)
             return None
 
-    def _process_single_event(self, event: dict[str, Any], db: Session, stream: str):
+    async def _process_single_event(
+        self, event: dict[str, Any], db: Session, stream: str
+    ):
         """Process a single event"""
         # Determine event category from stream
         if "agents" in stream:
@@ -207,10 +211,7 @@ class CTFEventProcessor:
         awarded_badges = self.badge_service.check_event_for_badges(event, db)
 
         # Push notification to WebSocket clients
-        # (TODO): take care of the blocking nature of the function
-        asyncio.create_task(
-            self._push_to_websocket(event, completed_challenges, awarded_badges, db)
-        )
+        await self._push_to_websocket(event, completed_challenges, awarded_badges, db)
 
         if completed_challenges:
             logger.info(
@@ -339,12 +340,9 @@ def get_processor() -> CTFEventProcessor:
     return _processor
 
 
-def start_processor_thread():
-    """Start processor in background thread"""
-    import threading  # pylint: disable=import-outside-toplevel
-
+def start_processor_task() -> asyncio.Task:
+    """Start processor as an asyncio background task"""
     processor = get_processor()
-    thread = threading.Thread(target=processor.start_sync, daemon=True)
-    thread.start()
-    logger.info("CTF processor thread started")
-    return thread
+    task = asyncio.create_task(processor.start_async())
+    logger.info("CTF processor task started")
+    return task
