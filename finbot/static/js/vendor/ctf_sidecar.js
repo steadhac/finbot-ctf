@@ -277,7 +277,7 @@ class CTFSidecar {
         const userId = window.CTF_USER_ID || 'anonymous';
         
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${wsProtocol}//${window.location.host}/ws?namespace=${namespace}&user_id=${userId}`;
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/connect?namespace=${namespace}&user_id=${userId}`;
         
         try {
             this.ws = new WebSocket(wsUrl);
@@ -286,9 +286,9 @@ class CTFSidecar {
                 console.log('CTF Sidecar: WebSocket connected');
                 this.updateWsStatus('Connected', true);
                 
-                // Subscribe to activity topic
+                // Subscribe to activity topic (server auto-subscribes, but explicit is fine)
                 this.ws.send(JSON.stringify({
-                    type: 'subscribe',
+                    action: 'subscribe',
                     topic: `activity:${namespace}:${userId}`
                 }));
             };
@@ -347,6 +347,18 @@ class CTFSidecar {
         if (!data.type) return;
         
         switch (data.type) {
+            case 'connected':
+                console.log('CTF Sidecar: Server confirmed connection', data.data);
+                break;
+            case 'subscribed':
+                console.log('CTF Sidecar: Subscribed to', data.data?.topic);
+                break;
+            case 'pong':
+                // Heartbeat response
+                break;
+            case 'error':
+                console.warn('CTF Sidecar: Server error', data.data?.message);
+                break;
             case 'activity':
                 this.prependActivity(data.data);
                 break;
@@ -358,6 +370,8 @@ class CTFSidecar {
                 this.showNotification('🎖️ Badge Earned!', data.data.title);
                 this.loadData(); // Refresh data
                 break;
+            default:
+                console.log('CTF Sidecar: Unknown message type', data.type);
         }
     }
     

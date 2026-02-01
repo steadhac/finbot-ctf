@@ -12,7 +12,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ws", tags=["websocket"])
 
 
-@router.websocket("/")
+@router.get("/health")
+async def ws_health():
+    """Health check for websocket router"""
+    return {"status": "ok", "router": "websocket"}
+
+
+@router.websocket("/connect")
 async def websocket_endpoint(
     websocket: WebSocket,
     namespace: str = Query(...),

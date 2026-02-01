@@ -41,6 +41,10 @@ class CSRFProtectionMiddleware(BaseHTTPMiddleware):
         if not self.enabled:
             return await call_next(request)
 
+        # Skip WebSocket upgrade requests
+        if request.headers.get("upgrade", "").lower() == "websocket":
+            return await call_next(request)
+
         # Skip for safe methods (GET, HEAD, OPTIONS)
         if request.method not in self.PROTECTED_METHODS:
             return await call_next(request)
