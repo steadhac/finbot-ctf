@@ -96,7 +96,7 @@ class CTFSidecar {
         this.showLoading(true);
         
         try {
-            const response = await fetch('/vendor/api/v1/ctf/sidecar');
+            const response = await fetch('/ctf/api/v1/sidecar');
             if (!response.ok) throw new Error('Failed to load CTF data');
             
             const data = await response.json();
