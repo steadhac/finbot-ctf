@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from finbot.apps.ctf import ctf_app
 from finbot.apps.vendor.main import app as vendor_app
+from finbot.apps.web.auth import router as auth_router
 from finbot.apps.web.routes import router as web_router
 from finbot.core.auth.csrf import CSRFProtectionMiddleware
 from finbot.core.auth.middleware import SessionMiddleware, get_session_context
@@ -113,6 +114,8 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 app.mount("/vendor", vendor_app)
 app.mount("/ctf", ctf_app)
 app.include_router(websocket_router)
+# Auth routes for magic link sign-in
+app.include_router(auth_router)
 # Web application is mounted at the root of the platform
 app.include_router(web_router)
 

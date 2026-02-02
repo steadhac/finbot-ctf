@@ -149,6 +149,47 @@ class UserActivity(Base):
     )
 
 
+class MagicLinkToken(Base):
+    """Magic Link Token for password-less authentication"""
+
+    __tablename__ = "magic_link_tokens"
+
+    id = Column[int](Integer, primary_key=True)
+    token = Column[str](String(64), unique=True, nullable=False, index=True)
+    email = Column[str](String(255), nullable=False, index=True)
+    session_id = Column[str](String(64), nullable=True)  # Temp session to upgrade
+
+    created_at = Column[datetime](DateTime, default=datetime.now(UTC))
+    expires_at = Column[datetime](DateTime, nullable=False)
+    used_at = Column[datetime](DateTime, nullable=True)
+    ip_address = Column[str](String(45), nullable=True)
+
+    __table_args__ = (
+        Index("idx_magic_link_token", "token"),
+        Index("idx_magic_link_email", "email"),
+        Index("idx_magic_link_expires", "expires_at"),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<MagicLinkToken(email='{self.email}', used={self.used_at is not None})>"
+        )
+
+    def is_expired(self) -> bool:
+        """Check if token is expired"""
+        now = datetime.now(UTC)
+        expires_at = (
+            self.expires_at
+            if self.expires_at.tzinfo
+            else self.expires_at.replace(tzinfo=UTC)
+        )
+        return now > expires_at
+
+    def is_valid(self) -> bool:
+        """Check if token is valid (not expired and not used)"""
+        return not self.is_expired() and self.used_at is None
+
+
 # Vendor Portal
 class Vendor(Base):
     """Vendor Model"""
