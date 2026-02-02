@@ -57,6 +57,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', path='css/common/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/vendor/portal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/vendor/ctf_sidecar.css') }}">
 </head>
 <body>
     <!-- Skip to main content for accessibility -->
@@ -267,12 +268,22 @@
     <!-- CTF Footer -->
     {% include 'components/ctf_footer.html' %}
 
+    <!-- CTF Sidecar Panel -->
+    {% include 'components/ctf_sidecar.html' %}
+
+    <!-- CTF Context -->
+    <script>
+        window.CTF_NAMESPACE = "{{ session_context.namespace if session_context else 'default' }}";
+        window.CTF_USER_ID = "{{ session_context.user_id if session_context else 'anonymous' }}";
+    </script>
+
     <!-- JavaScript -->
     <script src="{{ url_for('static', path='js/common/agreement-check.js') }}"></script>
     <script src="{{ url_for('static', path='js/common/utils.js') }}"></script>
     <script src="{{ url_for('static', path='js/common/api.js') }}"></script>
     <script src="{{ url_for('static', path='js/vendor/main.js') }}"></script>
     <script src="{{ url_for('static', path='js/vendor/onboarding.js') }}"></script>
+    <script src="{{ url_for('static', path='js/vendor/ctf_sidecar.js') }}"></script>
 
 </body>
 </html>
