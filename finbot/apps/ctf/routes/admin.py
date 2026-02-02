@@ -1,4 +1,6 @@
-"""Admin API Routes"""
+"""Admin API Routes
+TODO: Protect these routes
+"""
 
 import logging
 

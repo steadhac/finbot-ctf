@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import socket
+import time
 from datetime import UTC, datetime
 from typing import Any
 
@@ -93,8 +94,6 @@ class CTFEventProcessor:
 
     async def _ensure_consumer_groups(self):
         """Create consumer groups if they don't exist"""
-        import time  # pylint: disable=import-outside-toplevel
-
         lookback_ms = int(time.time() * 1000) - (
             self.default_lookback_hours * 3600 * 1000
         )
