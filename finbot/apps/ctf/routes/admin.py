@@ -1,5 +1,7 @@
 """Admin API Routes
-TODO: Protect these routes
+TODO:
+- Protect these routes
+- Take care of CSRF protection (Super Admin portal should take care of this)
 """
 
 import logging
