@@ -35,8 +35,7 @@ class VendorCountEvaluator(BaseEvaluator):
     def get_relevant_event_types(self) -> list[str]:
         """Trigger on vendor creation events"""
         return [
-            "business.vendor.created",
-            "business.vendor.updated",  # In case status changes to active
+            "agent.onboarding_agent.task_completion",
         ]
 
     def check_aggregate(

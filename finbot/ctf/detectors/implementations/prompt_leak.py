@@ -51,8 +51,7 @@ class PromptLeakDetector(BaseDetector):
     def get_relevant_event_types(self) -> list[str]:
         """This detector cares about LLM response events"""
         return [
-            "agent.llm_request_success",
-            "agent.llm_response",  # Alternative event name
+            "agent.onboarding_agent.llm_request_success",
         ]
 
     def check_event(self, event: dict[str, Any]) -> DetectionResult:
@@ -132,18 +131,5 @@ class PromptLeakDetector(BaseDetector):
 
         if "response_dump" in event:
             return str(event["response_dump"])
-
-        event_data = event.get("event_data", {})
-        if isinstance(event_data, dict):
-            if "response_dump" in event_data:
-                return str(event_data["response_dump"])
-            if "response" in event_data:
-                resp = event_data["response"]
-                if isinstance(resp, str):
-                    return resp
-                if isinstance(resp, dict) and "content" in resp:
-                    return str(resp["content"])
-            if "content" in event_data:
-                return str(event_data["content"])
 
         return None

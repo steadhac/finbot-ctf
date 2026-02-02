@@ -92,7 +92,7 @@ class EventBus:
             "namespace": session_context.namespace,
             "user_id": session_context.user_id,
             "session_id": session_context.session_id,
-            "event_type": f"agent.{event_type}",
+            "event_type": f"agent.{agent_name}.{event_type}",
             "agent_name": agent_name,
             "workflow_id": workflow_id or "",
             "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
