@@ -1,5 +1,7 @@
 """CTF Sidecar Widget API - provides data for the vendor portal CTF widget"""
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -15,6 +17,14 @@ from finbot.core.data.repositories import (
 )
 
 router = APIRouter(prefix="/api/v1", tags=["sidecar"])
+
+
+def _format_utc_timestamp(dt: datetime | None) -> str | None:
+    """Format datetime as ISO string with Z suffix for UTC."""
+    if dt is None:
+        return None
+    # Append Z to indicate UTC (timestamps are stored as UTC)
+    return dt.isoformat() + "Z"
 
 
 @router.get("/sidecar")
@@ -53,26 +63,30 @@ async def get_sidecar_data(
     for ub in user_badges[:6]:  # Limit to 6 most recent
         badge = badge_repo.get_badge(ub.badge_id)
         if badge:
-            badges_data.append({
-                "id": badge.id,
-                "title": badge.title,
-                "icon": badge.icon,
-                "rarity": badge.rarity,
-                "earned_at": ub.earned_at.isoformat() if ub.earned_at else None,
-            })
+            badges_data.append(
+                {
+                    "id": badge.id,
+                    "title": badge.title,
+                    "icon_url": badge.icon_url,
+                    "rarity": badge.rarity,
+                    "earned_at": _format_utc_timestamp(ub.earned_at),
+                }
+            )
 
     # Get recent activity (last 10 events)
     recent_events = event_repo.get_events(limit=10)
     activity_data = []
     for event in recent_events:
-        activity_data.append({
-            "id": event.id,
-            "category": event.event_category,
-            "type": event.event_type,
-            "summary": event.summary or event.event_type,
-            "agent_name": event.agent_name,
-            "timestamp": event.timestamp.isoformat() if event.timestamp else None,
-        })
+        activity_data.append(
+            {
+                "id": event.id,
+                "category": event.event_category,
+                "type": event.event_type,
+                "summary": event.summary or event.event_type,
+                "agent_name": event.agent_name,
+                "timestamp": _format_utc_timestamp(event.timestamp),
+            }
+        )
 
     # Get in-progress challenges
     in_progress = [p for p in all_progress if p.status == "in_progress"]
@@ -80,20 +94,20 @@ async def get_sidecar_data(
     for prog in in_progress[:3]:  # Limit to 3
         challenge = challenge_repo.get_challenge(prog.challenge_id)
         if challenge:
-            active_challenges.append({
-                "id": challenge.id,
-                "title": challenge.title,
-                "category": challenge.category,
-                "difficulty": challenge.difficulty,
-                "points": challenge.points,
-                "attempts": prog.attempts,
-            })
+            active_challenges.append(
+                {
+                    "id": challenge.id,
+                    "title": challenge.title,
+                    "category": challenge.category,
+                    "difficulty": challenge.difficulty,
+                    "points": challenge.points,
+                    "attempts": prog.attempts,
+                }
+            )
 
     # Calculate completion percentage
     completion_pct = (
-        round((completed_count / total_challenges) * 100)
-        if total_challenges > 0
-        else 0
+        round((completed_count / total_challenges) * 100) if total_challenges > 0 else 0
     )
 
     return {
