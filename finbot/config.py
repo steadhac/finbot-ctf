@@ -97,13 +97,13 @@ class Settings(BaseSettings):
 
     # Agent Config
     AGENT_MAX_ITERATIONS: int = 10
-    
+
     # OpenAI Config
     OPENAI_API_KEY: str = ""
-    
+
     # Ollama
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    
+
     # Development Config
     RELOAD: bool = True
     LOG_LEVEL: str = "debug"
@@ -167,10 +167,11 @@ class Settings(BaseSettings):
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
-    
     def get_database_config(self) -> dict[str, Any]:
         """Get the database specific configuration"""
-        base_config: dict[str, Any] = {"echo": self.DB_ECHO or self.DEBUG}
+        # Only echo SQL if explicitly requested via DB_ECHO
+        # (DEBUG mode no longer auto-enables SQL echoing to reduce noise)
+        base_config: dict[str, Any] = {"echo": self.DB_ECHO}
         if self.DATABASE_TYPE == "sqlite":
             base_config.update(
                 {
