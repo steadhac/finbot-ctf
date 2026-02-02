@@ -76,7 +76,7 @@ class Settings(BaseSettings):
     SESSION_COOKIE_SAMESITE: str = "Lax"
 
     # Namespace Config
-    NAMESPACE_PREFIX: str = "user_"
+    NAMESPACE_PREFIX: str = "ns_"
     ENABLE_NAMESPACE_ISOLATION: bool = True
 
     # Redis Config
@@ -107,6 +107,16 @@ class Settings(BaseSettings):
     # Development Config
     RELOAD: bool = True
     LOG_LEVEL: str = "debug"
+
+    # Magic Link Config
+    MAGIC_LINK_EXPIRY_MINUTES: int = 15
+    MAGIC_LINK_BASE_URL: str = "http://localhost:8000"
+
+    # Email Config
+    EMAIL_PROVIDER: str = "console"  # "console" | "resend"
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM_ADDRESS: str = "noreply@owaspasifinbot.com"
+    EMAIL_FROM_NAME: str = "OWASP ASI FinBot CTF"
 
     model_config = ConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False

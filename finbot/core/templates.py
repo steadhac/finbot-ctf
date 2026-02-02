@@ -23,6 +23,8 @@ def add_session_context(request: Request, context: dict) -> dict:
     session_context = getattr(request.state, "session_context", None)
     if session_context:
         context["session_context"] = session_context
+        if session_context.email:
+            context["user"] = {"email": session_context.email}
     return context
 
 

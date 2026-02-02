@@ -155,7 +155,7 @@ class BaseAgent(ABC):
             except Exception as e:  # pylint: disable=broad-exception-caught
                 logger.error("Agent loop iteration %d failed: %s", iteration, e)
 
-                task_result = callables["complete_task"](
+                task_result = await callables["complete_task"](
                     task_status="failed",
                     task_summary=f"Agent loop iteration {iteration} failed: {e}",
                 )
@@ -163,7 +163,7 @@ class BaseAgent(ABC):
                 return task_result
 
         # iterations exhausted, return the task status as failure
-        task_result = callables["complete_task"](
+        task_result = await callables["complete_task"](
             task_status="failed",
             task_summary=f"Agent loop iterations exhausted after {max_iterations} iterations",
         )

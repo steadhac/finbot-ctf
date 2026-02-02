@@ -24,7 +24,8 @@ class CSRFProtectionMiddleware(BaseHTTPMiddleware):
     PROTECTED_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
 
     # Paths that are exempt from CSRF protection
-    EXEMPT_PATHS = {"/api/health", "/api/status", "/static/", "/favicon.ico"}
+    # Note: /auth/ is exempt because magic link tokens are single-use and emailed
+    EXEMPT_PATHS = {"/api/health", "/api/status", "/static/", "/favicon.ico", "/auth/"}
 
     def __init__(self, app):
         super().__init__(app)
