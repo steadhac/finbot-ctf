@@ -68,10 +68,9 @@ async def ctf_activity(
     request: Request, session_context: SessionContext = Depends(get_session_context)
 ):
     """CTF Activity stream page"""
-    # TODO: Create activity page template
     return template_response(
         request,
-        "pages/dashboard.html",
+        "pages/activity.html",
         {"session_context": session_context},
     )
 
