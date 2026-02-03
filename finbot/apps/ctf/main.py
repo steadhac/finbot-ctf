@@ -2,7 +2,15 @@
 
 from fastapi import FastAPI
 
-from finbot.apps.ctf.routes import activity, admin, badges, challenges, sidecar, stats
+from finbot.apps.ctf.routes import (
+    activity,
+    admin,
+    badges,
+    challenges,
+    sidecar,
+    stats,
+    web_router,
+)
 
 ctf_app = FastAPI(
     title="FinBot CTF API",
@@ -10,7 +18,10 @@ ctf_app = FastAPI(
     version="1.0.0",
 )
 
-# Include routers
+# Include web routes (page routes)
+ctf_app.include_router(web_router)
+
+# Include API routers
 ctf_app.include_router(challenges.router)
 ctf_app.include_router(badges.router)
 ctf_app.include_router(activity.router)
