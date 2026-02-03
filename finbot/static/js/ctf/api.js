@@ -184,7 +184,29 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
+/**
+ * Update sidebar points display (runs on all pages)
+ */
+async function updateSidebarPoints() {
+    const sidebarPoints = document.getElementById('sidebar-points');
+    if (!sidebarPoints) return;
+
+    try {
+        const stats = await CTF.getStats();
+        if (stats && typeof stats.total_points === 'number') {
+            sidebarPoints.textContent = `${stats.total_points.toLocaleString()} pts`;
+        }
+    } catch (error) {
+        console.warn('Failed to load sidebar points:', error);
+        // Leave as default "-- pts"
+    }
+}
+
+// Update sidebar points on page load
+document.addEventListener('DOMContentLoaded', updateSidebarPoints);
+
 // Export globally
 window.CTF = CTF;
 window.getDifficultyClass = getDifficultyClass;
 window.showToast = showToast;
+window.updateSidebarPoints = updateSidebarPoints;

@@ -1,7 +1,7 @@
 """CTF Portal Web Routes"""
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from finbot.core.auth.middleware import get_session_context
 from finbot.core.auth.session import SessionContext
@@ -12,6 +12,12 @@ template_response = TemplateResponse("finbot/apps/ctf/templates")
 
 # Create web router
 router = APIRouter(tags=["ctf-web"])
+
+
+@router.get("/", name="ctf_root")
+async def ctf_root():
+    """Redirect /ctf to /ctf/dashboard"""
+    return RedirectResponse(url="/ctf/dashboard", status_code=302)
 
 
 @router.get("/dashboard", response_class=HTMLResponse, name="ctf_dashboard")

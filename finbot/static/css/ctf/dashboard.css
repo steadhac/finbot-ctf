@@ -6,12 +6,13 @@
    BASE STYLES
    ========================================================================== */
 
-a {
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: none;
+/* Remove underlines from all links in CTF portal */
+a,
+a:hover,
+a:focus,
+a:active,
+a:visited {
+    text-decoration: none !important;
 }
 
 /* ==========================================================================
@@ -39,39 +40,7 @@ a:hover {
    CTF SIDEBAR
    ========================================================================== */
 
-.ctf-sidebar {
-    background: linear-gradient(180deg, var(--portal-bg-secondary) 0%, var(--portal-bg-primary) 100%);
-    border-right: 1px solid rgba(0, 212, 255, 0.1);
-}
-
-.ctf-nav-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    border-radius: 10px;
-    color: #888;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.ctf-nav-item:hover {
-    background: rgba(0, 212, 255, 0.1);
-    color: var(--vendor-primary);
-}
-
-.ctf-nav-item.active {
-    background: linear-gradient(90deg, rgba(0, 212, 255, 0.2), transparent);
-    color: var(--vendor-primary);
-    border-left: 3px solid var(--vendor-primary);
-    margin-left: -3px;
-}
-
-.ctf-nav-item.active svg {
-    filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.6));
-}
+/* Note: Sidebar styles inherited from vendor portal (ai-sidebar, vendor-nav-item) */
 
 /* ==========================================================================
    GLASSMORPHISM CARDS
