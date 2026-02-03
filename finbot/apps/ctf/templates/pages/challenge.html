@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+
+{% block nav_challenges %}active{% endblock %}
+
+{% block page_title %}<span id="challenge-title">Loading...</span>{% endblock %}
+{% block page_subtitle %}<span id="challenge-category">--</span>{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center gap-3">
+    <a href="/ctf/challenges" class="vendor-btn quantum-secondary">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to Challenges
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Loading State -->
+    <div id="loading-state" class="space-y-6">
+        <div class="holographic-card p-6">
+            <div class="ctf-skeleton h-8 w-1/2 mb-4"></div>
+            <div class="ctf-skeleton h-4 w-full mb-2"></div>
+            <div class="ctf-skeleton h-4 w-full mb-2"></div>
+            <div class="ctf-skeleton h-4 w-3/4"></div>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="hidden">
+        <div class="holographic-card p-8 text-center">
+            <div class="text-4xl mb-4">❌</div>
+            <h3 class="text-lg font-semibold text-text-bright mb-2">Challenge Not Found</h3>
+            <p class="text-text-secondary text-sm mb-4">The challenge you're looking for doesn't exist or has been removed.</p>
+            <a href="/ctf/challenges" class="vendor-btn quantum-primary inline-flex">
+                Browse All Challenges
+            </a>
+        </div>
+    </div>
+
+    <!-- Challenge Content -->
+    <div id="challenge-content" class="hidden space-y-6">
+        <!-- Status Banner -->
+        <div id="status-banner" class="hidden rounded-lg p-4 flex items-center gap-3">
+            <div id="status-icon" class="w-10 h-10 rounded-full flex items-center justify-center"></div>
+            <div>
+                <div id="status-title" class="font-semibold"></div>
+                <div id="status-message" class="text-sm opacity-80"></div>
+            </div>
+        </div>
+
+        <!-- Main Info Card -->
+        <div class="holographic-card p-6">
+            <!-- Meta Row -->
+            <div class="flex flex-wrap items-center gap-3 mb-6">
+                <span id="difficulty-badge" class="ctf-difficulty"></span>
+                <span class="ctf-points" id="points-badge">⚡ --</span>
+                <div class="flex-1"></div>
+                <div class="text-sm text-text-secondary">
+                    <span id="attempts-count">0</span> attempts
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="prose prose-invert max-w-none">
+                <p id="challenge-description" class="text-text-primary leading-relaxed"></p>
+            </div>
+
+            <!-- Labels/Tags -->
+            <div id="labels-container" class="mt-6 pt-6 border-t border-white/10 hidden">
+                <h4 class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Related Standards</h4>
+                <div id="labels-list" class="flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+
+        <!-- Action Card -->
+        <div class="holographic-card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-text-bright mb-1">Check Your Progress</h3>
+                    <p class="text-sm text-text-secondary">Click to verify if you've completed this challenge</p>
+                </div>
+                <button id="check-btn" onclick="checkChallenge()" class="vendor-btn quantum-primary text-base px-6 py-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Check Progress
+                </button>
+            </div>
+
+            <!-- Check Result -->
+            <div id="check-result" class="hidden mt-4 p-4 rounded-lg"></div>
+        </div>
+
+        <!-- Hints Card -->
+        <div id="hints-card" class="holographic-card p-6 hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-text-bright">Hints</h3>
+                <div class="text-sm text-text-secondary">
+                    Total cost: <span id="hints-cost" class="text-ctf-warning font-mono">0</span> points
+                </div>
+            </div>
+
+            <div id="hints-list" class="space-y-3"></div>
+
+            <!-- Unlock Hint Button -->
+            <button id="unlock-hint-btn" onclick="unlockHint()" class="hidden mt-4 vendor-btn quantum-secondary w-full justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                </svg>
+                <span id="unlock-hint-text">Unlock Next Hint</span>
+            </button>
+        </div>
+
+        <!-- Resources Card -->
+        <div id="resources-card" class="holographic-card p-6 hidden">
+            <h3 class="text-lg font-semibold text-text-bright mb-4">Learning Resources</h3>
+            <div id="resources-list" class="space-y-3"></div>
+        </div>
+
+        <!-- Prerequisites Card -->
+        <div id="prerequisites-card" class="holographic-card p-6 hidden">
+            <h3 class="text-lg font-semibold text-text-bright mb-4">Prerequisites</h3>
+            <div id="prerequisites-list" class="space-y-2"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const challengeId = "{{ challenge_id }}";
+let challengeData = null;
+
+document.addEventListener('DOMContentLoaded', loadChallenge);
+
+async function loadChallenge() {
+    try {
+        challengeData = await CTF.getChallenge(challengeId);
+        renderChallenge(challengeData);
+    } catch (error) {
+        console.error('Failed to load challenge:', error);
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('error-state').classList.remove('hidden');
+    }
+}
+
+function renderChallenge(ch) {
+    // Hide loading, show content
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('challenge-content').classList.remove('hidden');
+
+    // Header
+    document.getElementById('challenge-title').textContent = ch.title;
+    document.getElementById('challenge-category').textContent = formatCategoryName(ch.category) + (ch.subcategory ? ' / ' + ch.subcategory : '');
+
+    // Status banner
+    if (ch.status === 'completed') {
+        showStatusBanner('completed', 'Challenge Completed!', `Completed on ${new Date(ch.completed_at).toLocaleDateString()}`);
+    } else if (ch.status === 'in_progress') {
+        showStatusBanner('in_progress', 'In Progress', `${ch.attempts} attempts so far`);
+    }
+
+    // Meta
+    const diffBadge = document.getElementById('difficulty-badge');
+    diffBadge.textContent = ch.difficulty;
+    diffBadge.className = getDifficultyClass(ch.difficulty);
+
+    document.getElementById('points-badge').innerHTML = `⚡ ${ch.points}`;
+    document.getElementById('attempts-count').textContent = ch.attempts;
+
+    // Description
+    document.getElementById('challenge-description').textContent = ch.description;
+
+    // Labels
+    if (ch.labels && Object.keys(ch.labels).length > 0) {
+        const container = document.getElementById('labels-container');
+        const list = document.getElementById('labels-list');
+        container.classList.remove('hidden');
+
+        list.innerHTML = Object.entries(ch.labels).map(([key, values]) => {
+            const valArray = Array.isArray(values) ? values : [values];
+            return valArray.map(v => `
+                <span class="px-2 py-1 bg-ctf-secondary/20 border border-ctf-secondary/30 rounded text-xs text-ctf-secondary">
+                    ${key}: ${v}
+                </span>
+            `).join('');
+        }).join('');
+    }
+
+    // Hints
+    if (ch.hints && ch.hints.length > 0) {
+        const card = document.getElementById('hints-card');
+        const list = document.getElementById('hints-list');
+        card.classList.remove('hidden');
+
+        document.getElementById('hints-cost').textContent = ch.hints_cost;
+
+        list.innerHTML = ch.hints.map((hint, i) => {
+            const isUnlocked = hint.text !== '[locked]';
+            return `
+                <div class="p-3 rounded-lg ${isUnlocked ? 'bg-ctf-primary/10 border border-ctf-primary/20' : 'bg-white/5 border border-white/10'}">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-semibold ${isUnlocked ? 'text-ctf-primary' : 'text-text-secondary'}">
+                            Hint ${i + 1}
+                        </span>
+                        <span class="text-xs ${isUnlocked ? 'text-ctf-accent' : 'text-ctf-warning'}">
+                            ${isUnlocked ? 'Unlocked' : `-${hint.cost} pts`}
+                        </span>
+                    </div>
+                    <p class="text-sm ${isUnlocked ? 'text-text-primary' : 'text-text-secondary italic'}">
+                        ${isUnlocked ? hint.text : '🔒 Locked - unlock to reveal'}
+                    </p>
+                </div>
+            `;
+        }).join('');
+
+        // Show unlock button if there are locked hints
+        const hasLockedHints = ch.hints.some(h => h.text === '[locked]');
+        const unlockBtn = document.getElementById('unlock-hint-btn');
+        if (hasLockedHints && ch.status !== 'completed') {
+            unlockBtn.classList.remove('hidden');
+            const nextHint = ch.hints.find(h => h.text === '[locked]');
+            document.getElementById('unlock-hint-text').textContent = `Unlock Next Hint (-${nextHint.cost} pts)`;
+        }
+    }
+
+    // Resources
+    if (ch.resources && ch.resources.length > 0) {
+        const card = document.getElementById('resources-card');
+        const list = document.getElementById('resources-list');
+        card.classList.remove('hidden');
+
+        list.innerHTML = ch.resources.map(res => `
+            <a href="${res.url}" target="_blank" rel="noopener"
+               class="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
+                <div class="w-8 h-8 rounded bg-ctf-primary/20 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-ctf-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="text-sm text-text-bright group-hover:text-ctf-primary transition-colors">${res.title}</div>
+                    ${res.type ? `<div class="text-xs text-text-secondary">${res.type}</div>` : ''}
+                </div>
+            </a>
+        `).join('');
+    }
+
+    // Prerequisites
+    if (ch.prerequisites && ch.prerequisites.length > 0) {
+        const card = document.getElementById('prerequisites-card');
+        const list = document.getElementById('prerequisites-list');
+        card.classList.remove('hidden');
+
+        list.innerHTML = ch.prerequisites.map(prereq => `
+            <a href="/ctf/challenges/${prereq}" class="flex items-center gap-2 text-sm text-text-secondary hover:text-ctf-primary transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                ${prereq}
+            </a>
+        `).join('');
+    }
+
+    // Disable check button if completed
+    if (ch.status === 'completed') {
+        const btn = document.getElementById('check-btn');
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+        btn.innerHTML = `
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Completed
+        `;
+    }
+}
+
+function showStatusBanner(status, title, message) {
+    const banner = document.getElementById('status-banner');
+    const icon = document.getElementById('status-icon');
+    const titleEl = document.getElementById('status-title');
+    const msgEl = document.getElementById('status-message');
+
+    banner.classList.remove('hidden');
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+
+    if (status === 'completed') {
+        banner.className = 'rounded-lg p-4 flex items-center gap-3 bg-ctf-accent/10 border border-ctf-accent/30 text-ctf-accent';
+        icon.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
+        icon.className = 'w-10 h-10 rounded-full flex items-center justify-center bg-ctf-accent/20';
+    } else if (status === 'in_progress') {
+        banner.className = 'rounded-lg p-4 flex items-center gap-3 bg-ctf-warning/10 border border-ctf-warning/30 text-ctf-warning';
+        icon.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
+        icon.className = 'w-10 h-10 rounded-full flex items-center justify-center bg-ctf-warning/20';
+    }
+}
+
+async function checkChallenge() {
+    const btn = document.getElementById('check-btn');
+    const resultDiv = document.getElementById('check-result');
+
+    btn.disabled = true;
+    btn.innerHTML = `
+        <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Checking...
+    `;
+
+    try {
+        const result = await CTF.checkChallenge(challengeId);
+
+        resultDiv.classList.remove('hidden');
+
+        if (result.detected) {
+            resultDiv.className = 'mt-4 p-4 rounded-lg bg-ctf-accent/10 border border-ctf-accent/30';
+            resultDiv.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-ctf-accent/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-ctf-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-ctf-accent">Challenge Completed!</div>
+                        <div class="text-sm text-text-secondary">${result.message || 'Congratulations! You\'ve successfully completed this challenge.'}</div>
+                    </div>
+                </div>
+            `;
+
+            // Reload to update UI
+            setTimeout(() => loadChallenge(), 1500);
+        } else {
+            resultDiv.className = 'mt-4 p-4 rounded-lg bg-ctf-warning/10 border border-ctf-warning/30';
+            resultDiv.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-ctf-warning/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-ctf-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-ctf-warning">Not Yet Complete</div>
+                        <div class="text-sm text-text-secondary">${result.message || 'Keep trying! Check the hints or resources for guidance.'}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+    } catch (error) {
+        console.error('Check failed:', error);
+        resultDiv.classList.remove('hidden');
+        resultDiv.className = 'mt-4 p-4 rounded-lg bg-ctf-danger/10 border border-ctf-danger/30';
+        resultDiv.innerHTML = `
+            <div class="text-ctf-danger">Failed to check progress: ${error.message}</div>
+        `;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Check Progress
+        `;
+    }
+}
+
+async function unlockHint() {
+    const btn = document.getElementById('unlock-hint-btn');
+    btn.disabled = true;
+
+    try {
+        const result = await CTF.fetch(`/challenges/${challengeId}/hint`, { method: 'POST' });
+        showToast(`Hint unlocked! (-${result.points_deducted} points)`, 'info');
+        loadChallenge(); // Reload to show new hint
+    } catch (error) {
+        console.error('Failed to unlock hint:', error);
+        showToast('Failed to unlock hint: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function formatCategoryName(category) {
+    return category
+        .replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
+}
+</script>
+{% endblock %}
