@@ -36,6 +36,8 @@ dev = [
     "pytest-html>=4.1.1",
     "pytest-timeout>=2.4.0",
     "pytest-xdist>=3.8.0",
+    "gspread>=6.0.0",
+
 ]
 
 [tool.black]
