@@ -66,6 +66,15 @@ async function loadDashboardData() {
         renderActivityFeed(activity);
         renderCategoryProgress(stats.category_progress);
 
+        // Calculate and render activity streak
+        renderActivityStreak(activity);
+
+        // Calculate and render points earned today
+        renderPointsToday(activity, challenges);
+
+        // Render badge rarity breakdown
+        renderBadgeRarityBreakdown(badges);
+
     } catch (error) {
         console.error('Failed to load dashboard data:', error);
     }
@@ -135,20 +144,24 @@ function renderStats(stats) {
 
     // Points
     document.getElementById('total-points').textContent = stats.total_points.toLocaleString();
-    if (stats.hints_cost > 0) {
-        document.getElementById('hints-cost').textContent = `-${stats.hints_cost} from hints`;
-        document.getElementById('hints-cost').classList.add('text-ctf-warning');
+
+    // Points earned today - will be calculated from activity or provided by API
+    const pointsToday = document.getElementById('points-today');
+    const pointsTodayLabel = document.getElementById('points-today-label');
+
+    if (stats.points_today !== undefined && stats.points_today > 0) {
+        pointsToday.textContent = `+${stats.points_today}`;
+        pointsTodayLabel.textContent = 'today';
+    } else {
+        // Placeholder - will be updated after activity loads
+        pointsToday.textContent = '';
+        pointsTodayLabel.textContent = '';
     }
 
-    // Badges
+    // Badges - count only, rarity breakdown is rendered separately
     document.getElementById('badges-earned').textContent = stats.badges_earned;
-    document.getElementById('badges-total').textContent = stats.badges_total;
 
-    // Hints
-    document.getElementById('hints-used').textContent = stats.hints_used;
-    if (stats.hints_cost > 0) {
-        document.getElementById('hints-cost-display').textContent = `-${stats.hints_cost} pts`;
-    }
+    // Activity Streak - calculated separately in renderActivityStreak()
 }
 
 /**
@@ -311,6 +324,162 @@ function renderCategoryProgress(categories) {
             </div>
         `;
     }).join('');
+}
+
+/**
+ * Render badge rarity breakdown (e.g., "3 rare • 1 epic")
+ */
+function renderBadgeRarityBreakdown(badges) {
+    const container = document.getElementById('badges-rarity-breakdown');
+
+    // Count earned badges by rarity
+    const earnedBadges = badges.filter(b => b.earned);
+    const rarityCounts = {};
+
+    earnedBadges.forEach(badge => {
+        const rarity = badge.rarity || 'common';
+        rarityCounts[rarity] = (rarityCounts[rarity] || 0) + 1;
+    });
+
+    if (earnedBadges.length === 0) {
+        container.innerHTML = '<span class="text-text-secondary">none yet</span>';
+        return;
+    }
+
+    // Define rarity order and colors
+    const rarityConfig = {
+        'legendary': { color: 'text-yellow-400', order: 1 },
+        'epic': { color: 'text-purple-400', order: 2 },
+        'rare': { color: 'text-blue-400', order: 3 },
+        'common': { color: 'text-gray-400', order: 4 }
+    };
+
+    // Build breakdown string, sorted by rarity (most rare first)
+    const parts = Object.entries(rarityCounts)
+        .sort((a, b) => (rarityConfig[a[0]]?.order || 99) - (rarityConfig[b[0]]?.order || 99))
+        .map(([rarity, count]) => {
+            const config = rarityConfig[rarity] || { color: 'text-gray-400' };
+            return `<span class="${config.color}">${count} ${rarity}</span>`;
+        });
+
+    container.innerHTML = parts.join(' <span class="text-text-secondary">•</span> ');
+}
+
+/**
+ * Calculate and render points earned today
+ */
+function renderPointsToday(activityResponse, challenges) {
+    const pointsToday = document.getElementById('points-today');
+    const pointsTodayLabel = document.getElementById('points-today-label');
+    const items = activityResponse.items || [];
+
+    // Get today's date
+    const today = new Date().toLocaleDateString();
+
+    // Look for challenge completions and badge earnings today
+    let earnedToday = 0;
+
+    items.forEach(item => {
+        const itemDate = new Date(item.timestamp).toLocaleDateString();
+        if (itemDate === today) {
+            // Check for challenge completion events
+            if (item.event_type === 'challenge_completed' && item.challenge_id) {
+                // Find the challenge to get its points
+                const challenge = challenges.find(c => c.id === item.challenge_id);
+                if (challenge) {
+                    earnedToday += challenge.points;
+                }
+            }
+            // Check for badge earned events
+            if (item.event_type === 'badge_earned') {
+                // Badges typically give bonus points - estimate or get from activity
+                earnedToday += 50; // Default badge points
+            }
+        }
+    });
+
+    if (earnedToday > 0) {
+        pointsToday.textContent = `+${earnedToday}`;
+        pointsTodayLabel.textContent = 'today';
+    } else {
+        // Show encouraging message if active today but no points yet
+        const wasActiveToday = items.some(item =>
+            new Date(item.timestamp).toLocaleDateString() === today
+        );
+
+        if (wasActiveToday) {
+            pointsToday.textContent = '';
+            pointsTodayLabel.textContent = 'active today';
+        }
+    }
+}
+
+/**
+ * Calculate and render activity streak (consecutive days of portal usage)
+ */
+function renderActivityStreak(activityResponse) {
+    const streakEl = document.getElementById('current-streak');
+    const streakStatus = document.getElementById('streak-status');
+    const items = activityResponse.items || [];
+
+    if (items.length === 0) {
+        streakEl.textContent = '0';
+        streakStatus.textContent = 'Start exploring!';
+        return;
+    }
+
+    // Get unique dates from activity (in local timezone)
+    const activityDates = new Set();
+    items.forEach(item => {
+        const date = new Date(item.timestamp);
+        const dateKey = date.toLocaleDateString();
+        activityDates.add(dateKey);
+    });
+
+    // Check if user was active today
+    const today = new Date().toLocaleDateString();
+    const wasActiveToday = activityDates.has(today);
+
+    // Calculate streak - for now, if active today, show 1+ based on recent activity
+    // Full streak calculation would require fetching more activity history
+    let streak = 0;
+
+    if (wasActiveToday) {
+        streak = 1;
+
+        // Check yesterday
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (activityDates.has(yesterday.toLocaleDateString())) {
+            streak = 2;
+        }
+
+        // Check day before
+        const dayBefore = new Date();
+        dayBefore.setDate(dayBefore.getDate() - 2);
+        if (streak === 2 && activityDates.has(dayBefore.toLocaleDateString())) {
+            streak = 3;
+        }
+    } else {
+        // Check if was active yesterday (streak not broken yet today)
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (activityDates.has(yesterday.toLocaleDateString())) {
+            streak = 1;
+        }
+    }
+
+    streakEl.textContent = streak;
+
+    if (streak === 0) {
+        streakStatus.textContent = 'Start exploring!';
+    } else if (streak === 1) {
+        streakStatus.textContent = wasActiveToday ? '🔥 Active today!' : '⏰ Log in to continue!';
+    } else if (streak < 7) {
+        streakStatus.textContent = '🔥 Keep it going!';
+    } else {
+        streakStatus.textContent = '🔥 On fire!';
+    }
 }
 
 /**

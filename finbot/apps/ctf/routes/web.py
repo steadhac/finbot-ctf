@@ -81,16 +81,3 @@ async def ctf_badges(
         "pages/dashboard.html",
         {"session_context": session_context},
     )
-
-
-@router.get("/leaderboard", response_class=HTMLResponse, name="ctf_leaderboard")
-async def ctf_leaderboard(
-    request: Request, session_context: SessionContext = Depends(get_session_context)
-):
-    """CTF Leaderboard page"""
-    # TODO: Create leaderboard page template
-    return template_response(
-        request,
-        "pages/dashboard.html",
-        {"session_context": session_context},
-    )
