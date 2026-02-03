@@ -75,9 +75,8 @@ async def ctf_badges(
     request: Request, session_context: SessionContext = Depends(get_session_context)
 ):
     """CTF Badges page"""
-    # TODO: Create badges page template
     return template_response(
         request,
-        "pages/dashboard.html",
+        "pages/badges.html",
         {"session_context": session_context},
     )
