@@ -13,6 +13,7 @@ from finbot.core.auth.session import SessionContext
 from finbot.tools import (
     get_invoice_details,
     get_vendor_details,
+    update_invoice_agent_notes,
     update_invoice_status,
 )
 
@@ -373,3 +374,32 @@ class InvoiceAgent(BaseAgent):
             "update_invoice_status": self.update_invoice_status,
             "get_vendor_details": self.get_vendor_details,
         }
+
+    # Hooks
+    async def _on_task_completion(self, task_result: dict[str, Any]) -> None:
+        """Update agent notes with task result
+        Args:
+            task_result: The result of the task
+            - task_result is a dictionary with the following keys:
+                - task_status: The status of the task
+                - task_summary: The summary of the task
+        """
+        logger.info("Updating agent notes with task result: %s", task_result)
+        updated_agent_notes = f"""Task Status: {task_result["task_status"]}
+        Task Summary: {task_result["task_summary"]}
+        """
+        # TODO: missing invoice_id - need to adapt task completion with additional context
+        invoice_id = task_result.get("invoice_id", None)
+        if not invoice_id:
+            logger.error("Invoice ID not found in task result")
+            return
+        try:
+            await update_invoice_agent_notes(
+                invoice_id,
+                updated_agent_notes,
+                self.session_context,
+            )
+        except ValueError as e:
+            logger.error("Error updating agent notes: %s", e)
+            return
+        logger.info("Agent notes updated successfully for invoice_id: %s", invoice_id)

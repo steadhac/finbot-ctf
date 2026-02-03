@@ -2,6 +2,7 @@
 Setup the database for the FinBot platform
 """
 
+import argparse
 import os
 import sys
 from pathlib import Path
@@ -14,6 +15,7 @@ sys.path.insert(0, str(project_root))
 from finbot.config import settings
 
 # Import models to register them with the declarative base
+from finbot.core.data import models  # noqa: F401
 from finbot.core.data.database import (
     create_tables,
     get_database_info,
@@ -58,10 +60,15 @@ def setup_postgresql() -> bool:
         conn.close()
         return True
     except ImportError:
-        print("psycopg2 is not installed")
+        print("❌ psycopg2 is not installed")
+        print("   Install: uv sync")
         return False
     except Exception as e:  # pylint: disable=broad-exception-caught
-        print(f"Error setting up PostgreSQL database: {e}")
+        print(f"❌ Error setting up PostgreSQL database: {e}")
+        print("\n💡 Quick fix:")
+        print("   1. Start PostgreSQL: docker compose up -d postgres")
+        print("   2. Wait a few seconds for it to start")
+        print("   3. Re-run this script")
         return False
 
 

@@ -76,7 +76,7 @@ class Settings(BaseSettings):
     SESSION_COOKIE_SAMESITE: str = "Lax"
 
     # Namespace Config
-    NAMESPACE_PREFIX: str = "user_"
+    NAMESPACE_PREFIX: str = "ns_"
     ENABLE_NAMESPACE_ISOLATION: bool = True
 
     # Redis Config
@@ -101,14 +101,22 @@ class Settings(BaseSettings):
     # OpenAI Config
     OPENAI_API_KEY: str = ""
 
-    # Google Sheets Config
-    GOOGLE_SHEETS_ID: str = ""
-    GOOGLE_CREDENTIALS_FILE: str = "google-credentials.json"
+    # Ollama
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
 
-    
     # Development Config
     RELOAD: bool = True
     LOG_LEVEL: str = "debug"
+
+    # Magic Link Config
+    MAGIC_LINK_EXPIRY_MINUTES: int = 15
+    MAGIC_LINK_BASE_URL: str = "http://localhost:8000"
+
+    # Email Config
+    EMAIL_PROVIDER: str = "console"  # "console" | "resend"
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM_ADDRESS: str = "noreply@owaspasifinbot.com"
+    EMAIL_FROM_NAME: str = "OWASP ASI FinBot CTF"
 
     model_config = ConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False
@@ -169,11 +177,11 @@ class Settings(BaseSettings):
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
-        from typing import Any, Literal
-    
     def get_database_config(self) -> dict[str, Any]:
         """Get the database specific configuration"""
-        base_config: dict[str, Any] = {"echo": self.DB_ECHO or self.DEBUG}
+        # Only echo SQL if explicitly requested via DB_ECHO
+        # (DEBUG mode no longer auto-enables SQL echoing to reduce noise)
+        base_config: dict[str, Any] = {"echo": self.DB_ECHO}
         if self.DATABASE_TYPE == "sqlite":
             base_config.update(
                 {
