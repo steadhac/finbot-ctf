@@ -10,6 +10,7 @@ from typing import Any, Callable
 from finbot.agents.base import BaseAgent
 from finbot.agents.utils import agent_tool
 from finbot.core.auth.session import SessionContext
+from finbot.core.messaging import event_bus
 from finbot.tools import (
     get_invoice_details,
     get_vendor_details,
@@ -314,6 +315,40 @@ class InvoiceAgent(BaseAgent):
             invoice_details = await update_invoice_status(
                 invoice_id, status, agent_notes, self.session_context
             )
+            previous_state = invoice_details.pop("_previous_state", {})
+
+            # determine decision based on status change
+            if status == "approved":
+                decision_type = "approval"
+            elif status == "rejected":
+                decision_type = "rejection"
+            else:
+                decision_type = "status_update"
+            amount = invoice_details.get("amount", 0)
+            amount_str = (
+                f"${amount:,.2f}" if isinstance(amount, (int, float)) else str(amount)
+            )
+
+            await event_bus.emit_business_event(
+                event_type="invoice.decision",
+                event_subtype="decision",
+                event_data={
+                    "invoice_id": invoice_id,
+                    "invoice_number": invoice_details.get("invoice_number"),
+                    "vendor_id": invoice_details.get("vendor_id"),
+                    "amount": amount,
+                    "decision_type": decision_type,
+                    "old_status": previous_state.get("status"),
+                    "new_status": status,
+                    "reasoning": agent_notes,
+                    "description": invoice_details.get("description"),
+                    "due_date": invoice_details.get("due_date"),
+                },
+                session_context=self.session_context,
+                workflow_id=self.workflow_id,
+                summary=f"Invoice {decision_type}: {amount_str} (#{invoice_details.get('invoice_number', 'N/A')})",
+            )
+
             return {
                 "invoice_id": invoice_details["id"],
                 "status": invoice_details["status"],

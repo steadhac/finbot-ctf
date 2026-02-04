@@ -83,6 +83,20 @@ class BaseAgent(ABC):
         callables = self._get_final_callables()
 
         for iteration in range(max_iterations):
+            # Emit iteration start event
+            await event_bus.emit_agent_event(
+                agent_name=self.agent_name,
+                event_type="iteration_start",
+                event_subtype="lifecycle",
+                event_data={
+                    "iteration": iteration + 1,
+                    "max_iterations": max_iterations,
+                },
+                session_context=self.session_context,
+                workflow_id=self.workflow_id,
+                summary=f"Agent iteration {iteration + 1}/{max_iterations} started",
+            )
+
             try:
                 response = await self.llm_client.chat(
                     request=LLMRequest(
@@ -132,6 +146,21 @@ class BaseAgent(ABC):
                                         failed: {str(e)}. Please try again.",
                                 }
                         else:
+                            # Emit invalid tool call event
+                            await event_bus.emit_agent_event(
+                                agent_name=self.agent_name,
+                                event_type="invalid_tool_call",
+                                event_subtype="error",
+                                event_data={
+                                    "attempted_tool": tool_call_name,
+                                    "arguments": tool_call.get("arguments", {}),
+                                    "available_tools": list(callables.keys()),
+                                    "iteration": iteration + 1,
+                                },
+                                session_context=self.session_context,
+                                workflow_id=self.workflow_id,
+                                summary=f"Invalid tool attempted: {tool_call_name}",
+                            )
                             function_output = {
                                 "error": f"Invalid tool call: {tool_call['name']} \
                                     Please try again.",
@@ -152,6 +181,24 @@ class BaseAgent(ABC):
                                 "output": function_output_str,
                             }
                         )
+
+                # Emit iteration complete event
+                await event_bus.emit_agent_event(
+                    agent_name=self.agent_name,
+                    event_type="iteration_complete",
+                    event_subtype="lifecycle",
+                    event_data={
+                        "iteration": iteration + 1,
+                        "max_iterations": max_iterations,
+                        "tool_calls_count": len(response.tool_calls)
+                        if response.tool_calls
+                        else 0,
+                        "has_content": bool(response.content),
+                    },
+                    session_context=self.session_context,
+                    workflow_id=self.workflow_id,
+                    summary=f"Agent iteration {iteration + 1}/{max_iterations} complete ({len(response.tool_calls) if response.tool_calls else 0} tool calls)",
+                )
             except Exception as e:  # pylint: disable=broad-exception-caught
                 logger.error("Agent loop iteration %d failed: %s", iteration, e)
 
@@ -310,12 +357,14 @@ class BaseAgent(ABC):
         await event_bus.emit_agent_event(
             agent_name=self.agent_name,
             event_type="task_start",
+            event_subtype="lifecycle",
             event_data={
                 "task_data": task_data or {},
                 "log_data": log_data or {},
             },
             session_context=self.session_context,
             workflow_id=self.workflow_id,
+            summary=f"Agent task started: {self.agent_name}",
         )
 
     async def log_task_completion(
@@ -335,12 +384,14 @@ class BaseAgent(ABC):
         await event_bus.emit_agent_event(
             agent_name=self.agent_name,
             event_type="task_completion",
+            event_subtype="lifecycle",
             event_data={
                 "task_result": task_result or {},
                 "log_data": log_data or {},
             },
             session_context=self.session_context,
             workflow_id=self.workflow_id,
+            summary=f"Agent task completed: {(task_result or {}).get('task_status', 'unknown')}",
         )
 
     @property
