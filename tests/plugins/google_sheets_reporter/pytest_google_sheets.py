@@ -166,7 +166,7 @@ def extract_iso_code(docstring: Optional[str]) -> Optional[str]:
     """Extract test code from docstring (ISO-*, SSM-*, etc.)."""
     if not docstring:
         return None
-    # Match patterns like: ISO-DAT-001, SSM-HMC-001, etc.
+    # Match patterns like: ISO-DAT-001, SSM-HMC-001, BAF-SSN-001, etc.
     match = re.search(r'([A-Z][A-Z0-9]*-[A-Z0-9]+-\d+)', docstring)
     return match.group(1) if match else None
 
@@ -175,19 +175,21 @@ def detect_test_category(item) -> str:
     """Detect which Google Sheets worksheet a test belongs to based on file path."""
     fspath = str(item.fspath).lower()
     
-    path_worksheet_map = {
-        'vendor': 'Isolation Testing Framework TCs',
-        'auth': 'Secure Session Management',
-        'security': 'Security Penetration Testing',
-        'ctf': 'CTF Challenge Validation',
-        'performance': 'Performance Testing',
-        'browser': 'Cross_Browser',
-        'e2e': 'End-To-End',
-        'integration': 'End-To-End',
-        'summary': 'Summary'
-    }
+    # List of tuples maintains order - check specific paths first
+    path_worksheet_map = [
+        ('agents', 'Base Agent Framework'),
+        ('vendor', 'Isolation Testing Framework TCs'),
+        ('auth', 'Secure Session Management'),
+        ('security', 'Security Penetration Testing'),
+        ('performance', 'Performance Testing'),
+        ('browser', 'Cross_Browser'),
+        ('e2e', 'End-To-End'),
+        ('integration', 'End-To-End'),
+        ('ctf', 'CTF Challenge Validation'),
+        ('summary', 'Summary')
+    ]
     
-    for keyword, worksheet in path_worksheet_map.items():
+    for keyword, worksheet in path_worksheet_map:
         if keyword in fspath:
             return worksheet
     
@@ -212,6 +214,7 @@ class GoogleSheetsPlugin:
                 'CTF Challenge Validation',
                 'Performance Testing',
                 'Cross_Browser',
+                'Base Agent Framework',
                 'End-To-End',
                 'Summary',
             ]
