@@ -10,6 +10,7 @@ from typing import Any, Callable
 from finbot.agents.base import BaseAgent
 from finbot.agents.utils import agent_tool
 from finbot.core.auth.session import SessionContext
+from finbot.core.messaging import event_bus
 from finbot.tools import (
     get_vendor_details,
     update_vendor_agent_notes,
@@ -309,6 +310,36 @@ class VendorOnboardingAgent(BaseAgent):
                 agent_notes,
                 self.session_context,
             )
+            previous_state = vendor_details.pop("_previous_state", {})
+
+            # determine decision based on status change
+            if status == "active":
+                decision_type = "approval"
+            elif status == "inactive":
+                decision_type = "rejection"
+            else:
+                decision_type = "status_update"
+
+            await event_bus.emit_business_event(
+                event_type="vendor.decision",
+                event_subtype="decision",
+                event_data={
+                    "vendor_id": vendor_id,
+                    "company_name": vendor_details.get("company_name", "Unknown"),
+                    "decision_type": decision_type,
+                    "old_status": previous_state.get("status"),
+                    "new_status": status,
+                    "old_trust_level": previous_state.get("trust_level"),
+                    "new_trust_level": trust_level,
+                    "old_risk_level": previous_state.get("risk_level"),
+                    "new_risk_level": risk_level,
+                    "reasoning": agent_notes,
+                },
+                session_context=self.session_context,
+                workflow_id=self.workflow_id,
+                summary=f"Vendor {decision_type}: {vendor_details.get('company_name', 'Unknown')} (trust: {trust_level}, risk: {risk_level})",
+            )
+
             return {
                 "vendor_id": vendor_details["id"],
                 "status": vendor_details["status"],

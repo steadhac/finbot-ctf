@@ -113,6 +113,7 @@ async def register_vendor(
 
         await event_bus.emit_business_event(
             event_type="vendor.created",
+            event_subtype="lifecycle",
             event_data={
                 "vendor_id": vendor.id,
                 "company_name": vendor.company_name,
@@ -120,6 +121,7 @@ async def register_vendor(
             },
             session_context=session_context,
             workflow_id=workflow_id,
+            summary=f"New vendor registered: {vendor.company_name}",
         )
 
         return {
@@ -305,6 +307,7 @@ async def request_vendor_review(
 
         await event_bus.emit_business_event(
             event_type="vendor.review_requested",
+            event_subtype="lifecycle",
             event_data={
                 "vendor_id": vendor.id,
                 "company_name": vendor.company_name,
@@ -313,6 +316,7 @@ async def request_vendor_review(
             },
             session_context=session_context,
             workflow_id=workflow_id,
+            summary=f"Vendor review requested: {vendor.company_name}",
         )
 
         return {
@@ -447,6 +451,7 @@ async def create_invoice(
 
         await event_bus.emit_business_event(
             event_type="invoice.created",
+            event_subtype="lifecycle",
             event_data={
                 "invoice_id": invoice.id,
                 "invoice_number": invoice.invoice_number,
@@ -459,6 +464,7 @@ async def create_invoice(
             },
             session_context=session_context,
             workflow_id=workflow_id,
+            summary=f"Invoice submitted: ${float(invoice.amount):,.2f} (#{invoice.invoice_number})",
         )
 
         return {
@@ -617,6 +623,7 @@ async def reprocess_invoice(
     # Emit event for re-processing
     await event_bus.emit_business_event(
         event_type="invoice.reprocessed",
+        event_subtype="lifecycle",
         event_data={
             "invoice_id": invoice.id,
             "invoice_number": invoice.invoice_number,
@@ -637,6 +644,7 @@ async def reprocess_invoice(
         },
         session_context=session_context,
         workflow_id=workflow_id,
+        summary=f"Invoice reprocessed: ${float(invoice.amount):,.2f} (#{invoice.invoice_number})",
     )
 
     return {
