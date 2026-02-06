@@ -41,6 +41,12 @@ jobs:
       env:
         GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
       run: pytest tests/unit/agents/test_base_agent.py -v --google-sheets
+      
+    - name: Run Specialized Business Agent tests with Google Sheets reporting
+      env:
+        GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
+      run: pytest tests/unit/agents/test_specialized_agents.py -v --google-sheets
+    
     
     - name: Upload coverage reports
       if: always()
