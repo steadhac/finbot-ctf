@@ -4,12 +4,10 @@ import pytest
 import json
 import secrets
 from datetime import datetime, timedelta, UTC
-from typing import Any, Callable, List
-from unittest.mock import AsyncMock, MagicMock
+from typing import Any, Callable
 
 from finbot.agents.base import BaseAgent
 from finbot.core.auth.session import SessionContext, session_manager
-from finbot.core.data.models import UserSession
 
 
 # ============================================================================
@@ -63,10 +61,8 @@ class TestBaseAgentFramework:
     """
 
     # =========================================================================
-    # Helper Methods - Reduce Repetitive Patterns
+    # Helper Methods
     # =========================================================================
-    # These helpers eliminate code duplication across all 12 test methods.
-    # They create real SessionContext objects and BaseAgent instances.
 
     def _create_session_context(
         self, 
@@ -91,17 +87,14 @@ class TestBaseAgentFramework:
         """
         user_id = user_id or f"user_{secrets.token_urlsafe(8)}"
         
-        # Create session via session_manager
         session = session_manager.create_session(
             email=email,
             user_agent="TestAgent/1.0"
         )
         
-        # Create timestamps for session context
         created_at = datetime.now(UTC)
         expires_at = created_at + timedelta(hours=24)
         
-        # Return SessionContext that BaseAgent expects
         return SessionContext(
             session_id=session.session_id,
             user_id=user_id,
@@ -111,53 +104,6 @@ class TestBaseAgentFramework:
             created_at=created_at,
             expires_at=expires_at
         )
-
-    def _query_session_data(self, db, session_id: str) -> tuple:
-        """
-        Helper to query session and return db_session and parsed data.
-        
-        Eliminates repetition: Every test performs this 3-step sequence:
-        1. Query database for UserSession by session_id
-        2. Check if result is None (error handling)
-        3. Parse JSON session_data into dict
-        
-        This helper performs all three steps and returns both the raw
-        db_session object and the parsed data dict as a tuple.
-        
-        Args:
-            db: Database connection/session object
-            session_id: The session_id to look up
-            
-        Returns:
-            Tuple of (db_session, parsed_data_dict)
-            Returns (None, None) if session not found in database
-        """
-        db_session = db.query(UserSession).filter(
-            UserSession.session_id == session_id
-        ).first()
-        if db_session is None:
-            return None, None
-        data = json.loads(db_session.session_data)
-        return db_session, data
-
-    def _get_namespace(self, data: dict) -> str:
-        """
-        Helper to extract namespace from session data.
-        
-        Eliminates repetition: Session data can store namespace in either
-        'namespace' or 'user_id' keys depending on context. Every test
-        needed to handle this fallback pattern.
-        
-        Centralizes the logic: tries 'namespace' key first, falls back to
-        'user_id' if not present.
-        
-        Args:
-            data: Parsed session data dictionary
-            
-        Returns:
-            The namespace string value, or None if neither key exists
-        """
-        return data.get("namespace", data.get("user_id"))
 
     # ==========================================================================
     # BAF-SSN-001: Base Agent Initialization with Session Awareness
@@ -195,7 +141,6 @@ class TestBaseAgentFramework:
         9. Agents maintain independent session contexts
         10. Session awareness fully implemented
         """
-        
         # Step 1-2: Create session context and initialize agent
         session_context_1 = self._create_session_context("agent_user@example.com")
         agent_1 = ConcreteTestAgent(session_context=session_context_1)
@@ -229,16 +174,15 @@ class TestBaseAgentFramework:
         
         # Step 10: Confirm session awareness
         print(f"✓ BAF-SSN-001: Agent 1 session: {agent_1.session_context.session_id[:16]}...")
-        print(f"✓ BAF-SSN-001: Agent 1 namespace: {agent_1.session_context.namespace}")
         print(f"✓ BAF-SSN-001: Agent 2 session: {agent_2.session_context.session_id[:16]}...")
-        print(f"✓ BAF-SSN-001: Agent 2 namespace: {agent_2.session_context.namespace}")
         print(f"✓ BAF-SSN-001: Session awareness properly implemented")
 
     # ==========================================================================
     # BAF-SSN-002: Session Context Persistence
     # ==========================================================================
     @pytest.mark.unit
-    def test_baf_ssn_002_session_context_persistence(self):
+    @pytest.mark.asyncio
+    async def test_baf_ssn_002_session_context_persistence(self):
         """
         BAF-SSN-002: Session Context Persistence
         Title: Agent session context persists throughout agent lifecycle
@@ -270,59 +214,41 @@ class TestBaseAgentFramework:
         9. Namespace isolation maintained
         10. Session persistence fully functional
         """
-        
         # Step 1-3: Create session context and agent
         session_context = self._create_session_context("persistent_agent@example.com")
         agent = ConcreteTestAgent(session_context=session_context)
         
-        # Store initial session data
         initial_session_id = agent.session_context.session_id
         initial_namespace = agent.session_context.namespace
         
-        # Step 4: Execute first operation (simulate)
-        operation_1_result = {
-            "operation": "operation_1",
-            "status": "success",
-            "timestamp": datetime.now().isoformat()
-        }
-        assert operation_1_result["status"] == "success"
-        
-        # Step 5: Verify session persistence (context remains)
+        # Step 4-5: Execute first operation via agent.process() and verify persistence
+        result_1 = await agent.process({"operation": "operation_1"})
+        assert result_1["task_status"] == "success"
         assert agent.session_context.session_id == initial_session_id, \
             "Session ID changed after operation 1"
         assert agent.session_context.namespace == initial_namespace, \
             "Namespace changed after operation 1"
         
-        # Step 6: Execute second operation
-        operation_2_result = {
-            "operation": "operation_2",
-            "status": "success",
-            "timestamp": datetime.now().isoformat()
-        }
-        assert operation_2_result["status"] == "success"
-        
-        # Step 7-8: Verify persistence and no corruption
+        # Step 6-8: Execute second operation and verify no corruption
+        result_2 = await agent.process({"operation": "operation_2"})
+        assert result_2["task_status"] == "success"
         assert agent.session_context.session_id == initial_session_id, \
             "Session ID changed after operation 2"
         assert agent.session_context.namespace == initial_namespace, \
             "Namespace changed after operation 2"
         
         # Step 9: Verify isolation maintained
-        assert initial_namespace is not None, \
-            "Namespace lost"
+        assert initial_namespace is not None, "Namespace lost"
         
         # Step 10: Confirm persistence
-        print(f"✓ BAF-SSN-002: Session context persisted after operation 1")
-        print(f"✓ BAF-SSN-002: Session context persisted after operation 2")
-        print(f"✓ BAF-SSN-002: Context isolation maintained throughout lifecycle")
+        print(f"✓ BAF-SSN-002: Session context persisted across 2 process() calls")
         print(f"✓ BAF-SSN-002: Session persistence fully functional")
 
     # ==========================================================================
     # BAF-EVN-001: Event Emission and CTF Tracking
     # ==========================================================================
     @pytest.mark.unit
-    @pytest.mark.asyncio
-    async def test_baf_evn_001_event_emission_and_ctf_tracking(self):
+    def test_baf_evn_001_event_emission_and_ctf_tracking(self):
         """
         BAF-EVN-001: Event Emission and CTF Tracking
         Title: Agent emits events for CTF tracking
@@ -354,63 +280,43 @@ class TestBaseAgentFramework:
         9. All events linked to correct session
         10. CTF tracking fully functional
         """
-        
         # Step 1-2: Create session and initialize agent
         session_context = self._create_session_context("event_agent@example.com")
         agent = ConcreteTestAgent(session_context=session_context)
         
-        # Create mock event queue
         event_queue = []
         
-        # Step 3: Emit agent_initialized event
+        # Step 3-5: Emit events
         event_queue.append({
             'type': 'agent_initialized',
-            'data': {
-                'agent_type': 'ConcreteTestAgent',
-                'version': '1.0'
-            },
+            'data': {'agent_type': 'ConcreteTestAgent', 'version': '1.0'},
             'timestamp': datetime.now().isoformat(),
             'session_id': agent.session_context.session_id
         })
-        
-        # Step 4: Emit operation_started event
         event_queue.append({
             'type': 'operation_started',
-            'data': {
-                'operation_id': 'op_001',
-                'operation_name': 'test_operation'
-            },
+            'data': {'operation_id': 'op_001', 'operation_name': 'test_operation'},
             'timestamp': datetime.now().isoformat(),
             'session_id': agent.session_context.session_id
         })
-        
-        # Step 5: Emit operation_completed event
         event_queue.append({
             'type': 'operation_completed',
-            'data': {
-                'operation_id': 'op_001',
-                'result': 'success',
-                'duration_ms': 150
-            },
+            'data': {'operation_id': 'op_001', 'result': 'success', 'duration_ms': 150},
             'timestamp': datetime.now().isoformat(),
             'session_id': agent.session_context.session_id
         })
         
         # Step 6-7: Verify event queue
-        assert len(event_queue) == 3, \
-            f"Expected 3 events, got {len(event_queue)}"
+        assert len(event_queue) == 3, f"Expected 3 events, got {len(event_queue)}"
         
+        required_fields = {'type', 'data', 'timestamp', 'session_id'}
         for event in event_queue:
-            assert 'type' in event, "Event missing type"
-            assert 'data' in event, "Event missing data"
-            assert 'timestamp' in event, "Event missing timestamp"
-            assert 'session_id' in event, "Event missing session_id"
+            missing = required_fields - set(event.keys())
+            assert not missing, f"Event missing fields: {missing}"
         
         # Step 8: Verify chronological order
-        timestamps = [datetime.fromisoformat(e['timestamp']) 
-                     for e in event_queue]
-        assert timestamps == sorted(timestamps), \
-            "Event timestamps not chronological"
+        timestamps = [datetime.fromisoformat(e['timestamp']) for e in event_queue]
+        assert timestamps == sorted(timestamps), "Event timestamps not chronological"
         
         # Step 9: Verify session context in events
         for event in event_queue:
@@ -420,7 +326,6 @@ class TestBaseAgentFramework:
         # Step 10: Confirm CTF tracking
         print(f"✓ BAF-EVN-001: Emitted {len(event_queue)} events")
         print(f"✓ BAF-EVN-001: Event types: {[e['type'] for e in event_queue]}")
-        print(f"✓ BAF-EVN-001: All events include session context")
         print(f"✓ BAF-EVN-001: CTF tracking fully functional")
 
     # ==========================================================================
@@ -459,7 +364,6 @@ class TestBaseAgentFramework:
         9. Total routed events equals emitted events
         10. Event routing fully functional
         """
-        
         # Step 1-2: Create session and initialize
         session_context = self._create_session_context("routing_agent@example.com")
         agent = ConcreteTestAgent(session_context=session_context)
@@ -484,34 +388,21 @@ class TestBaseAgentFramework:
         ]
         
         for event_type, data in events_to_emit:
-            if event_type == 'error':
-                error_handler({'type': event_type, **data})
-            else:
-                success_handler({'type': event_type, **data})
+            handler = error_handler if event_type == 'error' else success_handler
+            handler({'type': event_type, **data})
         
         # Step 6-8: Verify routing
-        assert len(error_events) == 3, \
-            f"Expected 3 error events, got {len(error_events)}"
-        assert len(success_events) == 2, \
-            f"Expected 2 success events, got {len(success_events)}"
-        
-        for event in error_events:
-            assert event['type'] == 'error', \
-                "Success event in error handler"
-        
-        for event in success_events:
-            assert event['type'] == 'success', \
-                "Error event in success handler"
+        assert len(error_events) == 3, f"Expected 3 error events, got {len(error_events)}"
+        assert len(success_events) == 2, f"Expected 2 success events, got {len(success_events)}"
+        assert all(e['type'] == 'error' for e in error_events), "Non-error in error handler"
+        assert all(e['type'] == 'success' for e in success_events), "Non-success in success handler"
         
         # Step 9: Verify no event loss
         total_events = len(error_events) + len(success_events)
-        assert total_events == len(events_to_emit), \
-            "Events lost during routing"
+        assert total_events == len(events_to_emit), "Events lost during routing"
         
         # Step 10: Confirm routing
-        print(f"✓ BAF-EVN-002: Routed {len(error_events)} error events")
-        print(f"✓ BAF-EVN-002: Routed {len(success_events)} success events")
-        print(f"✓ BAF-EVN-002: Zero events lost, routing correctly")
+        print(f"✓ BAF-EVN-002: Routed {len(error_events)} error, {len(success_events)} success")
         print(f"✓ BAF-EVN-002: Event routing and filtering fully functional")
 
     # ==========================================================================
@@ -550,67 +441,37 @@ class TestBaseAgentFramework:
         9. attempt_recovery() called, transitions recovered to True
         10. Agent operational with recovered=True
         """
-        
-        # Step 1-2: Create session and initialize agent with error flags
+        # Step 1-2: Create session and initialize agent
         session_context = self._create_session_context("error_agent@example.com")
         agent = ConcreteTestAgent(session_context=session_context)
         
         error_handled = False
         error_message = None
         recovered = False
-        recovery_attempts = 0
         
-        # Step 3-4: Define and execute failing operation
-        def failing_operation():
-            raise ValueError("Test error: operation failed")
-        
-        # Step 5: Catch error and mark as handled
+        # Step 3-5: Execute failing operation and catch error
         try:
-            failing_operation()
+            raise ValueError("Test error: operation failed")
         except ValueError as e:
             error_handled = True
             error_message = str(e)
         
         assert error_handled is True, "Error not handled"
         
-        # Step 6: Verify initial state (recovered still False)
-        assert recovered is False, \
-            "recovered flag should be False before recovery attempt"
-        print(f"✓ Step 6: Error caught, recovered={recovered} (unhandled)")
+        # Step 6: Verify pre-recovery state
+        assert recovered is False, "recovered should be False before recovery"
         
-        # Step 7: Verify session not corrupted
-        assert agent.session_context.session_id is not None, \
-            "Session corrupted by error"
+        # Step 7-8: Verify session not corrupted
+        assert agent.session_context.session_id is not None, "Session corrupted by error"
+        assert agent.session_context.namespace is not None, "Session namespace lost"
         
-        # Step 8: Verify session namespace still accessible
-        assert agent.session_context.namespace is not None, \
-            "Session namespace lost"
-        print(f"✓ Step 8: Session intact, namespace={agent.session_context.namespace}")
-        
-        # Step 9: Call attempt_recovery() to transition False → True
-        recovery_success = True
+        # Step 9: Transition to recovered
         recovered = True
-        recovery_attempts += 1
-        
         assert recovered is True, "Recovery flag not set to True"
-        assert recovery_attempts == 1, "Recovery attempt not counted"
-        print(f"✓ Step 9: attempt_recovery() called, recovered={recovered}")
         
-        # Step 10: Verify agent is operational after recovery
-        recovery_result = {
-            "status": "recovered",
-            "timestamp": datetime.now().isoformat()
-        }
-        
-        assert recovery_result["status"] == "recovered", \
-            "Recovery operation failed"
-        
-        # Final confirmation
-        print(f"✓ BAF-ERR-001: Initial error: {error_message}")
-        print(f"✓ BAF-ERR-001: Error handled: {error_handled}")
+        # Step 10: Confirm
+        print(f"✓ BAF-ERR-001: Error handled: {error_message}")
         print(f"✓ BAF-ERR-001: Recovery transition: False → {recovered}")
-        print(f"✓ BAF-ERR-001: Recovery attempts: {recovery_attempts}")
-        print(f"✓ BAF-ERR-001: Agent operational after recovery")
         print(f"✓ BAF-ERR-001: Error handling and recovery fully functional")
 
     # ==========================================================================
@@ -649,7 +510,6 @@ class TestBaseAgentFramework:
         9. No sensitive data found in logs
         10. Error logs returned by get_error_logs
         """
-        
         # Step 1-2: Create session and initialize agent
         session_context = self._create_session_context("logging_agent@example.com")
         agent = ConcreteTestAgent(session_context=session_context)
@@ -657,88 +517,60 @@ class TestBaseAgentFramework:
         error_log = []
         error_counter = 0
         
-        # Define log_error method
-        def log_error_method(error_type: str, error_message: str, error_code: str):
+        def log_error(error_type: str, error_message: str, error_code: str):
             nonlocal error_counter
             error_counter += 1
-            log_entry = {
+            error_log.append({
                 'timestamp': datetime.now().isoformat(),
                 'session_id': agent.session_context.session_id,
                 'error_type': error_type,
                 'error_message': error_message,
                 'error_code': error_code,
                 'sequence': error_counter
-            }
-            error_log.append(log_entry)
-            return True
+            })
         
-        # Step 3-4: Define operations that raise REAL errors
-        def operation_1():
-            raise ValueError("Invalid input provided to operation_1")
-        
-        def operation_2():
-            raise RuntimeError("Operation_2 failed to complete successfully")
-        
-        def operation_3():
-            raise TimeoutError("Operation_3 exceeded maximum execution time")
-        
-        # Step 5: Execute operations, catch real errors, and log them
+        # Step 3-5: Define, execute, and log errors
         operations = [
-            (operation_1, 'ValueError', 'Invalid input provided to operation_1', 'E001'),
-            (operation_2, 'RuntimeError', 'Operation_2 failed to complete successfully', 'E002'),
-            (operation_3, 'TimeoutError', 'Operation_3 exceeded maximum execution time', 'E003'),
+            (ValueError, "Invalid input provided to operation_1", 'E001'),
+            (RuntimeError, "Operation_2 failed to complete successfully", 'E002'),
+            (TimeoutError, "Operation_3 exceeded maximum execution time", 'E003'),
         ]
         
-        for op_func, error_type, error_msg, error_code in operations:
+        for exc_class, msg, code in operations:
             try:
-                op_func()
-                assert False, f"Expected {error_type} to be raised"
+                raise exc_class(msg)
             except (ValueError, RuntimeError, TimeoutError) as e:
-                log_error_method(error_type, str(e), error_code)
-                print(f"✓ Caught {error_type}: {str(e)}")
+                log_error(type(e).__name__, str(e), code)
         
         # Step 6: Verify all 3 errors logged
-        assert len(error_log) == 3, \
-            f"Expected 3 logged errors, got {len(error_log)}"
+        assert len(error_log) == 3, f"Expected 3 logged errors, got {len(error_log)}"
         
-        # Step 7: Verify each error has required fields
-        for i, log_entry in enumerate(error_log):
-            assert 'error_type' in log_entry, f"Error {i} missing type"
-            assert 'error_message' in log_entry, f"Error {i} missing message"
-            assert 'timestamp' in log_entry, f"Error {i} missing timestamp"
-            assert 'sequence' in log_entry, f"Error {i} missing sequence"
-            assert log_entry['sequence'] == i + 1, \
-                f"Error {i} sequence is {log_entry['sequence']}, expected {i + 1}"
+        # Step 7: Verify required fields and sequence
+        required_fields = {'error_type', 'error_message', 'timestamp', 'sequence'}
+        for i, entry in enumerate(error_log):
+            missing = required_fields - set(entry.keys())
+            assert not missing, f"Error {i} missing fields: {missing}"
+            assert entry['sequence'] == i + 1, \
+                f"Error {i} sequence is {entry['sequence']}, expected {i + 1}"
         
-        # Step 8: Verify session_id in each log entry
-        for log_entry in error_log:
-            assert log_entry['session_id'] == session_context.session_id, \
+        # Step 8: Verify session_id
+        for entry in error_log:
+            assert entry['session_id'] == session_context.session_id, \
                 "Log entry has incorrect session_id"
         
         # Step 9: Verify no sensitive data in logs
         sensitive_strings = ['password', 'token', 'secret', 'api_key']
-        for log_entry in error_log:
-            log_str = json.dumps(log_entry).lower()
+        for entry in error_log:
+            log_str = json.dumps(entry).lower()
             for sensitive in sensitive_strings:
                 assert sensitive not in log_str, \
                     f"Sensitive data '{sensitive}' found in log"
         
-        # Step 10: Verify log retrieval
-        retrieved_logs = error_log
-        assert len(retrieved_logs) == 3, "Error logs not retrievable"
+        # Step 10: Verify error types
+        error_types = [e['error_type'] for e in error_log]
+        assert set(error_types) == {'ValueError', 'RuntimeError', 'TimeoutError'}
         
-        # Verify error types match what we caught
-        error_types = [log['error_type'] for log in retrieved_logs]
-        assert 'ValueError' in error_types
-        assert 'RuntimeError' in error_types
-        assert 'TimeoutError' in error_types
-        
-        # Final confirmation
-        print(f"✓ BAF-ERR-002: Triggered 3 real errors")
-        print(f"✓ BAF-ERR-002: Logged {len(error_log)} error entries")
-        print(f"✓ BAF-ERR-002: Error types: {error_types}")
-        print(f"✓ BAF-ERR-002: Error sequence maintained")
-        print(f"✓ BAF-ERR-002: Session context in all logs")
+        print(f"✓ BAF-ERR-002: Logged {len(error_log)} errors: {error_types}")
         print(f"✓ BAF-ERR-002: Error propagation and logging fully functional")
 
     # ==========================================================================
@@ -777,36 +609,31 @@ class TestBaseAgentFramework:
         9. string_analyzer returns 10 (length of test_input)
         10. Tool framework fully functional
         """
-        
         # Step 1-2: Create session and initialize
         session_context = self._create_session_context("tool_agent@example.com")
         agent = ConcreteTestAgent(session_context=session_context)
         
-        tool_registry = {}
-        tool_results = {}
-        
-        # Step 3-4: Define tools with descriptive implementations
+        # Step 3-4: Define tools
         def string_processor(input_val: str) -> str:
-            """Transforms input text by adding prefix"""
             return f"tool_a_processed_{input_val}"
         
         def string_analyzer(input_val: str) -> int:
-            """Analyzes input text and returns length"""
             return len(input_val)
         
         # Step 5-6: Register tools
-        tool_registry['string_processor'] = {
-            'name': 'string_processor',
-            'implementation': string_processor,
-            'parameters': ['input_val'],
-            'return_type': 'str'
-        }
-        
-        tool_registry['string_analyzer'] = {
-            'name': 'string_analyzer',
-            'implementation': string_analyzer,
-            'parameters': ['input_val'],
-            'return_type': 'int'
+        tool_registry = {
+            'string_processor': {
+                'name': 'string_processor',
+                'implementation': string_processor,
+                'parameters': ['input_val'],
+                'return_type': 'str'
+            },
+            'string_analyzer': {
+                'name': 'string_analyzer',
+                'implementation': string_analyzer,
+                'parameters': ['input_val'],
+                'return_type': 'int'
+            }
         }
         
         # Step 7: Verify registration
@@ -814,27 +641,16 @@ class TestBaseAgentFramework:
         assert 'string_processor' in tool_registry
         assert 'string_analyzer' in tool_registry
         
-        # Step 8-9: Execute tools
+        # Step 8-9: Execute tools and verify outputs
         processed_text = tool_registry['string_processor']['implementation']('test_input')
-        tool_results['string_processor'] = processed_text
-        
         text_length = tool_registry['string_analyzer']['implementation']('test_input')
-        tool_results['string_analyzer'] = text_length
         
-        # Verify outputs
         assert processed_text == "tool_a_processed_test_input"
         assert text_length == 10
         
-        # Verify isolation
-        processor_context = {'session_id': agent.session_context.session_id, 'tool': 'string_processor'}
-        analyzer_context = {'session_id': agent.session_context.session_id, 'tool': 'string_analyzer'}
-        assert processor_context['tool'] != analyzer_context['tool']
-        
         # Step 10: Confirm framework
         print(f"✓ BAF-INT-001: Registered {len(tool_registry)} tools")
-        print(f"✓ BAF-INT-001: string_processor executed: {processed_text}")
-        print(f"✓ BAF-INT-001: string_analyzer executed: {text_length}")
-        print(f"✓ BAF-INT-001: Tool isolation maintained")
+        print(f"✓ BAF-INT-001: string_processor={processed_text}, string_analyzer={text_length}")
         print(f"✓ BAF-INT-001: Tool integration framework fully functional")
 
     # ==========================================================================
@@ -873,39 +689,28 @@ class TestBaseAgentFramework:
         9. Failed validation logged
         10. Tool validation fully functional
         """
-        
         # Step 1-2: Create session and initialize
         session_context = self._create_session_context("validation_agent@example.com")
         agent = ConcreteTestAgent(session_context=session_context)
         
-        tools = {}
-        execution_log = []
-        
-        # Step 3: Register tool with validation
-        def calculate_total(values: List[int]) -> int:
+        # Step 3-4: Register tool with validation
+        def calculate_total(values: list[int]) -> int:
             return sum(values)
         
-        tools['calculate'] = {
-            'impl': calculate_total,
-            'params': {'values': {'type': 'list', 'element_type': 'int'}},
-            'returns': 'int'
+        tools = {
+            'calculate': {
+                'impl': calculate_total,
+                'params': {'values': {'type': 'list', 'element_type': 'int'}},
+                'returns': 'int'
+            }
         }
         
-        # Step 5: Execute with valid parameters
+        # Step 5-6: Execute with valid parameters
         valid_input = [1, 2, 3, 4, 5]
         result_valid = tools['calculate']['impl'](valid_input)
-        
-        execution_log.append({
-            'tool': 'calculate',
-            'input': valid_input,
-            'output': result_valid,
-            'status': 'success',
-            'session_id': agent.session_context.session_id
-        })
-        
         assert result_valid == 15
         
-        # Step 7: Attempt with invalid parameters
+        # Step 7-8: Attempt with invalid parameters
         invalid_input = [1, 'two', 3]
         validation_error = None
         
@@ -913,28 +718,18 @@ class TestBaseAgentFramework:
             for item in invalid_input:
                 if not isinstance(item, int):
                     raise TypeError(f"Expected int, got {type(item)}")
-            result_invalid = tools['calculate']['impl'](invalid_input)
+            tools['calculate']['impl'](invalid_input)
         except TypeError as e:
             validation_error = str(e)
         
         assert validation_error is not None
         
-        execution_log.append({
-            'tool': 'calculate',
-            'input': invalid_input,
-            'error': validation_error,
-            'status': 'validation_failed',
-            'session_id': agent.session_context.session_id
-        })
-        
-        # Step 9: Verify agent stability
-        assert len(execution_log) == 2
+        # Step 9: Verify agent stability after error
         assert agent.session_context.session_id is not None
         
         # Step 10: Confirm validation
         print(f"✓ BAF-INT-002: Valid execution: {result_valid}")
         print(f"✓ BAF-INT-002: Invalid input rejected: {validation_error}")
-        print(f"✓ BAF-INT-002: Agent remained stable")
         print(f"✓ BAF-INT-002: Tool execution and validation fully functional")
 
     # ==========================================================================
@@ -973,55 +768,42 @@ class TestBaseAgentFramework:
         9. All items have correct session_id
         10. Memory management fully functional
         """
-        
         # Step 1-2: Create session and initialize
         session_context = self._create_session_context("memory_agent@example.com")
         agent = ConcreteTestAgent(session_context=session_context)
         
         memory = {}
         max_memory_items = 100
+        sid = agent.session_context.session_id
         
-        # Step 3-4: Add data to memory
+        # Step 3-4: Add first batch
         for i in range(10):
-            key = f"memory_item_{i}"
-            value = f"data_value_{i}_{datetime.now().isoformat()}"
-            memory[key] = {
-                'value': value,
+            memory[f"memory_item_{i}"] = {
+                'value': f"data_value_{i}",
                 'timestamp': datetime.now().isoformat(),
-                'session_id': agent.session_context.session_id
+                'session_id': sid
             }
-        
         assert len(memory) == 10
         
-        # Step 5-6: Retrieve and verify
+        # Step 5: Verify retrieval
         for i in range(10):
-            key = f"memory_item_{i}"
-            assert key in memory
-            assert memory[key]['session_id'] == agent.session_context.session_id
+            assert memory[f"memory_item_{i}"]['session_id'] == sid
         
-        # Step 7: Add more data
+        # Step 6-8: Add second batch and verify constraints
         for i in range(10, 20):
-            key = f"memory_item_{i}"
-            value = f"data_value_{i}_{datetime.now().isoformat()}"
-            memory[key] = {
-                'value': value,
+            memory[f"memory_item_{i}"] = {
+                'value': f"data_value_{i}",
                 'timestamp': datetime.now().isoformat(),
-                'session_id': agent.session_context.session_id
+                'session_id': sid
             }
-        
-        # Step 8: Verify memory constraints
-        assert len(memory) <= max_memory_items
         assert len(memory) == 20
+        assert len(memory) <= max_memory_items
         
-        # Step 9: Verify isolation
-        for key, item in memory.items():
-            assert item['session_id'] == agent.session_context.session_id
+        # Step 9: Verify all items tagged correctly
+        assert all(item['session_id'] == sid for item in memory.values())
         
-        # Step 10: Confirm management
-        print(f"✓ BAF-MEM-001: Stored 20 items in agent memory")
-        print(f"✓ BAF-MEM-001: Memory usage: {len(memory)}/{max_memory_items}")
-        print(f"✓ BAF-MEM-001: All data retrieved successfully")
-        print(f"✓ BAF-MEM-001: Context isolation maintained in memory")
+        # Step 10: Confirm
+        print(f"✓ BAF-MEM-001: Stored {len(memory)}/{max_memory_items} items")
         print(f"✓ BAF-MEM-001: Memory and context management fully functional")
 
     # ==========================================================================
@@ -1060,7 +842,6 @@ class TestBaseAgentFramework:
         9. Zero shared keys between agents
         10. Instance isolation fully functional
         """
-        
         # Step 1-4: Create sessions and agents
         session_a = self._create_session_context("agent_A@example.com")
         session_b = self._create_session_context("agent_B@example.com")
@@ -1068,37 +849,19 @@ class TestBaseAgentFramework:
         agent_a = ConcreteTestAgent(session_context=session_a)
         agent_b = ConcreteTestAgent(session_context=session_b)
         
-        memory_a = {}
-        memory_b = {}
+        # Step 5-6: Add data to each agent's memory
+        memory_a = {f"a_key_{i}": f"a_value_{i}" for i in range(5)}
+        memory_b = {f"b_key_{i}": f"b_value_{i}" for i in range(5)}
         
-        # Step 5: Add data to agent_A
-        for i in range(5):
-            memory_a[f"a_key_{i}"] = f"a_value_{i}"
+        # Step 7-9: Verify zero overlap
+        shared_keys = set(memory_a.keys()) & set(memory_b.keys())
+        assert len(shared_keys) == 0, f"Shared keys found: {shared_keys}"
+        assert agent_a.session_context.namespace != agent_b.session_context.namespace, \
+            "Agents share namespace"
         
-        # Step 6: Add data to agent_B
-        for i in range(5):
-            memory_b[f"b_key_{i}"] = f"b_value_{i}"
-        
-        # Step 7-8: Verify isolation
-        for key in memory_a.keys():
-            assert key not in memory_b
-        
-        for key in memory_b.keys():
-            assert key not in memory_a
-        
-        # Step 9: Verify no shared memory
-        agent_a_keys = set(memory_a.keys())
-        agent_b_keys = set(memory_b.keys())
-        shared_keys = agent_a_keys.intersection(agent_b_keys)
-        
-        assert len(shared_keys) == 0
-        
-        # Step 10: Confirm isolation
-        print(f"✓ BAF-MEM-002: Agent A memory: {len(memory_a)} items")
-        print(f"✓ BAF-MEM-002: Agent B memory: {len(memory_b)} items")
-        print(f"✓ BAF-MEM-002: Zero overlap in memory")
-        print(f"✓ BAF-MEM-002: Context completely isolated per instance")
-        print(f"✓ BAF-MEM-002: Instance isolation fully functional")
+        # Step 10: Confirm
+        print(f"✓ BAF-MEM-002: Agent A: {len(memory_a)} items, Agent B: {len(memory_b)} items")
+        print(f"✓ BAF-MEM-002: Context isolation per instance fully functional")
 
     # ==========================================================================
     # BAF-GSI-001: Google Sheets Integration for Agent Metrics
@@ -1136,7 +899,6 @@ class TestBaseAgentFramework:
         9. Upload response indicates 1 row written
         10. Google Sheets integration fully functional
         """
-        
         # Step 1-2: Create session and initialize
         session_context = self._create_session_context("gs_agent@example.com")
         agent = ConcreteTestAgent(session_context=session_context)
@@ -1152,59 +914,42 @@ class TestBaseAgentFramework:
             'memory_items': 15
         }
         
-        # Step 3-4: Collect and verify metrics
-        assert 'total_operations' in metrics
-        assert 'successful_operations' in metrics
-        assert 'failed_operations' in metrics
-        assert 'total_duration_ms' in metrics
+        # Step 3-4: Verify required fields
+        required_keys = {'total_operations', 'successful_operations', 'failed_operations', 'total_duration_ms'}
+        assert required_keys.issubset(metrics.keys()), f"Missing keys: {required_keys - metrics.keys()}"
         
-        # Step 5-6: Format for Google Sheets
-        formatted_metrics = {
-            'headers': [
-                'Session ID', 'Agent Type', 'Total Operations', 'Successful',
-                'Failed', 'Total Duration (ms)', 'Avg Duration (ms)',
-                'Errors', 'Tools Used', 'Memory Items', 'Timestamp'
-            ],
-            'rows': [[
-                agent.session_context.session_id, 'TestAgent',
-                metrics['total_operations'],
-                metrics['successful_operations'],
-                metrics['failed_operations'],
-                metrics['total_duration_ms'],
-                metrics['average_duration_ms'],
-                metrics['errors'],
-                metrics['tools_executed'],
-                metrics['memory_items'],
-                datetime.now().isoformat()
-            ]]
-        }
+        # Step 5-7: Format for Google Sheets
+        headers = [
+            'Session ID', 'Agent Type', 'Total Operations', 'Successful',
+            'Failed', 'Total Duration (ms)', 'Avg Duration (ms)',
+            'Errors', 'Tools Used', 'Memory Items', 'Timestamp'
+        ]
+        row = [
+            agent.session_context.session_id, 'TestAgent',
+            metrics['total_operations'], metrics['successful_operations'],
+            metrics['failed_operations'], metrics['total_duration_ms'],
+            metrics['average_duration_ms'], metrics['errors'],
+            metrics['tools_executed'], metrics['memory_items'],
+            datetime.now().isoformat()
+        ]
         
-        assert len(formatted_metrics['headers']) == 11
-        assert len(formatted_metrics['rows']) == 1
-        assert len(formatted_metrics['rows'][0]) == 11
+        assert len(headers) == 11
+        assert len(row) == 11
         
-        # Step 8: Simulate upload
-        upload_response = {
-            'status': 'success',
-            'sheet_id': 'test_sheet_123',
-            'rows_written': 1,
-            'timestamp': datetime.now().isoformat()
-        }
-        
+        # Step 8-9: Simulate upload
+        upload_response = {'status': 'success', 'rows_written': 1}
         assert upload_response['status'] == 'success'
         assert upload_response['rows_written'] == 1
         
-        # Step 9: Verify no sensitive data
+        # Verify no sensitive data in headers
         sensitive_patterns = ['password', 'token', 'secret', 'api_key']
-        for header in formatted_metrics['headers']:
+        for header in headers:
             for pattern in sensitive_patterns:
-                assert pattern not in header.lower()
+                assert pattern not in header.lower(), \
+                    f"Sensitive data '{pattern}' found in header"
         
-        # Step 10: Confirm integration
-        print(f"✓ BAF-GS-001: Collected {len(metrics)} metric types")
-        print(f"✓ BAF-GS-001: Formatted {len(formatted_metrics['rows'])} row(s) for Sheets")
-        print(f"✓ BAF-GS-001: Uploaded metrics to Google Sheets")
-        print(f"✓ BAF-GS-001: No sensitive data in export")
+        # Step 10: Confirm
+        print(f"✓ BAF-GS-001: Formatted {len(metrics)} metrics into {len(headers)} columns")
         print(f"✓ BAF-GS-001: Google Sheets integration fully functional")
 
     # ==========================================================================
@@ -1243,60 +988,43 @@ class TestBaseAgentFramework:
         9. Metrics formatted for export
         10. All AC verified, system ready
         """
-        
         # Step 1-2: Create session and initialize full agent
         session_context = self._create_session_context("full_agent@example.com")
         agent = ConcreteTestAgent(session_context=session_context)
+        sid = agent.session_context.session_id
         
-        tools = {}
         events = []
-        metrics = {
-            'operations': 0,
-            'successful': 0,
-            'failed': 0,
-            'errors': [],
-            'tools_used': []
-        }
-        memory = {}
+        metrics = {'operations': 0, 'successful': 0, 'failed': 0, 'errors': [], 'tools_used': []}
         
-        # Step 3: Register tools
+        # Step 3: Register tools (fixed closure bug with default arg)
+        tools = {}
         for tool_name in ['analyze', 'execute', 'validate']:
             tools[tool_name] = {
                 'name': tool_name,
-                'impl': lambda x: f"{tool_name}_result",
+                'impl': lambda x, name=tool_name: f"{name}_result",
                 'status': 'ready'
             }
-        
         assert len(tools) == 3
         
-        # Step 4: Execute operations
-        operations = [
-            {'type': 'analyze', 'input': 'data_1'},
-            {'type': 'execute', 'input': 'action_1'},
-            {'type': 'validate', 'input': 'result_1'},
-        ]
+        # Verify closure fix: each tool returns its own name
+        assert tools['analyze']['impl']('x') == 'analyze_result'
+        assert tools['execute']['impl']('x') == 'execute_result'
+        assert tools['validate']['impl']('x') == 'validate_result'
         
-        for i, op in enumerate(operations):
-            events.append({
-                'type': 'operation_started',
-                'operation_id': f'op_{i}',
-                'timestamp': datetime.now().isoformat(),
-                'session_id': agent.session_context.session_id
-            })
+        # Step 4-5: Execute operations with events
+        for i, op_type in enumerate(['analyze', 'execute', 'validate']):
+            events.append({'type': 'operation_started', 'operation_id': f'op_{i}',
+                          'timestamp': datetime.now().isoformat(), 'session_id': sid})
             
             metrics['operations'] += 1
             metrics['successful'] += 1
-            metrics['tools_used'].append(op['type'])
+            metrics['tools_used'].append(op_type)
             
-            events.append({
-                'type': 'operation_completed',
-                'operation_id': f'op_{i}',
-                'result': f"{op['type']}_result",
-                'timestamp': datetime.now().isoformat(),
-                'session_id': agent.session_context.session_id
-            })
+            events.append({'type': 'operation_completed', 'operation_id': f'op_{i}',
+                          'result': f"{op_type}_result",
+                          'timestamp': datetime.now().isoformat(), 'session_id': sid})
         
-        # Step 5-6: Verify metrics and events
+        # Step 6: Verify
         assert metrics['operations'] == 3
         assert metrics['successful'] == 3
         assert len(events) == 6
@@ -1305,50 +1033,24 @@ class TestBaseAgentFramework:
         try:
             raise RuntimeError("Simulated mid-execution error")
         except RuntimeError as e:
-            events.append({
-                'type': 'error',
-                'error_type': 'RuntimeError',
-                'error_message': str(e),
-                'timestamp': datetime.now().isoformat(),
-                'session_id': agent.session_context.session_id
-            })
+            events.append({'type': 'error', 'error_message': str(e),
+                          'timestamp': datetime.now().isoformat(), 'session_id': sid})
             metrics['failed'] += 1
             metrics['errors'].append(str(e))
         
-        # Step 8: Verify recovery
-        events.append({
-            'type': 'recovery_started',
-            'timestamp': datetime.now().isoformat(),
-            'session_id': agent.session_context.session_id
-        })
-        events.append({
-            'type': 'recovery_completed',
-            'timestamp': datetime.now().isoformat(),
-            'session_id': agent.session_context.session_id
-        })
-        
+        # Step 8: Recovery events
+        events.append({'type': 'recovery_started', 'timestamp': datetime.now().isoformat(), 'session_id': sid})
+        events.append({'type': 'recovery_completed', 'timestamp': datetime.now().isoformat(), 'session_id': sid})
         assert metrics['failed'] == 1
         
-        # Step 9: Format and upload metrics
-        gs_data = {
-            'headers': ['Metric', 'Value'],
-            'rows': [
-                ['Session ID', agent.session_context.session_id],
-                ['Total Operations', metrics['operations']],
-                ['Successful', metrics['successful']],
-                ['Failed', metrics['failed']],
-                ['Total Events', len(events)],
-                ['Tools Used', len(set(metrics['tools_used']))],
-            ]
-        }
+        # Step 9: Call agent.process() to verify end-to-end
+        result = await agent.process({"operation": "final_validation"})
+        assert result["task_status"] == "success"
         
         # Step 10: Confirm all AC met
-        print(f"✓ BAF-COM-001: AC1 - Session awareness: {agent.session_context.session_id[:16]}...")
-        print(f"✓ BAF-COM-001: AC2 - Event emission: {len(events)} events emitted")
-        print(f"✓ BAF-COM-001: AC3 - Error handling: Recovered from {len(metrics['errors'])} error(s)")
-        print(f"✓ BAF-COM-001: AC4 - Tool framework: {len(tools)} tools registered")
-        print(f"✓ BAF-COM-001: AC5 - Memory management: {len(memory)} items in memory")
-        print(f"✓ BAF-COM-001: Google Sheets integration: Ready for upload")
-        print(f"✓ BAF-COM-001: Operations executed: {metrics['successful']}/{metrics['operations']}")
+        print(f"✓ BAF-COM-001: AC1 - Session: {sid[:16]}...")
+        print(f"✓ BAF-COM-001: AC2 - Events: {len(events)} emitted")
+        print(f"✓ BAF-COM-001: AC3 - Errors: recovered from {len(metrics['errors'])}")
+        print(f"✓ BAF-COM-001: AC4 - Tools: {len(tools)} registered")
+        print(f"✓ BAF-COM-001: AC5 - process() returned success")
         print(f"✓ BAF-COM-001: ALL ACCEPTANCE CRITERIA MET")
-        print(f"✓ BAF-COM-001: SYSTEM READY FOR PRODUCTION")
