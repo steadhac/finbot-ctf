@@ -11,7 +11,7 @@ Tests for the CTF event processing pipeline mapped to acceptance criteria:
 
 import json
 import pytest
-from datetime import datetime, timezone, timedelta, UTC
+from datetime import datetime, UTC
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from finbot.ctf.processor.event_processor import CTFEventProcessor
@@ -22,7 +22,6 @@ from finbot.ctf.detectors.result import DetectionResult
 from finbot.ctf.detectors.registry import (
     create_detector,
     register_detector,
-    get_detector_class,
     list_registered_detectors,
 )
 from finbot.ctf.detectors.implementations.prompt_leak import PromptLeakDetector
@@ -231,10 +230,11 @@ def test_idempotent_event_storage(db):
 
     Test Steps:
     1. Create CTFEventProcessor with no Redis client
-    2. Build event with explicit event_id = "evt-idem-001"
-    3. Call _store_ctf_event twice with the same event
-    4. Query CTFEvent table for external_event_id = "evt-idem-001"
-    5. Verify exactly 1 record exists (no duplicate)
+    2. Clean up any leftover CTFEvent with event_id "evt-idem-001"
+    3. Build event with explicit event_id = "evt-idem-001"
+    4. Call _store_ctf_event twice with the same event
+    5. Query CTFEvent table for external_event_id = "evt-idem-001"
+    6. Verify exactly 1 record exists (no duplicate)
 
     Expected Results:
     1. First insert creates one CTFEvent record
@@ -245,6 +245,12 @@ def test_idempotent_event_storage(db):
 
     processor = CTFEventProcessor(redis_client=None)
     event = _make_event(event_id="evt-idem-001")
+
+    # FIX: Clean up from previous runs so first store is actually tested
+    db.query(CTFEvent).filter(
+        CTFEvent.external_event_id == "evt-idem-001"
+    ).delete(synchronize_session=False)
+    db.commit()
 
     processor._store_ctf_event(event, "agent", db)
     count_1 = db.query(CTFEvent).filter(
@@ -663,11 +669,12 @@ def test_challenge_completion_and_progress_update(db):
     1. Create Challenge in DB with FakeTestDetector (should_detect=True)
     2. Build matching event
     3. Call check_event_for_challenges(event, db)
-    4. Verify returned list has one entry (challenge_id, result)
-    5. Query UserChallengeProgress — verify status="completed"
-    6. Verify completed_at is not None
-    7. Verify completion_evidence contains detection details
-    8. Verify successful_attempts == 1
+    4. Filter results to our test challenge (isolate from YAML-seeded data)
+    5. Verify returned list has one entry (challenge_id, result)
+    6. Query UserChallengeProgress — verify status="completed"
+    7. Verify completed_at is not None
+    8. Verify completion_evidence contains detection details
+    9. Verify successful_attempts == 1
 
     Expected Results:
     1. Challenge flagged as completed automatically
@@ -697,9 +704,10 @@ def test_challenge_completion_and_progress_update(db):
     event = _make_event(event_type="agent.llm_response")
     completed = service.check_event_for_challenges(event, db)
 
-    assert len(completed) == 1
-    assert completed[0][0] == "ch-flag-001"
-    assert completed[0][1].detected is True
+    # FIX #1: Filter to our test challenge (YAML-seeded challenges may also match)
+    our_completed = [(cid, r) for cid, r in completed if cid == "ch-flag-001"]
+    assert len(our_completed) == 1
+    assert our_completed[0][1].detected is True
 
     progress = db.query(UserChallengeProgress).filter(
         UserChallengeProgress.challenge_id == "ch-flag-001",
@@ -734,10 +742,11 @@ def test_challenge_progress_tracking_on_failed_attempt(db):
     1. Create Challenge in DB with should_detect=False
     2. Build matching event
     3. Call check_event_for_challenges(event, db)
-    4. Verify returned list is empty (no completion)
-    5. Query UserChallengeProgress — verify status="in_progress"
-    6. Verify attempts=1, failed_attempts=1
-    7. Verify first_attempt_at is set
+    4. Filter results to our test challenge (isolate from YAML-seeded data)
+    5. Verify our challenge not in completed list
+    6. Query UserChallengeProgress — verify status="in_progress"
+    7. Verify attempts=1, failed_attempts=1
+    8. Verify first_attempt_at is set
 
     Expected Results:
     1. No flag awarded for failed detection
@@ -767,10 +776,15 @@ def test_challenge_progress_tracking_on_failed_attempt(db):
     event = _make_event(event_type="agent.llm_response")
     completed = service.check_event_for_challenges(event, db)
 
-    assert completed == []
+    # FIX #1: Filter to our challenge — other YAML-seeded challenges may complete
+    our_completed = [(cid, r) for cid, r in completed if cid == "ch-fail-001"]
+    assert our_completed == []
 
+    # FIX #4: Add namespace + user_id filters to avoid finding stale records
     progress = db.query(UserChallengeProgress).filter(
         UserChallengeProgress.challenge_id == "ch-fail-001",
+        UserChallengeProgress.namespace == "test-ns",
+        UserChallengeProgress.user_id == "user-1",
     ).first()
 
     assert progress is not None
@@ -797,12 +811,13 @@ def test_already_completed_challenge_skipped(db):
     2. Create UserChallengeProgress with status="completed"
     3. Build matching event
     4. Call check_event_for_challenges(event, db)
-    5. Verify returned list is empty (skipped)
+    5. Filter results to our test challenge (isolate from YAML-seeded data)
+    6. Verify our challenge not in completed list (skipped)
 
     Expected Results:
     1. Completed challenge not re-detected
     2. No duplicate awards
-    3. Returns empty list
+    3. Returns empty for our challenge
     """
     from finbot.core.data.models import Challenge, UserChallengeProgress
 
@@ -835,7 +850,9 @@ def test_already_completed_challenge_skipped(db):
     event = _make_event(event_type="agent.llm_response")
     completed = service.check_event_for_challenges(event, db)
 
-    assert completed == []
+    # FIX #1: Filter to our challenge — other YAML-seeded challenges may complete
+    our_completed = [(cid, r) for cid, r in completed if cid == "ch-skip-001"]
+    assert our_completed == []
 
     db.close()
 
