@@ -32,6 +32,7 @@ from finbot.core.websocket.events import (
     create_challenge_completed_event,
     create_badge_earned_event,
 )
+from finbot.core.data.models import Challenge, UserChallengeProgress
 
 
 # ============================================================================
@@ -753,7 +754,6 @@ def test_challenge_progress_tracking_on_failed_attempt(db):
     2. Progress record created with "in_progress" status
     3. Attempt counters properly incremented
     """
-    from finbot.core.data.models import Challenge, UserChallengeProgress
 
     service = ChallengeService()
     _cleanup_challenges(db, ["ch-fail-001"])
