@@ -345,17 +345,6 @@ class InvoiceRepository(NamespacedRepository):
         invoice.updated_at = datetime.now(UTC)
         self.db.commit()
 
-        self.log_activity(
-            "invoice_updated",
-            f"Updated invoice: {invoice.invoice_number}",
-            metadata={
-                "invoice_id": invoice.id,
-                "vendor_id": invoice.vendor_id,
-                "updates": list(updates.keys()),
-            },
-            commit=True,
-        )
-
         return invoice
 
 
