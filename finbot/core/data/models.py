@@ -801,4 +801,6 @@ class LLMResponse(BaseModel):
     success: bool = True  # whether the request was successful
     provider: LLMProviderType | None = None
     metadata: dict | None = None  # provider specific metadata
-    messages: list[dict[str, str]] | None = None  # message history
+    # Message history - using Any to support complex objects like tool_calls, metadata, etc.
+    # that may be included in message entries beyond just content strings
+    messages: list[dict[str, Any]] | None = None

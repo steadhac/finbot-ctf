@@ -17,7 +17,7 @@ class GoogleSheetsReporter:
     def __init__(self, worksheet_name: str):
         """Initialize connection to a specific worksheet."""
         self.worksheet_name = worksheet_name
-        self.results: List[Dict] = []
+        self.results: List[List[str]] = []
         
         # Get credentials from environment
         creds_file = os.getenv('GOOGLE_CREDENTIALS_FILE', 'google-credentials.json')
@@ -77,42 +77,56 @@ class GoogleSheetsReporter:
         self.results.append(row)
     
     def save_results(self):
-        """Save all accumulated results to the worksheet."""
+        """Save all accumulated results to the worksheet in a single batch.
+
+        Reads column A once, matches every result to a row, then writes all
+        K/L/M cells in one update_cells call — avoids rate-limiting from
+        making two API calls per test result.
+        """
         if not self.results:
             return
-        
-        # For all worksheets, try to update existing rows in columns K, L, M
+
+        # One read to get all of column A
+        col_a = self.worksheet.col_values(1)
+
+        cells_to_update = []
+        timestamp = datetime.now().isoformat()
+
         for result in self.results:
-            # result is a list: [test_code, test_name, status, duration, timestamp, message]
-            self._update_or_append_result(result)
-        
+            test_code = result[0]
+            test_name = result[1]
+            status = result[2]
+            message = result[5]
+
+            row = None
+            for query in [test_code, test_name]:
+                if not query:
+                    continue
+                for i, cell_value in enumerate(col_a):
+                    if query and cell_value and query.strip().lower() in str(cell_value).strip().lower():
+                        row = i + 1  # 1-indexed
+                        break
+                if row:
+                    break
+
+            if row is None:
+                print(
+                    f"  [sheets] no match for '{test_code}' / '{test_name}' "
+                    f"in '{self.worksheet_name}' col A: {col_a[:10]}"
+                )
+                continue
+
+            cells_to_update.extend([
+                gspread.Cell(row, 11, status),
+                gspread.Cell(row, 12, message),
+                gspread.Cell(row, 13, timestamp),
+            ])
+
+        # One write for all matched results
+        if cells_to_update:
+            self.worksheet.update_cells(cells_to_update)
+
         self.results = []
-    
-    
-    def _update_or_append_result(self, result: list):
-        """Find test code and update K, L, M columns. If not found, append row."""
-        test_code = result[0]
-        status = result[2]
-        message = result[5]
-        
-        try:
-            # Find the row with matching test code in column A
-            cell = self.worksheet.find(test_code, in_column=1)
-            if cell:
-                row = cell.row
-                # Batch update columns K (11), L (12), M (13)
-                cells_to_update = [
-                    gspread.Cell(row, 11, status),
-                    gspread.Cell(row, 12, message),
-                    gspread.Cell(row, 13, datetime.now().isoformat())
-                ]
-                self.worksheet.update_cells(cells_to_update)
-                return
-        except Exception:
-            pass
-        
-        # If not found, append as new row
-        self.worksheet.append_row(result)
     
     def save_summary_results(self, results_dicts: list):
         """Save summary with one row per test suite."""
@@ -166,15 +180,28 @@ def extract_iso_code(docstring: Optional[str]) -> Optional[str]:
     """Extract test code from docstring (ISO-*, SSM-*, etc.)."""
     if not docstring:
         return None
-    # Match patterns like: ISO-DAT-001, SSM-HMC-001, etc.
-    match = re.search(r'([A-Z][A-Z0-9]*-[A-Z0-9]+-\d+)', docstring)
+    # Match patterns like: ISO-DAT-001, SSM-HMC-001, LLM-OLLA-GSI-001, LLM-CTX-ERR-001, etc.
+    match = re.search(r'([A-Z][A-Z0-9]*(?:-[A-Z][A-Z0-9]*)*-\d+)', docstring)
     return match.group(1) if match else None
 
 
 def detect_test_category(item) -> str:
     """Detect which Google Sheets worksheet a test belongs to based on file path."""
     fspath = str(item.fspath).lower()
-    
+
+    # LLM-specific detection — checked first to avoid matching generic keywords
+    if '/llm/' in fspath or '\\llm\\' in fspath:
+        if 'test_llm_client' in fspath:
+            return 'LLM Client'
+        if 'test_mock_client' in fspath:
+            return 'LLM Mock Client'
+        if 'test_ollama_client' in fspath:
+            return 'LLM Ollama Client'
+        if 'test_openai_client' in fspath:
+            return 'LLM OpenAI Client'
+        if 'test_contextual_client' in fspath:
+            return 'LLM Contextual Client'
+
     path_worksheet_map = {
         'vendor': 'Isolation Testing Framework TCs',
         'auth': 'Secure Session Management',
@@ -186,11 +213,11 @@ def detect_test_category(item) -> str:
         'integration': 'End-To-End',
         'summary': 'Summary'
     }
-    
+
     for keyword, worksheet in path_worksheet_map.items():
         if keyword in fspath:
             return worksheet
-    
+
     return 'Isolation Testing Framework TCs'
 
 
@@ -213,6 +240,11 @@ class GoogleSheetsPlugin:
                 'Performance Testing',
                 'Cross_Browser',
                 'End-To-End',
+                'LLM Client',
+                'LLM Mock Client',
+                'LLM Ollama Client',
+                'LLM OpenAI Client',
+                'LLM Contextual Client',
                 'Summary',
             ]
             
