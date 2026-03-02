@@ -1,10 +1,34 @@
-"""
-Unit tests for LLMClient using unittest.mock and pytest.
-
-- Uses patch and AsyncMock from unittest.mock to mock dependencies and async methods.
-- A pytest fixture is provided to patch settings for each test, reducing repetition.
-- Each test includes detailed Test Steps and Expected Results in the docstring.
-"""
+# ==============================================================================
+# LLM Client (Router) Test Suite
+# ==============================================================================
+# User Story: As a developer, I want a single LLMClient router so that the
+#             rest of the codebase is decoupled from the concrete AI provider
+#             and switching providers requires only a settings change.
+#
+# Acceptance Criteria:
+#   1. Routes requests to correct backend based on LLM_PROVIDER setting
+#   2. Passes request through unchanged and returns response unchanged
+#   3. Returns success=False on provider error, never raises
+#   4. Documents import-time singleton risk at module load
+#   5. Raises ValueError for unsupported provider values
+#
+# Test Categories:
+#   LLM-PROV-001: OpenAI Provider Initialization
+#   LLM-PROV-002: Ollama Provider Initialization
+#   LLM-PROV-003: Mock Provider Initialization
+#   LLM-PROV-004: Unsupported Provider Error Handling
+#   LLM-PROV-005: Provider Mismatch Warning
+#   LLM-PROV-006: Error Response on Provider Failure
+#   LLM-PROV-007: Successful Chat Through Provider
+#   LLM-PROV-008: Module-Level Singleton Documents Import-Time Risk
+#   LLM-PROV-009: Bad Provider Raises ValueError At Instantiation
+#   LLM-PROV-010: Ollama Provider Initialization
+#   LLM-PROV-011: Ollama Provider Not Registered Raises ValueError
+#   LLM-PROV-012: No Warning When Provider Matches
+#   LLM-PROV-013: LLMClient Does Not Mutate Request Before Delegation
+#   LLM-PROV-014: Error Response Is Well-Formed
+#   LLM-CLI-GSI-001: Google Sheets Integration Verification
+# ==============================================================================
 
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch

@@ -1,3 +1,42 @@
+# ==============================================================================
+# OpenAI Client Test Suite
+# ==============================================================================
+# User Story: As a developer, I want OpenAIClient to reliably communicate with
+#             the OpenAI Responses API so that the platform can run cloud AI
+#             inference with stateful conversation chaining.
+#
+# Acceptance Criteria:
+#   1. Loads configuration from settings at instantiation
+#   2. Sends correctly formatted requests and parses responses
+#   3. Extracts tool calls and chains conversations via previous_response_id
+#   4. Forwards temperature correctly, including zero (does not swap with default)
+#   5. Does not mutate the caller's LLMRequest or message list
+#   6. Handles malformed API responses without crashing
+#
+# Test Categories:
+#   LLM-OAPI-001: Configuration Loading
+#   LLM-OAPI-002: Successful Chat Completion
+#   LLM-OAPI-003: JSON Schema Formatting
+#   LLM-OAPI-004: Tool Calls Handling
+#   LLM-OAPI-005: Previous Response ID Chaining
+#   LLM-OAPI-006: Message History Preservation
+#   LLM-OAPI-007: Zero Temperature Not Overridden
+#   LLM-OAPI-008: Explicit Temperature Passed Through
+#   LLM-OAPI-009: None Temperature Falls Back to Default
+#   LLM-OAPI-ERR-001: Malformed JSON in Function Arguments
+#   LLM-OAPI-ERR-002: API Network Error Handling
+#   LLM-OAPI-EDGE-001: Empty Tool Calls List
+#   LLM-OAPI-EDGE-002: Tool Calls With Unexpected Output Type
+#   LLM-OAPI-EDGE-003: Tool Call Missing Required Fields
+#   LLM-OAPI-EDGE-004: Request With Messages Set to None
+#   LLM-OAPI-EDGE-005: Message Content With Unexpected Type
+#   LLM-OAPI-EDGE-006: Unexpected Exception Not Retried
+#   LLM-OAPI-EDGE-007: Messages List Not Mutated on Chat (bug documentation)
+#   LLM-OAPI-EDGE-008: Response Messages Independent of Request Messages (bug documentation)
+#   LLM-OAPI-EDGE-009: Second Call Does Not Inherit First Call History (bug documentation)
+#   LLM-OAPI-GSI-001: Google Sheets Integration Verification
+# ==============================================================================
+
 import sys
 import os
 import gspread

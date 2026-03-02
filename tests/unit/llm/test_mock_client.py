@@ -1,3 +1,28 @@
+# ==============================================================================
+# Mock LLM Client Test Suite
+# ==============================================================================
+# User Story: As a developer, I want a deterministic fake LLM client so that
+#             higher-level tests can exercise AI-dependent code without real
+#             network calls or non-deterministic responses.
+#
+# Acceptance Criteria:
+#   1. Returns consistent fixed response on every call
+#   2. Accepts all LLMRequest parameters without error
+#   3. response.success is always True
+#   4. response.tool_calls is an empty list, not None
+#   5. Exception type preserved when wrapping errors
+#
+# Test Categories:
+#   LLM-MOCK-001: Basic Mock Response
+#   LLM-MOCK-002: Mock Client with Custom Parameters
+#   LLM-MOCK-003: Empty Messages Handling
+#   LLM-MOCK-004: None Messages Handling
+#   LLM-MOCK-005: Mock Response Success Field Is True
+#   LLM-MOCK-006: Mock Response tool_calls Field Is Empty List
+#   LLM-MOCK-EDGE-001: Exception Wrapping Loses Original Type
+#   LLM-MOCK-GSI-001: Google Sheets Integration Verification
+# ==============================================================================
+
 import pytest
 from unittest.mock import patch
 

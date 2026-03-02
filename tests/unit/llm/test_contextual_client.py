@@ -1,3 +1,39 @@
+# ==============================================================================
+# Contextual LLM Client Test Suite
+# ==============================================================================
+# User Story: As a developer, I want ContextualLLMClient to enrich every AI
+#             call with session identity and emit observability events so that
+#             agent behaviour can be traced and audited without modifying
+#             individual agents.
+#
+# Acceptance Criteria:
+#   1. Attaches session_id, user_id, and workflow_id to every call
+#   2. Emits llm_request_start before the AI call
+#   3. Emits llm_request_success or llm_request_error after the AI call
+#   4. Forwards temperature correctly, including zero
+#   5. Event bus failure must not block the AI call (resilience bug documented)
+#   6. Full conversation content in Redis events documented as security concern
+#
+# Test Categories:
+#   LLM-CTX-001: Session Context Preservation
+#   LLM-CTX-002: Workflow ID Tracking
+#   LLM-CTX-003: Event Emission on Request Start
+#   LLM-CTX-004: Event Emission on Success
+#   LLM-CTX-005: Event Emission on Error
+#   LLM-CTX-006: Child Client Creation
+#   LLM-CTX-007: Workflow ID Update
+#   LLM-CTX-008: Call Count Tracking
+#   LLM-CTX-009: Zero Temperature Override Prevention
+#   LLM-CTX-010: Full Request Content Emitted to Redis Event Bus (bug documentation)
+#   LLM-CTX-011: Full Response Content Emitted to Redis Event Bus (bug documentation)
+#   LLM-CTX-ERR-001: Event Emission Failure Behavior (bug documentation)
+#   LLM-CTX-EDGE-001: Concurrent Client Access
+#   LLM-CTX-EDGE-002: LLMRequest Object Mutated In Place (bug documentation)
+#   LLM-CTX-EDGE-003: Zero Temperature Shows Default In Event Log (bug documentation)
+#   LLM-CTX-EDGE-004: Full Request and Response Serialized Into Redis Event (bug documentation)
+#   LLM-CONT-GSI-001: Google Sheets Integration Verification
+# ==============================================================================
+
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, UTC
 
@@ -1214,7 +1250,7 @@ async def test_request_dump_not_emitted_to_redis():
 
     captured_event_data = {}
 
-    async def capture_event(**kwargs):
+    def capture_event(**kwargs):
         captured_event_data.update(kwargs.get("event_data", {}))
 
     with patch("finbot.core.llm.contextual_client.event_bus") as mock_event_bus:
@@ -1244,9 +1280,6 @@ async def test_request_dump_not_emitted_to_redis():
         print(f"           {key}: {preview}")
     print()
     print("  STEP 2 — Checking for sensitive content in payload...")
-    request_dump = captured_event_data.get("request_dump", "")
-    response_content = captured_event_data.get("response_content", "")
-    response_dump = captured_event_data.get("response_dump", "")
     print(f"           'request_dump' present:    {'request_dump' in captured_event_data}")
     print(f"           'response_content' present: {'response_content' in captured_event_data}")
     print(f"           'response_dump' present:    {'response_dump' in captured_event_data}")

@@ -1,4 +1,5 @@
 import re
+import json
 import gspread
 from datetime import datetime
 from typing import Optional, Dict, List
@@ -20,15 +21,21 @@ class GoogleSheetsReporter:
         self.results: List[List[str]] = []
         
         # Get credentials from environment
-        creds_file = os.getenv('GOOGLE_CREDENTIALS_FILE', 'google-credentials.json')
+        credentials_json = os.getenv('GOOGLE_CREDENTIALS')
         sheets_id = os.getenv('GOOGLE_SHEETS_ID')
-        
+
         if not sheets_id:
             raise ValueError("GOOGLE_SHEETS_ID not set in environment")
-        
+
         # Authenticate with Google Sheets
         scopes = ['https://www.googleapis.com/auth/spreadsheets']
-        credentials = Credentials.from_service_account_file(creds_file, scopes=scopes)
+        if credentials_json:
+            # JSON string from environment (CI/CD)
+            credentials = Credentials.from_service_account_info(json.loads(credentials_json), scopes=scopes)
+        else:
+            # Credentials file (local development)
+            credentials_file = os.getenv('GOOGLE_CREDENTIALS_FILE', 'google-credentials.json')
+            credentials = Credentials.from_service_account_file(credentials_file, scopes=scopes)
         self.client = gspread.authorize(credentials)
         self.sheet = self.client.open_by_key(sheets_id)
         
@@ -36,7 +43,7 @@ class GoogleSheetsReporter:
         try:
             self.worksheet = self.sheet.worksheet(worksheet_name)
         except gspread.exceptions.WorksheetNotFound:
-            self.worksheet = self.sheet.add_worksheet(title=worksheet_name, rows=1000, cols=10)
+            self.worksheet = self.sheet.add_worksheet(title=worksheet_name, rows=1000, cols=13)
             self._initialize_headers()
     
     def _initialize_headers(self):
@@ -76,6 +83,16 @@ class GoogleSheetsReporter:
         ]
         self.results.append(row)
     
+    def _find_row(self, col_a: list, test_code: str, test_name: str) -> Optional[int]:
+        """Return 1-indexed row number in col_a matching test_code or test_name, or None."""
+        for query in [test_code, test_name]:
+            if not query:
+                continue
+            for i, cell_value in enumerate(col_a):
+                if cell_value and query.strip().lower() in str(cell_value).strip().lower():
+                    return i + 1
+        return None
+
     def save_results(self):
         """Save all accumulated results to the worksheet in a single batch.
 
@@ -86,9 +103,7 @@ class GoogleSheetsReporter:
         if not self.results:
             return
 
-        # One read to get all of column A
         col_a = self.worksheet.col_values(1)
-
         cells_to_update = []
         timestamp = datetime.now().isoformat()
 
@@ -98,17 +113,7 @@ class GoogleSheetsReporter:
             status = result[2]
             message = result[5]
 
-            row = None
-            for query in [test_code, test_name]:
-                if not query:
-                    continue
-                for i, cell_value in enumerate(col_a):
-                    if query and cell_value and query.strip().lower() in str(cell_value).strip().lower():
-                        row = i + 1  # 1-indexed
-                        break
-                if row:
-                    break
-
+            row = self._find_row(col_a, test_code, test_name)
             if row is None:
                 print(
                     f"  [sheets] no match for '{test_code}' / '{test_name}' "
@@ -122,7 +127,6 @@ class GoogleSheetsReporter:
                 gspread.Cell(row, 13, timestamp),
             ])
 
-        # One write for all matched results
         if cells_to_update:
             self.worksheet.update_cells(cells_to_update)
 
@@ -253,7 +257,7 @@ class GoogleSheetsPlugin:
                     self.reporters[worksheet_name] = GoogleSheetsReporter(worksheet_name)
                     self.results_by_worksheet[worksheet_name] = []
                 except Exception as e:
-                    pass
+                    print(f"⚠️  Could not initialize worksheet '{worksheet_name}': {e}")
     
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item, call):
@@ -266,7 +270,12 @@ class GoogleSheetsPlugin:
             test_code = extract_iso_code(item.obj.__doc__)
             worksheet_name = detect_test_category(item)
             
-            status = "PASSED" if report.passed else "FAILED"
+            if report.passed:
+                status = "PASSED"
+            elif report.skipped:
+                status = "SKIPPED"
+            else:
+                status = "FAILED"
             duration = report.duration
             message = str(report.longrepr) if report.longrepr else ""
             
@@ -287,66 +296,65 @@ class GoogleSheetsPlugin:
             if 'Summary' in self.results_by_worksheet:
                 self.results_by_worksheet['Summary'].append(result)
     
-    def pytest_sessionfinish(self, session, exitstatus):
-        """Hook called after all tests complete."""
-        if not self.config.getoption("--google-sheets"):
-            return
-        
-        print("\n" + "=" * 80)
-        print("Google Sheets Test Results Summary")
-        print("=" * 80)
-        
-        # Calculate overall stats
-        total_tests = 0
-        passed_tests = 0
-        
-        # Save results to each worksheet (except Summary)
-        worksheet_count = 0
-        for worksheet_name, results in self.results_by_worksheet.items():
-            if results and worksheet_name != "Summary":
-                worksheet_count += 1
-                passed_count = sum(1 for r in results if r['status'] == 'PASSED')
-                total_count = len(results)
-                passed_tests += passed_count
-                total_tests += total_count
-                
-                # Save to worksheet
-                if worksheet_name in self.reporters:
-                    try:
-                        for result in results:
-                            self.reporters[worksheet_name].record_result(
-                                result['code'],
-                                result['name'],
-                                result['status'],
-                                result['duration'],
-                                result['message']
-                            )
-                        self.reporters[worksheet_name].save_results()
-                        print(f"✓ Saved {total_count} results to '{worksheet_name}' ({passed_count}/{total_count} passed)")
-                    except Exception as e:
-                        print(f"✗ ERROR saving to '{worksheet_name}': {e}")
-        
-        # Save Summary ONCE with all results at the end
-        if "Summary" in self.results_by_worksheet and self.reporters.get("Summary"):
-            try:
-                self.reporters["Summary"].save_summary_results(self.results_by_worksheet["Summary"])
-                summary_results = self.results_by_worksheet["Summary"]
-                print(f"✓ Saved Summary ({len(summary_results)} total tests)")
-            except Exception as e:
-                print(f"✗ ERROR saving to Summary: {e}")
-        
-        # Calculate pass rate
-        if total_tests > 0:
-            pass_rate = (passed_tests / total_tests) * 100
-            print(f"\nOverall: {passed_tests}/{total_tests} passed ({pass_rate:.1f}%)")
-        
+    def _flush_worksheet(self, worksheet_name: str, results: list) -> tuple:
+        """Record and save results for one worksheet. Returns (passed_count, total_count)."""
+        total_count = len(results)
+        passed_count = sum(1 for r in results if r['status'] == 'PASSED')
+        if worksheet_name not in self.reporters:
+            return passed_count, total_count
+        try:
+            for result in results:
+                self.reporters[worksheet_name].record_result(
+                    result['code'], result['name'], result['status'],
+                    result['duration'], result['message']
+                )
+            self.reporters[worksheet_name].save_results()
+            print(f"✓ Saved {total_count} results to '{worksheet_name}' ({passed_count}/{total_count} passed)")
+        except Exception as e:
+            print(f"✗ ERROR saving to '{worksheet_name}': {e}")
+        return passed_count, total_count
+
+    def _print_breakdown(self) -> None:
+        """Print per-worksheet pass/fail counts."""
         print("\nWorksheet Breakdown:")
         print("=" * 80)
         for worksheet_name, results in self.results_by_worksheet.items():
             if results and worksheet_name != "Summary":
                 passed = sum(1 for r in results if r['status'] == 'PASSED')
                 print(f"✓ {worksheet_name}: {passed}/{len(results)} passed")
-        
+
+    def pytest_sessionfinish(self):
+        """Hook called after all tests complete."""
+        if not self.config.getoption("--google-sheets"):
+            return
+
+        print("\n" + "=" * 80)
+        print("Google Sheets Test Results Summary")
+        print("=" * 80)
+
+        total_tests = 0
+        passed_tests = 0
+        worksheet_count = 0
+
+        for worksheet_name, results in self.results_by_worksheet.items():
+            if results and worksheet_name != "Summary":
+                worksheet_count += 1
+                passed_count, total_count = self._flush_worksheet(worksheet_name, results)
+                passed_tests += passed_count
+                total_tests += total_count
+
+        if "Summary" in self.results_by_worksheet and self.reporters.get("Summary"):
+            try:
+                self.reporters["Summary"].save_summary_results(self.results_by_worksheet["Summary"])
+                print(f"✓ Saved Summary ({len(self.results_by_worksheet['Summary'])} total tests)")
+            except Exception as e:
+                print(f"✗ ERROR saving to Summary: {e}")
+
+        if total_tests > 0:
+            pass_rate = (passed_tests / total_tests) * 100
+            print(f"\nOverall: {passed_tests}/{total_tests} passed ({pass_rate:.1f}%)")
+
+        self._print_breakdown()
         print(f"✓ Results saved to {worksheet_count} worksheet(s)")
 
 

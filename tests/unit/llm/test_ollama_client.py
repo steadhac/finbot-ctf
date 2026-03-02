@@ -1,3 +1,48 @@
+# ==============================================================================
+# Ollama Client Test Suite
+# ==============================================================================
+# User Story: As a developer, I want OllamaClient to reliably communicate with
+#             a local Ollama server so that the platform can run AI inference
+#             offline without depending on cloud providers.
+#
+# Acceptance Criteria:
+#   1. Loads configuration from settings at instantiation
+#   2. Sends correctly formatted chat requests and parses responses
+#   3. Extracts tool calls from model output
+#   4. Retries on transient network errors, fails fast on logic errors
+#   5. Does not mutate the caller's LLMRequest or message list
+#   6. Handles malformed API responses without crashing
+#
+# Test Categories:
+#   LLM-CONF-001: Default Configuration Loading
+#   LLM-CHAT-001: Successful Chat Completion
+#   LLM-CHAT-002: Message History Preservation
+#   LLM-CHAT-003: Custom Model and Temperature Override
+#   LLM-CHAT-004: Zero Temperature Override Prevention
+#   LLM-TOOL-001: Tool Calls Extraction
+#   LLM-TOOL-002: Multiple Tool Calls
+#   LLM-TOOL-003: Tool Calls In History Are JSON-Serializable
+#   LLM-TOOL-004: Tool Calls In History Have Expected Dict Structure
+#   LLM-ERR-001: Retry on Timeout Error
+#   LLM-ERR-002: Retry Exhaustion
+#   LLM-ERR-003: Connection Error Retry
+#   LLM-ERR-004: Non-Retryable Error Immediate Failure
+#   LLM-JSON-001: JSON Schema Output Formatting
+#   LLM-META-001: Response Metadata Extraction
+#   LLM-META-002: Missing Metadata Graceful Handling
+#   LLM-OLLA-EDGE-001: Empty Message Content Handling
+#   LLM-OLLA-EDGE-002: Tool Calls With Message Content
+#   LLM-OLLA-EDGE-003: Chat Does Not Mutate Original Messages List
+#   LLM-OLLA-EDGE-004: Second Call Does Not Inherit First Call History
+#   LLM-OLLA-EDGE-005: response.messages Is None (bug documentation)
+#   LLM-OLLA-EDGE-006: Tool Calls With Unexpected Type
+#   LLM-OLLA-EDGE-007: Tool Call Missing Required Fields
+#   LLM-OLLA-EDGE-008: Request With Messages Set to None
+#   LLM-OLLA-EDGE-009: Message Content With Unexpected Type
+#   LLM-OLLA-EDGE-010: Unexpected Exception Not Retried
+#   LLM-OLLA-GSI-001: Google Sheets Integration Verification
+# ==============================================================================
+
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
