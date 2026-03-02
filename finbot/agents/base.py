@@ -72,6 +72,12 @@ class BaseAgent(ABC):
         system_prompt = self._get_final_system_prompt()
         user_prompt = await self._get_user_prompt(task_data=task_data)
 
+        # Store the user prompt on the workflow so every event
+        # (agent + business) in this workflow carries it.
+        event_bus.set_workflow_context(
+            self.workflow_id, user_prompt=user_prompt
+        )
+
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -82,140 +88,143 @@ class BaseAgent(ABC):
         max_iterations = self._get_max_iterations()
         callables = self._get_final_callables()
 
-        for iteration in range(max_iterations):
-            # Emit iteration start event
-            await event_bus.emit_agent_event(
-                agent_name=self.agent_name,
-                event_type="iteration_start",
-                event_subtype="lifecycle",
-                event_data={
-                    "iteration": iteration + 1,
-                    "max_iterations": max_iterations,
-                },
-                session_context=self.session_context,
-                workflow_id=self.workflow_id,
-                summary=f"Agent iteration {iteration + 1}/{max_iterations} started",
-            )
-
-            try:
-                response = await self.llm_client.chat(
-                    request=LLMRequest(
-                        messages=messages,
-                        tools=tools,
-                    )
-                )
-                logger.debug(
-                    "Iteration %d response.content: %s response.tool_calls: %s",
-                    iteration,
-                    response.content,
-                    json.dumps(response.tool_calls),
-                )
-
-                # get the latest message object to get the conversation going
-                if response.messages:
-                    messages = response.messages
-
-                if response.tool_calls:
-                    for tool_call in response.tool_calls:
-                        tool_call_name = tool_call["name"]
-                        callable_fn = callables.get(tool_call_name, None)
-                        if callable_fn:
-                            try:
-                                logger.debug(
-                                    "Calling callable %s with arguments %s",
-                                    tool_call_name,
-                                    tool_call["arguments"],
-                                )
-                                function_output = await callable_fn(
-                                    **tool_call["arguments"]
-                                )
-                                logger.debug("Function output: %s", function_output)
-                                if tool_call_name == "complete_task":
-                                    # this will end the agent loop and
-                                    # return the task status and summary
-                                    await self.log_task_completion(
-                                        task_result=function_output
-                                    )
-                                    return function_output
-                            except Exception as e:  # pylint: disable=broad-exception-caught
-                                logger.error(
-                                    "Tool call %s failed: %s", tool_call["name"], e
-                                )
-                                function_output = {
-                                    "error": f"Tool call {tool_call['name']} \
-                                        failed: {str(e)}. Please try again.",
-                                }
-                        else:
-                            # Emit invalid tool call event
-                            await event_bus.emit_agent_event(
-                                agent_name=self.agent_name,
-                                event_type="invalid_tool_call",
-                                event_subtype="error",
-                                event_data={
-                                    "attempted_tool": tool_call_name,
-                                    "arguments": tool_call.get("arguments", {}),
-                                    "available_tools": list(callables.keys()),
-                                    "iteration": iteration + 1,
-                                },
-                                session_context=self.session_context,
-                                workflow_id=self.workflow_id,
-                                summary=f"Invalid tool attempted: {tool_call_name}",
-                            )
-                            function_output = {
-                                "error": f"Invalid tool call: {tool_call['name']} \
-                                    Please try again.",
-                            }
-                        function_output_str = function_output
-                        if not isinstance(function_output_str, str):
-                            try:
-                                function_output_str = json.dumps(function_output_str)
-                            except Exception as _:  # pylint: disable=broad-exception-caught
-                                try:
-                                    function_output_str = str(function_output_str)
-                                except Exception as __:  # pylint: disable=broad-exception-caught
-                                    pass  # use the output as is
-                        messages.append(
-                            {
-                                "type": "function_call_output",
-                                "call_id": tool_call["call_id"],
-                                "output": function_output_str,
-                            }
-                        )
-
-                # Emit iteration complete event
+        try:
+            for iteration in range(max_iterations):
+                # Emit iteration start event
                 await event_bus.emit_agent_event(
                     agent_name=self.agent_name,
-                    event_type="iteration_complete",
+                    event_type="iteration_start",
                     event_subtype="lifecycle",
                     event_data={
                         "iteration": iteration + 1,
                         "max_iterations": max_iterations,
-                        "tool_calls_count": len(response.tool_calls)
-                        if response.tool_calls
-                        else 0,
-                        "has_content": bool(response.content),
                     },
                     session_context=self.session_context,
                     workflow_id=self.workflow_id,
-                    summary=f"Agent iteration {iteration + 1}/{max_iterations} complete ({len(response.tool_calls) if response.tool_calls else 0} tool calls)",
+                    summary=f"Agent iteration {iteration + 1}/{max_iterations} started",
                 )
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                logger.error("Agent loop iteration %d failed: %s", iteration, e)
 
-                task_result = await callables["complete_task"](
-                    task_status="failed",
-                    task_summary=f"Agent loop iteration {iteration} failed: {e}",
-                )
-                await self.log_task_completion(task_result=task_result)
-                return task_result
+                try:
+                    response = await self.llm_client.chat(
+                        request=LLMRequest(
+                            messages=messages,
+                            tools=tools,
+                        )
+                    )
+                    logger.debug(
+                        "Iteration %d response.content: %s response.tool_calls: %s",
+                        iteration,
+                        response.content,
+                        json.dumps(response.tool_calls),
+                    )
 
-        # iterations exhausted, return the task status as failure
-        task_result = await callables["complete_task"](
-            task_status="failed",
-            task_summary=f"Agent loop iterations exhausted after {max_iterations} iterations",
-        )
-        await self.log_task_completion(task_result=task_result)
-        return task_result
+                    # get the latest message object to get the conversation going
+                    if response.messages:
+                        messages = response.messages
+
+                    if response.tool_calls:
+                        for tool_call in response.tool_calls:
+                            tool_call_name = tool_call["name"]
+                            callable_fn = callables.get(tool_call_name, None)
+                            if callable_fn:
+                                try:
+                                    logger.debug(
+                                        "Calling callable %s with arguments %s",
+                                        tool_call_name,
+                                        tool_call["arguments"],
+                                    )
+                                    function_output = await callable_fn(
+                                        **tool_call["arguments"]
+                                    )
+                                    logger.debug("Function output: %s", function_output)
+                                    if tool_call_name == "complete_task":
+                                        # this will end the agent loop and
+                                        # return the task status and summary
+                                        await self.log_task_completion(
+                                            task_result=function_output
+                                        )
+                                        return function_output
+                                except Exception as e:  # pylint: disable=broad-exception-caught
+                                    logger.error(
+                                        "Tool call %s failed: %s", tool_call["name"], e
+                                    )
+                                    function_output = {
+                                        "error": f"Tool call {tool_call['name']} \
+                                            failed: {str(e)}. Please try again.",
+                                    }
+                            else:
+                                # Emit invalid tool call event
+                                await event_bus.emit_agent_event(
+                                    agent_name=self.agent_name,
+                                    event_type="invalid_tool_call",
+                                    event_subtype="error",
+                                    event_data={
+                                        "attempted_tool": tool_call_name,
+                                        "arguments": tool_call.get("arguments", {}),
+                                        "available_tools": list(callables.keys()),
+                                        "iteration": iteration + 1,
+                                    },
+                                    session_context=self.session_context,
+                                    workflow_id=self.workflow_id,
+                                    summary=f"Invalid tool attempted: {tool_call_name}",
+                                )
+                                function_output = {
+                                    "error": f"Invalid tool call: {tool_call['name']} \
+                                        Please try again.",
+                                }
+                            function_output_str = function_output
+                            if not isinstance(function_output_str, str):
+                                try:
+                                    function_output_str = json.dumps(function_output_str)
+                                except Exception as _:  # pylint: disable=broad-exception-caught
+                                    try:
+                                        function_output_str = str(function_output_str)
+                                    except Exception as __:  # pylint: disable=broad-exception-caught
+                                        pass  # use the output as is
+                            messages.append(
+                                {
+                                    "type": "function_call_output",
+                                    "call_id": tool_call["call_id"],
+                                    "output": function_output_str,
+                                }
+                            )
+
+                    # Emit iteration complete event
+                    await event_bus.emit_agent_event(
+                        agent_name=self.agent_name,
+                        event_type="iteration_complete",
+                        event_subtype="lifecycle",
+                        event_data={
+                            "iteration": iteration + 1,
+                            "max_iterations": max_iterations,
+                            "tool_calls_count": len(response.tool_calls)
+                            if response.tool_calls
+                            else 0,
+                            "has_content": bool(response.content),
+                        },
+                        session_context=self.session_context,
+                        workflow_id=self.workflow_id,
+                        summary=f"Agent iteration {iteration + 1}/{max_iterations} complete ({len(response.tool_calls) if response.tool_calls else 0} tool calls)",
+                    )
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    logger.error("Agent loop iteration %d failed: %s", iteration, e)
+
+                    task_result = await callables["complete_task"](
+                        task_status="failed",
+                        task_summary=f"Agent loop iteration {iteration} failed: {e}",
+                    )
+                    await self.log_task_completion(task_result=task_result)
+                    return task_result
+
+            # iterations exhausted, return the task status as failure
+            task_result = await callables["complete_task"](
+                task_status="failed",
+                task_summary=f"Agent loop iterations exhausted after {max_iterations} iterations",
+            )
+            await self.log_task_completion(task_result=task_result)
+            return task_result
+        finally:
+            event_bus.clear_workflow_context(self.workflow_id)
 
     def _get_system_prompt(self) -> str:
         """

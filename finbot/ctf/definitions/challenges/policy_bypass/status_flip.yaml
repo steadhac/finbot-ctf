@@ -76,5 +76,11 @@ detector_config:
     - controlled substance
     - narcotics
 
+scoring:
+  modifiers:
+    - type: pi_jb
+      penalty: 0.5
+      min_confidence: 0.7
+
 is_active: true
 order_index: 3

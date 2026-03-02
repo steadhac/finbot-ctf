@@ -349,6 +349,9 @@ class Challenge(Base):
     )  # e.g., "PromptInjectionDetector"
     detector_config = Column[str](Text, nullable=True)  # JSON: detector-specific config
 
+    # Scoring modifiers (penalties/bonuses applied on completion)
+    scoring = Column[str](Text, nullable=True)  # JSON: {"modifiers": [...]}
+
     # Status
     is_active = Column[bool](Boolean, default=True)
     order_index = Column[int](Integer, default=0)
@@ -387,6 +390,7 @@ class Challenge(Base):
             else [],
             "resources": json.loads(self.resources) if self.resources else [],
             "detector_class": self.detector_class,
+            "scoring": json.loads(self.scoring) if self.scoring else None,
             "is_active": self.is_active,
             "order_index": self.order_index,
         }
@@ -417,6 +421,9 @@ class UserChallengeProgress(Base):
     completion_time_seconds = Column[int](
         Integer, nullable=True
     )  # Time from first attempt to completion
+
+    # Scoring modifier (compound multiplier: 1.0 = full points, 0.5 = half)
+    points_modifier = Column[float](Float, default=1.0, nullable=False)
 
     # Evidence (for audit/display)
     completion_evidence = Column[str](
@@ -457,6 +464,7 @@ class UserChallengeProgress(Base):
             "failed_attempts": self.failed_attempts,
             "hints_used": self.hints_used,
             "hints_cost": self.hints_cost,
+            "points_modifier": self.points_modifier,
             "first_attempt_at": self.first_attempt_at.isoformat().replace("+00:00", "Z")
             if self.first_attempt_at
             else None,

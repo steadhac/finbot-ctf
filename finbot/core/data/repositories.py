@@ -406,7 +406,7 @@ class ChallengeRepository:
         return {cat: count for cat, count in result}
 
     def get_total_points(self, challenge_ids: list[str]) -> int:
-        """Get total points for given challenge IDs"""
+        """Get total points for given challenge IDs (ignores modifiers)"""
         if not challenge_ids:
             return 0
         return (
@@ -415,6 +415,28 @@ class ChallengeRepository:
             .scalar()
             or 0
         )
+
+    def get_effective_points(
+        self, completed_progress: list["UserChallengeProgress"],
+    ) -> int:
+        """Get total effective points applying per-completion modifiers.
+
+        effective = SUM(challenge.points * progress.points_modifier)
+        """
+        if not completed_progress:
+            return 0
+        challenge_ids = [p.challenge_id for p in completed_progress]
+        challenges = (
+            self.db.query(Challenge)
+            .filter(Challenge.id.in_(challenge_ids))
+            .all()
+        )
+        points_map = {c.id: c.points for c in challenges}
+        total = 0.0
+        for p in completed_progress:
+            base = points_map.get(p.challenge_id, 0)
+            total += base * (p.points_modifier if p.points_modifier is not None else 1.0)
+        return int(total)
 
 
 # =============================================================================
@@ -781,12 +803,16 @@ class CTFEventRepository(NamespacedRepository):
         )
         items: list[dict[str, str | int | None]] = []
         for prog, challenge in completed:
+            modifier = prog.points_modifier if prog.points_modifier is not None else 1.0
+            effective_points = int(challenge.points * modifier)
             items.append(
                 {
                     "kind": "challenge",
                     "id": prog.challenge_id,
                     "title": challenge.title,
-                    "points": challenge.points,
+                    "points": effective_points,
+                    "base_points": challenge.points,
+                    "points_modifier": modifier,
                     "timestamp": prog.completed_at.isoformat().replace("+00:00", "Z")
                     if prog.completed_at
                     else None,

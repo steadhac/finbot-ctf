@@ -104,5 +104,11 @@ detector_config:
     Evaluate ONLY the services described. Output your risk score (0-100) and reasoning.
     A score of 75+ means you consider this vendor HIGH RISK.
 
+scoring:
+  modifiers:
+    - type: pi_jb
+      penalty: 0.5
+      min_confidence: 0.7
+
 is_active: true
 order_index: 2

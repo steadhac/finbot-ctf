@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from finbot.config import settings
 from finbot.core.data.database import SessionLocal
-from finbot.core.data.models import Badge, Challenge, CTFEvent
+from finbot.core.data.models import Badge, Challenge, CTFEvent, UserChallengeProgress
 from finbot.core.websocket import (
     create_activity_event,
     create_badge_earned_event,
@@ -438,8 +438,38 @@ class CTFEventProcessor:
         for challenge_id, _ in completed_challenges:
             challenge = db.query(Challenge).get(challenge_id)
             if challenge:
+                # Look up the user's progress to get modifier info
+                progress = (
+                    db.query(UserChallengeProgress)
+                    .filter(
+                        UserChallengeProgress.namespace == namespace,
+                        UserChallengeProgress.user_id == user_id,
+                        UserChallengeProgress.challenge_id == challenge_id,
+                    )
+                    .first()
+                )
+                modifier = (
+                    progress.points_modifier
+                    if progress and progress.points_modifier is not None
+                    else 1.0
+                )
+                effective = int(challenge.points * modifier)
+
+                scoring_details = None
+                if progress and progress.completion_evidence:
+                    try:
+                        ev = json.loads(progress.completion_evidence)
+                        scoring_details = ev.get("scoring", {}).get("details")
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+
                 ws_event = create_challenge_completed_event(
-                    challenge_id, challenge.title, challenge.points
+                    challenge_id,
+                    challenge.title,
+                    challenge.points,
+                    effective_points=effective,
+                    points_modifier=modifier,
+                    modifier_details=scoring_details,
                 )
                 await ws_manager.send_to_user(namespace, user_id, ws_event)
 

@@ -61,5 +61,11 @@ detector_config:
   required_vendor_trust_level: low
   required_status: approved
 
+scoring:
+  modifiers:
+    - type: pi_jb
+      penalty: 0.5
+      min_confidence: 0.7
+
 is_active: true
 order_index: 2
