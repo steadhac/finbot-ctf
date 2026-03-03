@@ -137,32 +137,21 @@ def test_session_rotation_preserves_hmac(db):
         user_agent="Mozilla/5.0"
     )
 
-    # Use a fresh DB session to avoid SQLite locking conflicts
-    db = SessionLocal()
-    try:
-        # Simulate rotation by calling internal method
-        new_session_ctx = session_manager._rotate_session(old_session_ctx, db)
+    new_session_ctx = session_manager._rotate_session(old_session_ctx, db)
 
-        # Verify new session has valid signature
-        new_session = db.query(UserSession).filter_by(
-            session_id=new_session_ctx.session_id
-        ).first()
+    # Verify new session exists and has a valid HMAC signature.
+    # get_session opens its own internal DB session (avoids StaticPool
+    # connection conflicts with the fixture db) and verifies the stored
+    # HMAC signature before returning — a non-None result proves both
+    # existence and signature validity.
+    retrieved_ctx, status = session_manager.get_session(new_session_ctx.session_id)
+    assert retrieved_ctx is not None, "Rotated session not found in database"
+    assert status != "session_tampered", "Rotated session has invalid HMAC signature"
 
-        assert new_session is not None, "Rotated session not found in database"
-        assert new_session.signature is not None, "Rotated session has no signature"
-
-        # Verify signature is valid
-        expected_signature = verify_hmac_signature(new_session.session_data, new_session.signature)
-        assert new_session.signature == expected_signature, \
-            "Rotated session signature does not match HMAC"
-
-        # Verify old session was deleted
-        old_session_check = db.query(UserSession).filter_by(
-            session_id=old_session_ctx.session_id
-        ).first()
-        assert old_session_check is None, "Old session should be deleted after rotation"
-    finally:
-        db.close()
+    # Verify old session was deleted
+    old_retrieved, old_status = session_manager.get_session(old_session_ctx.session_id)
+    assert old_retrieved is None and old_status == "session_not_found", \
+        "Old session should be deleted after rotation"
 
 
 # ============================================================================
@@ -412,20 +401,16 @@ def test_session_replay_after_logout(fast_client: TestClient, db):
     )
     
     # Verify session works
-    response = fast_client.get(
-        "/api/session/status",
-        cookies={"finbot_session": session_ctx.session_id}
-    )
+    fast_client.cookies.set("finbot_session", session_ctx.session_id)
+    response = fast_client.get("/api/session/status")
     assert response.status_code == 200
-    
+
     # Delete session (simulate logout)
     session_manager.delete_session(session_ctx.session_id)
-    
-    # Try to reuse old cookie
-    response = fast_client.get(
-        "/api/session/status",
-        cookies={"finbot_session": session_ctx.session_id}
-    )
+
+    # Try to reuse old cookie (explicitly re-set in case server changed it)
+    fast_client.cookies.set("finbot_session", session_ctx.session_id)
+    response = fast_client.get("/api/session/status")
     
     # Should create new temporary session (not reuse old one)
     assert response.status_code == 200
@@ -492,10 +477,8 @@ def test_truncated_token_rejected(fast_client: TestClient):
     truncated_token = session_ctx.session_id[:TRUNCATED_TOKEN_LENGTH]
     
     # Try to use truncated token
-    response = fast_client.get(
-        "/api/session/status",
-        cookies={"finbot_session": truncated_token}
-    )
+    fast_client.cookies.set("finbot_session", truncated_token)
+    response = fast_client.get("/api/session/status")
     
     # Should create new temporary session
     assert response.status_code == 200
@@ -518,10 +501,8 @@ def test_oversized_token_rejected(fast_client: TestClient):
     oversized_token = "a" * OVERSIZED_TOKEN_LENGTH
     
     # Try to use oversized token
-    response = fast_client.get(
-        "/api/session/status",
-        cookies={"finbot_session": oversized_token}
-    )
+    fast_client.cookies.set("finbot_session", oversized_token)
+    response = fast_client.get("/api/session/status")
     
     # Should create new temporary session
     assert response.status_code == 200
