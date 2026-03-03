@@ -11,77 +11,59 @@ import pytest
 # Load environment variables at module level
 load_dotenv()
 
+# Constants for worksheet names
+LLM_CLIENT = 'LLM Client'
+LLM_MOCK_CLIENT = 'LLM Mock Client'
+LLM_OLLAMA_CLIENT = 'LLM Ollama Client'
+LLM_OPENAI_CLIENT = 'LLM OpenAI Client'
+LLM_CONTEXTUAL_CLIENT = 'LLM Contextual Client'
+COMPLETE_USER_ISOLATION = 'Complete User Isolation'
+ISOLATION_TESTING_FRAMEWORK = 'Isolation Testing Framework TCs'
+SECURE_SESSION_MANAGEMENT = 'Secure Session Management'
+BASE_AGENT_FRAMEWORK = 'Base Agent Framework'
+SPECIALIZED_BUSINESS_AGENT = 'Specialized Business Agent'
+EVENT_DRIVEN_CTF = 'Event Driven CTF'
+
 
 class GoogleSheetsReporter:
     """Handles updating a specific Google Sheets worksheet with test results."""
-    
+
     def __init__(self, worksheet_name: str):
-        """Initialize connection to a specific worksheet."""
+        """Store config; defer Google API connection until first write."""
         self.worksheet_name = worksheet_name
-        self.results: List[Dict] = []
-        
-        # Get credentials from environment
-        creds_json = os.getenv('GOOGLE_CREDENTIALS')
-        sheets_id = os.getenv('GOOGLE_SHEETS_ID')
-        
-        if not sheets_id:
+        self.results: List[dict] = []
+
+        # Validate required env vars eagerly (fast, no network)
+        self._credentials_json = os.getenv('GOOGLE_CREDENTIALS')
+        self._sheets_id = os.getenv('GOOGLE_SHEETS_ID')
+        if not self._sheets_id:
             raise ValueError("GOOGLE_SHEETS_ID not set in environment")
-        
-        # Authenticate with Google Sheets
+        self._credentials_file = os.getenv('GOOGLE_CREDENTIALS_FILE', 'google-credentials.json')
+
+        # Lazily initialized on first write
+        self.worksheet = None
+
+    def _ensure_connected(self):
+        """Connect to Google Sheets on demand (called before any sheet operation)."""
+        if self.worksheet is not None:
+            return
+
         scopes = ['https://www.googleapis.com/auth/spreadsheets']
-        
-        if creds_json:
-            # Use JSON string from environment (for CI/CD)
-            creds_dict = json.loads(creds_json)
-            credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+        if self._credentials_json:
+            credentials = Credentials.from_service_account_info(
+                json.loads(self._credentials_json), scopes=scopes
+            )
         else:
-            # Use credentials file (for local development)
-            creds_file = os.getenv('GOOGLE_CREDENTIALS_FILE', 'google-credentials.json')
-            credentials = Credentials.from_service_account_file(creds_file, scopes=scopes)
-        
-        self.client = gspread.authorize(credentials)
-        self.sheet = self.client.open_by_key(sheets_id)
-        
-        # Get or create worksheet
-        try:
-            self.worksheet = self.sheet.worksheet(worksheet_name)
-        except gspread.exceptions.WorksheetNotFound:
-            # CHANGE: Increase cols from 10 to 13 to support columns K, L, M
-            self.worksheet = self.sheet.add_worksheet(title=worksheet_name, rows=1000, cols=13)
-            self._initialize_headers()
-    
-    def _initialize_headers(self):
-        """Set up column headers if worksheet is new."""
-        if self.worksheet_name == "Summary":
-            headers = [
-                'Timestamp',
-                'Test Suite',
-                'Total Tests',
-                'Passed',
-                'Failed',
-                'Pass Rate',
-                'Duration (s)',
-                'Test Details',
-                'Statuses'
-            ]
-        else:
-            # Standard test case headers - NOW INCLUDES COLUMNS K, L, M
-            headers = [
-                'US ID',                          # Column A (1)
-                'Dependency',                     # Column B (2)
-                'Creator',                        # Column C (3)
-                'Claimed by',                     # Column D (4)
-                'Title',                          # Column E (5)
-                'Description',                    # Column F (6)
-                'Steps',                          # Column G (7)
-                'Expected Results',               # Column H (8)
-                'Actual Results',                 # Column I (9)
-                'Placeholder J',                  # Column J (10)
-                'Automation Status',              # Column K (11) - automation_status
-                'Automation Notes',               # Column L (12) - automation_notes
-                'Last Run'                        # Column M (13) - timestamp
-            ]
-        self.worksheet.append_row(headers)
+            credentials = Credentials.from_service_account_file(
+                self._credentials_file, scopes=scopes
+            )
+        client = gspread.authorize(credentials)
+        # Prevent indefinite hangs on network calls (connect_timeout, read_timeout)
+        client.http_client.timeout = (10, 30)
+        sheet = client.open_by_key(self._sheets_id)
+
+        # Get existing worksheet — never create a new tab
+        self.worksheet = sheet.worksheet(self.worksheet_name)
     
     def record_result(self, test_code: str, test_name: str, status: str, duration: float, message: str = ""):
         """Record a single test result."""
@@ -89,82 +71,67 @@ class GoogleSheetsReporter:
             'code': test_code,
             'name': test_name,
             'status': status,
-            'duration': duration,
+            'duration': f"{duration:.2f}",
             'timestamp': datetime.now().isoformat(),
             'message': message
         }
         self.results.append(row)
     
+    def _find_row(self, col_a: list, test_code: str, test_name: str) -> Optional[int]:
+        """Return 1-indexed row number in col_a matching test_code or test_name, or None."""
+        for query in [test_code, test_name]:
+            if not query:
+                continue
+            for i, cell_value in enumerate(col_a):
+                if cell_value and query.strip().lower() in str(cell_value).strip().lower():
+                    return i + 1
+        return None
+
     def save_results(self):
-        """Save all accumulated results to the worksheet."""
+        """Save all accumulated results to the worksheet in a single batch.
+
+        Reads column A once, matches every result to its US ID row, then writes
+        all K/L/M cells in one update_cells call — avoids rate-limiting from
+        making individual API calls per test result.
+        """
         if not self.results:
             return
-        
-        # Update existing rows with test results
+
+        self._ensure_connected()
+        col_a = self.worksheet.col_values(1)
+        cells_to_update = []
+        timestamp = datetime.now().isoformat()
+
         for result in self.results:
-            self._update_actual_results(result)
-        
+            test_code = result['code']
+            test_name = result['name']
+            status = result['status']
+            message = result['message']
+
+            row = self._find_row(col_a, test_code, test_name)
+            if row is None:
+                print(
+                    f"  [sheets] no match for '{test_code}' in '{self.worksheet_name}' "
+                    f"col A — verify the US ID exists in the sheet"
+                )
+                continue
+
+            cells_to_update.extend([
+                gspread.Cell(row, 11, status),
+                gspread.Cell(row, 12, message),
+                gspread.Cell(row, 13, timestamp),
+            ])
+
+        if cells_to_update:
+            self.worksheet.update_cells(cells_to_update)
+
         self.results = []
-    
-    def _update_actual_results(self, result: dict):
-        """Find test code in column A and update columns K, L, M in the same row."""
-        test_code = result['code']
-        status = result['status']
-        duration = result['duration']
-        message = result['message']
-        timestamp = result['timestamp']
-        
-        # Format automation notes with more detail for failures
-        if status == "FAILED" and message:
-            # For FAILED tests, capture the full error message (up to 5000 chars)
-            error_msg = message.replace('\n', ' | ')[:5000]
-            automation_notes = f"Status: FAILED | Duration: {duration:.2f}s | {error_msg}"
-        else:
-            # For passed/skipped tests, use brief format
-            automation_notes = f"Status: {status} | Duration: {duration:.2f}s"
-            if message:
-                automation_notes += f" | {message[:500]}"
-        
-        try:
-            # Get all values from column A (US ID) to find matching row
-            col_a_values = self.worksheet.col_values(1)
-            
-            # Search for test code in column A (case-insensitive, strip whitespace)
-            row_number = None
-            for idx, cell_value in enumerate(col_a_values, start=1):
-                if cell_value and cell_value.strip().upper() == test_code.strip().upper():
-                    row_number = idx
-                    break
-            
-            if row_number:
-                # Update columns K (11), L (12), M (13) in matching row
-                self.worksheet.update_cell(row_number, 11, status)
-                self.worksheet.update_cell(row_number, 12, automation_notes)
-                self.worksheet.update_cell(row_number, 13, timestamp)
-                
-                print(f"✓ Updated {test_code} at row {row_number}: {status}")
-                return
-            else:
-                # DEBUG: Print more details about unmatched tests
-                print(f"\n🔴 UNMATCHED TEST DETECTED:")
-                print(f"   Test Code: {test_code}")
-                print(f"   Test Name: {result.get('name', 'Unknown')}")
-                print(f"   Status: {status}")
-                print(f"   Duration: {duration:.2f}s")
-                print(f"   Worksheet: {self.worksheet_name}")
-                print(f"   Message: {message[:100] if message else 'None'}")
-                print(f"   Available US IDs in column A: {[v for v in col_a_values[1:11] if v]}")
-                print()
-                
-        except Exception as e:
-            print(f"⚠️ Could not update test code {test_code}: {e}")
     
     def save_summary_results(self, results_dicts: list):
         """Save summary with one row per test suite."""
         if not results_dicts:
             return
         
-        # Group results by worksheet
         results_by_worksheet = {}
         for result in results_dicts:
             ws = result.get('worksheet', 'Unknown')
@@ -172,27 +139,25 @@ class GoogleSheetsReporter:
                 results_by_worksheet[ws] = []
             results_by_worksheet[ws].append(result)
         
-        # Create a summary row for each worksheet
         for worksheet_name, worksheet_results in results_by_worksheet.items():
             self._save_summary_row_for_worksheet(worksheet_name, worksheet_results)
     
     def _save_summary_row_for_worksheet(self, worksheet_name: str, results: list):
         """Create summary row for a specific worksheet."""
+        self._ensure_connected()
         total_tests = len(results)
         passed_tests = sum(1 for r in results if r['status'] == 'PASSED')
         failed_tests = total_tests - passed_tests
         pass_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         total_duration = sum(float(r['duration']) for r in results)
-        
+
         test_names = "\n".join([
             f"{r['code']}: {r['name']} ({r['duration']:.2f}s)"
             for r in results
         ])
-        
+
         statuses_str = "\n".join([r['status'] for r in results])
-        
-        # Create row with CORRECT column order:
-        # Timestamp | Total Tests | Passed | Failed | Pass Rate | Duration | Test Suite | Test Details | Statuses
+
         summary_row = [
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # Timestamp
             total_tests,                                    # Total Tests
@@ -211,23 +176,38 @@ def extract_iso_code(docstring: Optional[str]) -> Optional[str]:
     """Extract test code from docstring (ISO-*, SSM-*, CUI-*, etc.)."""
     if not docstring:
         return None
-    # Match patterns like: ISO-DAT-001, SSM-HMC-001, CUI-NS-001, etc.
-    match = re.search(r'([A-Z][A-Z0-9]*-[A-Z0-9]+-\d+)', docstring)
+    match = re.search(r'([A-Z][A-Z0-9]*(?:-[A-Z][A-Z0-9]*)*-\d+)', docstring)
     return match.group(1) if match else None
 
 
 def detect_test_category(item) -> str:
     """Detect which Google Sheets worksheet a test belongs to based on file path."""
     fspath = str(item.fspath).lower()
-    
+
+    # LLM-specific detection — checked first to avoid matching generic keywords
+    if '/llm/' in fspath or '\\llm\\' in fspath:
+        if 'test_llm_client' in fspath:
+            return LLM_CLIENT
+        if 'test_mock_client' in fspath:
+            return LLM_MOCK_CLIENT
+        if 'test_ollama_client' in fspath:
+            return LLM_OLLAMA_CLIENT
+        if 'test_openai_client' in fspath:
+            return LLM_OPENAI_CLIENT
+        if 'test_contextual_client' in fspath:
+            return LLM_CONTEXTUAL_CLIENT
+
     path_worksheet_map = {
-        'complete_user_isolation': 'Complete User Isolation',
-        'isolation': 'Isolation Testing Framework TCs',
-        'vendor': 'Isolation Testing Framework TCs',
-        'auth': 'Secure Session Management',
-        'session': 'Secure Session Management',
+        'complete_user_isolation': COMPLETE_USER_ISOLATION,
+        'specialized': SPECIALIZED_BUSINESS_AGENT,
+        'agents': BASE_AGENT_FRAMEWORK,
+        'isolation': ISOLATION_TESTING_FRAMEWORK,
+        'vendor': ISOLATION_TESTING_FRAMEWORK,
+        'auth': SECURE_SESSION_MANAGEMENT,
+        'session': SECURE_SESSION_MANAGEMENT,
         'security': 'Security Penetration Testing',
-        'ctf': 'Event Driven CTF',
+        'test_event_driven_ctf_backend': EVENT_DRIVEN_CTF,
+        'ctf': 'CTF Challenge Validation',
         'performance': 'Performance Testing',
         'browser': 'Cross_Browser',
         'e2e': 'End-To-End',
@@ -235,22 +215,29 @@ def detect_test_category(item) -> str:
         'google_sheets': 'Google Sheets Integration',
         'summary': 'Summary'
     }
-    
+
     for keyword, worksheet in path_worksheet_map.items():
         if keyword in fspath:
             return worksheet
-    
-    return 'Isolation Testing Framework TCs'
+
+    return ISOLATION_TESTING_FRAMEWORK
 
 
 class GoogleSheetsPlugin:
     """Pytest plugin for automatic Google Sheets test result reporting."""
     
-    # Worksheets that should have test results updated
     UPDATABLE_WORKSHEETS = {
-        'Isolation Testing Framework TCs',
-        'Secure Session Management',
-        'Complete User Isolation'
+        ISOLATION_TESTING_FRAMEWORK,
+        SECURE_SESSION_MANAGEMENT,
+        COMPLETE_USER_ISOLATION,
+        BASE_AGENT_FRAMEWORK,
+        SPECIALIZED_BUSINESS_AGENT,
+        EVENT_DRIVEN_CTF,
+        LLM_CLIENT,
+        LLM_MOCK_CLIENT,
+        LLM_OLLAMA_CLIENT,
+        LLM_OPENAI_CLIENT,
+        LLM_CONTEXTUAL_CLIENT,
     }
     
     def __init__(self, config):
@@ -263,135 +250,150 @@ class GoogleSheetsPlugin:
         self.failed_count = 0
         
         if config.getoption("--google-sheets"):
-            # List of worksheets to initialize
             worksheets = [
-                'Isolation Testing Framework TCs',
-                'Secure Session Management',
+                ISOLATION_TESTING_FRAMEWORK,
+                SECURE_SESSION_MANAGEMENT,
+                BASE_AGENT_FRAMEWORK,
+                SPECIALIZED_BUSINESS_AGENT,
+                EVENT_DRIVEN_CTF,
                 'Security Penetration Testing',
-                'Event Driven CTF',
+                'CTF Challenge Validation',
                 'Performance Testing',
                 'Cross_Browser',
                 'End-To-End',
-                'Complete User Isolation',
+                LLM_CLIENT,
+                LLM_MOCK_CLIENT,
+                LLM_OLLAMA_CLIENT,
+                LLM_OPENAI_CLIENT,
+                LLM_CONTEXTUAL_CLIENT,
+                COMPLETE_USER_ISOLATION,
                 'Summary',
             ]
             
             for worksheet_name in worksheets:
+                self.results_by_worksheet[worksheet_name] = []
                 try:
                     self.reporters[worksheet_name] = GoogleSheetsReporter(worksheet_name)
-                    self.results_by_worksheet[worksheet_name] = []
                 except Exception as e:
                     print(f"⚠️  Could not initialize worksheet '{worksheet_name}': {e}")
     
+    def _get_test_status(self, report) -> str:
+        """Determine test status from report."""
+        if report.passed:
+            return "PASSED"
+        elif report.skipped:
+            return "SKIPPED"
+        return "FAILED"
+    
+    def _update_counters(self, status: str) -> None:
+        """Update test counts based on status."""
+        self.test_count += 1
+        if status == "PASSED":
+            self.passed_count += 1
+        elif status == "FAILED":
+            self.failed_count += 1
+    
+    def _record_test_result(self, item, report, worksheet_name: str) -> None:
+        """Build and record a test result."""
+        test_code = extract_iso_code(item.obj.__doc__)
+        status = self._get_test_status(report)
+        message = str(report.longrepr) if report.longrepr else ""
+        
+        self._update_counters(status)
+        
+        result = {
+            'code': test_code or item.name,
+            'name': item.name,
+            'status': status,
+            'duration': report.duration,
+            'message': message,
+            'worksheet': worksheet_name
+        }
+        
+        if worksheet_name in self.results_by_worksheet:
+            self.results_by_worksheet[worksheet_name].append(result)
+        
+        if 'Summary' in self.results_by_worksheet:
+            self.results_by_worksheet['Summary'].append(result)
+
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item, call):
         """Hook to capture test results and update Google Sheets."""
         outcome = yield
         report = outcome.get_result()
-        
-        # Only process the actual test call (not setup/teardown)
-        if report.when == "call" and self.config.getoption("--google-sheets"):
-            test_code = extract_iso_code(item.obj.__doc__)
-            worksheet_name = detect_test_category(item)
-            
-            status = "PASSED" if report.passed else "FAILED"
-            if report.skipped:
-                status = "SKIPPED"
-            
-            duration = report.duration
-            message = str(report.longrepr) if report.longrepr else ""
-            
-            # Track test counts
-            self.test_count += 1
-            if status == "PASSED":
-                self.passed_count += 1
-            elif status == "FAILED":
-                self.failed_count += 1
-            
-            result = {
-                'code': test_code or item.name,
-                'name': item.name,
-                'status': status,
-                'duration': duration,
-                'message': message,
-                'worksheet': worksheet_name
-            }
-            
-            # Track result for the specific worksheet (only if it's updatable)
-            if worksheet_name in self.results_by_worksheet:
-                self.results_by_worksheet[worksheet_name].append(result)
-            
-            # Also add to Summary
-            if 'Summary' in self.results_by_worksheet:
-                self.results_by_worksheet['Summary'].append(result)
-    
-    def pytest_sessionfinish(self, session, exitstatus):
-        """Hook called after all tests complete."""
+
         if not self.config.getoption("--google-sheets"):
             return
-        
-        print("\n" + "=" * 90)
-        print("📊 AUTOMATED TEST RESULTS - GOOGLE SHEETS UPDATE")
-        print("=" * 90)
-        
-        # Calculate overall stats
-        total_tests = 0
-        passed_tests = 0
-        
-        # Save results ONLY to updatable worksheets (except Summary)
-        worksheet_count = 0
-        for worksheet_name, results in self.results_by_worksheet.items():
-            # Only update if worksheet is in the updatable list and has results
-            if results and worksheet_name != "Summary" and worksheet_name in self.UPDATABLE_WORKSHEETS:
-                worksheet_count += 1
-                passed_count = sum(1 for r in results if r['status'] == 'PASSED')
-                total_count = len(results)
-                passed_tests += passed_count
-                total_tests += total_count
-                
-                # Save to worksheet
-                if worksheet_name in self.reporters:
-                    try:
-                        for result in results:
-                            self.reporters[worksheet_name].record_result(
-                                result['code'],
-                                result['name'],
-                                result['status'],
-                                result['duration'],
-                                result['message']
-                            )
-                        self.reporters[worksheet_name].save_results()
-                        print(f"✓ Updated {total_count} results in '{worksheet_name}' ({passed_count}/{total_count} passed)")
-                    except Exception as e:
-                        print(f"✗ ERROR saving to '{worksheet_name}': {e}")
-        
-        # Save Summary ONCE with all results at the end
-        if "Summary" in self.results_by_worksheet and self.reporters.get("Summary"):
-            try:
-                self.reporters["Summary"].save_summary_results(self.results_by_worksheet["Summary"])
-                summary_results = self.results_by_worksheet["Summary"]
-                print(f"✓ Updated Summary sheet ({len(summary_results)} total tests)")
-            except Exception as e:
-                print(f"✗ ERROR saving to Summary: {e}")
-        
-        # Calculate pass rate
-        if total_tests > 0:
-            pass_rate = (passed_tests / total_tests) * 100
-            print(f"\n📈 OVERALL RESULTS: {passed_tests}/{total_tests} passed ({pass_rate:.1f}%)")
-        
-        print("\n📋 WORKSHEET BREAKDOWN:")
-        print("-" * 90)
+
+        # Skipped tests only have a "setup" phase — "call" is never reached.
+        # Passing/failing tests are captured from "call".
+        is_call_result = report.when == "call"
+        is_skip_result = report.when == "setup" and report.skipped
+
+        if is_call_result or is_skip_result:
+            worksheet_name = detect_test_category(item)
+            self._record_test_result(item, report, worksheet_name)
+    
+    def _flush_worksheet(self, worksheet_name: str, results: list) -> tuple:
+        """Record and save results for one worksheet. Returns (passed_count, total_count)."""
+        total_count = len(results)
+        passed_count = sum(1 for r in results if r['status'] == 'PASSED')
+        if worksheet_name not in self.reporters:
+            print(f"⊗ Skipping '{worksheet_name}' — reporter not initialized (check credentials/tab permissions)")
+            return passed_count, total_count
+        try:
+            for result in results:
+                self.reporters[worksheet_name].record_result(
+                    result['code'], result['name'], result['status'],
+                    result['duration'], result['message']
+                )
+            self.reporters[worksheet_name].save_results()
+            print(f"✓ Saved {total_count} results to '{worksheet_name}' ({passed_count}/{total_count} passed)")
+        except Exception as e:
+            print(f"✗ ERROR saving to '{worksheet_name}': {e}")
+        return passed_count, total_count
+
+    def _print_breakdown(self) -> None:
+        """Print per-worksheet pass/fail counts."""
+        print("\nWorksheet Breakdown:")
+        print("=" * 80)
         for worksheet_name, results in self.results_by_worksheet.items():
             if results and worksheet_name != "Summary":
                 passed = sum(1 for r in results if r['status'] == 'PASSED')
-                failed = sum(1 for r in results if r['status'] == 'FAILED')
-                skipped = sum(1 for r in results if r['status'] == 'SKIPPED')
-                total = len(results)
-                updatable_status = "✓" if worksheet_name in self.UPDATABLE_WORKSHEETS else "⊗"
-                print(f"  {updatable_status} {worksheet_name}: {passed} passed, {failed} failed, {skipped} skipped ({total} total)")
-        
-        elapsed_time = (datetime.now() - self.session_start_time).total_seconds()
-        print(f"\n⏱️  Test Execution Time: {elapsed_time:.2f}s")
+                print(f"✓ {worksheet_name}: {passed}/{len(results)} passed")
+
+    def pytest_sessionfinish(self):
+        """Hook called after all tests complete."""
+        if not self.config.getoption("--google-sheets"):
+            return
+
+        print("\n" + "=" * 80)
+        print("Google Sheets Test Results Summary")
+        print("=" * 80)
+
+        total_tests = 0
+        passed_tests = 0
+        worksheet_count = 0
+
+        for worksheet_name, results in self.results_by_worksheet.items():
+            if results and worksheet_name != "Summary" and worksheet_name in self.UPDATABLE_WORKSHEETS:
+                worksheet_count += 1
+                passed_count, total_count = self._flush_worksheet(worksheet_name, results)
+                passed_tests += passed_count
+                total_tests += total_count
+
+        if "Summary" in self.results_by_worksheet and self.reporters.get("Summary"):
+            try:
+                self.reporters["Summary"].save_summary_results(self.results_by_worksheet["Summary"])
+                print(f"✓ Saved Summary ({len(self.results_by_worksheet['Summary'])} total tests)")
+            except Exception as e:
+                print(f"✗ ERROR saving to Summary: {e}")
+
+        if total_tests > 0:
+            pass_rate = (passed_tests / total_tests) * 100
+            print(f"\nOverall: {passed_tests}/{total_tests} passed ({pass_rate:.1f}%)")
+
+        self._print_breakdown()
         print(f"✓ Results saved to {worksheet_count} worksheet(s)")
         print("=" * 90)
 

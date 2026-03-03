@@ -24,7 +24,6 @@ from finbot.ctf.detectors.registry import (
     register_detector,
     list_registered_detectors,
 )
-from finbot.ctf.detectors.implementations.prompt_leak import PromptLeakDetector
 from finbot.core.websocket.events import (
     WSEvent,
     WSEventType,
@@ -45,13 +44,80 @@ class FakeTestDetector(BaseDetector):
     def get_relevant_event_types(self):
         return self.config.get("event_types", ["agent.*"])
 
-    def check_event(self, event):
+    async def check_event(self, event, db=None):
         should_detect = self.config.get("should_detect", False)
         return DetectionResult(
             detected=should_detect,
             confidence=1.0 if should_detect else 0.0,
             evidence={"event_type": event.get("event_type")},
             message="Fake detection" if should_detect else "No detection",
+        )
+
+
+_DEFAULT_LEAK_PATTERNS = [
+    "you are a",
+    "your role is",
+    "the system prompt",
+]
+
+
+@register_detector("PromptLeakDetector")
+class PromptLeakDetector(BaseDetector):
+    """Test-local pattern-based detector for system prompt leak (EDR-PTT tests).
+
+    The production equivalent (prompt_leak.py) was removed in favour of the
+    LLM-judge-based SystemPromptLeakDetector.  This class lives here so the
+    EDR-PTT acceptance tests can continue to exercise the detector framework
+    with a concrete, deterministic implementation.
+
+    Configuration:
+        patterns: list[str] - Patterns to match (case-insensitive).
+                              Defaults to _DEFAULT_LEAK_PATTERNS.
+        min_confidence: float (0.0-1.0) - Detection threshold. Default: 0.5
+
+    Confidence formula: min(1.0, num_matches * 0.3 + 0.2)
+    """
+
+    def _validate_config(self) -> None:
+        if "patterns" in self.config:
+            patterns = self.config["patterns"]
+            if not isinstance(patterns, list):
+                raise ValueError("patterns must be a list")
+            if not patterns:
+                raise ValueError("patterns list cannot be empty")
+        if "min_confidence" in self.config:
+            conf = self.config["min_confidence"]
+            if not isinstance(conf, (int, float)) or conf < 0 or conf > 1:
+                raise ValueError("min_confidence must be between 0.0 and 1.0")
+
+    def get_relevant_event_types(self):
+        return ["agent.*.llm_request_success"]
+
+    def check_event(self, event, db=None):  # type: ignore[override]
+        response_text = event.get("response_dump")
+        if not response_text:
+            return DetectionResult(
+                detected=False,
+                message="No response text found in event",
+            )
+
+        patterns = self.config.get("patterns", _DEFAULT_LEAK_PATTERNS)
+        min_confidence = self.config.get("min_confidence", 0.5)
+
+        text_lower = response_text.lower()
+        matches = [p for p in patterns if p.lower() in text_lower]
+        patterns_matched = len(matches)
+        confidence = min(1.0, patterns_matched * 0.3 + 0.2) if patterns_matched else 0.0
+        detected = patterns_matched > 0 and confidence >= min_confidence
+
+        return DetectionResult(
+            detected=detected,
+            confidence=confidence,
+            message="System prompt leak detected" if detected else f"No leak detected (confidence {confidence:.2f})",
+            evidence={
+                "matches": matches,
+                "patterns_matched": patterns_matched,
+            },
         )
 
 
@@ -198,9 +264,9 @@ async def test_event_category_classification(db):
     event = _make_event()
 
     processor.challenge_service = MagicMock()
-    processor.challenge_service.check_event_for_challenges.return_value = []
+    processor.challenge_service.check_event_for_challenges = AsyncMock(return_value=[])
     processor.badge_service = MagicMock()
-    processor.badge_service.check_event_for_badges.return_value = []
+    processor.badge_service.check_event_for_badges = AsyncMock(return_value=[])
 
     with patch.object(processor, "_store_ctf_event") as mock_store, \
          patch.object(processor, "_push_to_websocket", new_callable=AsyncMock):
@@ -660,7 +726,8 @@ def test_detector_registry_lookup():
 # EDR-FLG-001: Challenge Completion and Progress Update
 # ============================================================================
 @pytest.mark.unit
-def test_challenge_completion_and_progress_update(db):
+@pytest.mark.asyncio
+async def test_challenge_completion_and_progress_update(db):
     """EDR-FLG-001: Challenge Completion and Progress Update
 
     Verify that when a detector returns detected=True, the challenge is
@@ -703,7 +770,7 @@ def test_challenge_completion_and_progress_update(db):
     db.commit()
 
     event = _make_event(event_type="agent.llm_response")
-    completed = service.check_event_for_challenges(event, db)
+    completed = await service.check_event_for_challenges(event, db)
 
     # FIX #1: Filter to our test challenge (YAML-seeded challenges may also match)
     our_completed = [(cid, r) for cid, r in completed if cid == "ch-flag-001"]
@@ -733,7 +800,8 @@ def test_challenge_completion_and_progress_update(db):
 # EDR-FLG-002: Challenge Progress Tracking on Failed Attempt
 # ============================================================================
 @pytest.mark.unit
-def test_challenge_progress_tracking_on_failed_attempt(db):
+@pytest.mark.asyncio
+async def test_challenge_progress_tracking_on_failed_attempt(db):
     """EDR-FLG-002: Challenge Progress Tracking on Failed Attempt
 
     Verify that when a detector returns detected=False, the challenge
@@ -774,7 +842,7 @@ def test_challenge_progress_tracking_on_failed_attempt(db):
     db.commit()
 
     event = _make_event(event_type="agent.llm_response")
-    completed = service.check_event_for_challenges(event, db)
+    completed = await service.check_event_for_challenges(event, db)
 
     # FIX #1: Filter to our challenge — other YAML-seeded challenges may complete
     our_completed = [(cid, r) for cid, r in completed if cid == "ch-fail-001"]
@@ -800,7 +868,8 @@ def test_challenge_progress_tracking_on_failed_attempt(db):
 # EDR-FLG-003: Already Completed Challenge Skipped
 # ============================================================================
 @pytest.mark.unit
-def test_already_completed_challenge_skipped(db):
+@pytest.mark.asyncio
+async def test_already_completed_challenge_skipped(db):
     """EDR-FLG-003: Already Completed Challenge Skipped
 
     Verify that challenges already completed by a user are not
@@ -848,7 +917,7 @@ def test_already_completed_challenge_skipped(db):
     db.commit()
 
     event = _make_event(event_type="agent.llm_response")
-    completed = service.check_event_for_challenges(event, db)
+    completed = await service.check_event_for_challenges(event, db)
 
     # FIX #1: Filter to our challenge — other YAML-seeded challenges may complete
     our_completed = [(cid, r) for cid, r in completed if cid == "ch-skip-001"]
@@ -861,7 +930,8 @@ def test_already_completed_challenge_skipped(db):
 # EDR-FLG-004: Badge Auto-Award on Event
 # ============================================================================
 @pytest.mark.unit
-def test_badge_auto_award_on_event(db):
+@pytest.mark.asyncio
+async def test_badge_auto_award_on_event(db):
     """EDR-FLG-004: Badge Auto-Award on Event
 
     Verify that badges are automatically awarded when the evaluator
@@ -903,24 +973,24 @@ def test_badge_auto_award_on_event(db):
 
     mock_evaluator = MagicMock()
     mock_evaluator.matches_event_type.return_value = True
-    mock_evaluator.check_event.return_value = DetectionResult(
+    mock_evaluator.check_event = AsyncMock(return_value=DetectionResult(
         detected=True,
         confidence=1.0,
         message="Badge earned!",
         evidence={"vendor_count": 5},
-    )
+    ))
 
     # Only mock the evaluator for OUR test badge, not YAML-seeded badges
-    original_get = service.get_evaluator_for_badge
+    from finbot.ctf.evaluators import create_evaluator as real_create_evaluator
 
-    def selective_mock(badge_obj):
-        if badge_obj.id == "badge-auto-001":
+    def selective_create(evaluator_class, badge_id, config=None):
+        if badge_id == "badge-auto-001":
             return mock_evaluator
-        return original_get(badge_obj)
+        return real_create_evaluator(evaluator_class, badge_id, config)
 
-    with patch.object(service, "get_evaluator_for_badge", side_effect=selective_mock):
+    with patch("finbot.ctf.processor.badge_service.create_evaluator", side_effect=selective_create):
         event = _make_event(event_type="business.vendor.created")
-        awarded = service.check_event_for_badges(event, db)
+        awarded = await service.check_event_for_badges(event, db)
 
     # Filter to only our test badge (other YAML-loaded badges may also award)
     our_awards = [(bid, r) for bid, r in awarded if bid == "badge-auto-001"]
@@ -944,7 +1014,8 @@ def test_badge_auto_award_on_event(db):
 # EDR-FLG-005: Duplicate Badge Prevention
 # ============================================================================
 @pytest.mark.unit
-def test_duplicate_badge_prevention(db):
+@pytest.mark.asyncio
+async def test_duplicate_badge_prevention(db):
     """EDR-FLG-005: Duplicate Badge Prevention
 
     Verify that a badge already earned by a user is not awarded again.
@@ -986,21 +1057,10 @@ def test_duplicate_badge_prevention(db):
     db.add(existing)
     db.commit()
 
-    mock_evaluator = MagicMock()
-    mock_evaluator.matches_event_type.return_value = True
-    mock_evaluator.check_event.return_value = DetectionResult(detected=True)
-
-    # Only mock the evaluator for OUR test badge, not leftover badges from other tests
-    original_get = service.get_evaluator_for_badge
-
-    def selective_mock(badge_obj):
-        if badge_obj.id == "badge-dup-001":
-            return mock_evaluator
-        return original_get(badge_obj)
-
-    with patch.object(service, "get_evaluator_for_badge", side_effect=selective_mock):
-        event = _make_event(event_type="business.vendor.created")
-        awarded = service.check_event_for_badges(event, db)
+    # badge-dup-001 already exists in UserBadge so the service skips it before
+    # calling any evaluator — no evaluator mock needed.
+    event = _make_event(event_type="business.vendor.created")
+    awarded = await service.check_event_for_badges(event, db)
 
     # Filter to only our test badge (other leftover badges should not appear)
     our_awards = [(bid, r) for bid, r in awarded if bid == "badge-dup-001"]
@@ -1014,32 +1074,35 @@ def test_duplicate_badge_prevention(db):
 # ============================================================================
 @pytest.mark.unit
 def test_service_cache_reload():
-    """EDR-FLG-006: Service Cache Reload
+    """EDR-FLG-006: Service Initialization
 
-    Verify that reload_definitions() clears both detector and evaluator
-    caches so fresh instances are created on next event.
+    Verify that CTFEventProcessor initializes ChallengeService and
+    BadgeService on construction, and that each instance is independent.
+
+    Services create detectors/evaluators fresh per event call (no
+    internal cache), so this test confirms the processor wires them
+    correctly and that two separate processor instances have distinct
+    service objects.
 
     Test Steps:
-    1. Create CTFEventProcessor
-    2. Populate challenge_service._detectors_cache with dummy data
-    3. Populate badge_service._evaluators_cache with dummy data
-    4. Call reload_definitions()
-    5. Verify both caches are empty
+    1. Create two CTFEventProcessor instances
+    2. Verify each has a ChallengeService attribute
+    3. Verify each has a BadgeService attribute
+    4. Verify the two processors do NOT share service instances
 
     Expected Results:
-    1. Detector cache cleared
-    2. Evaluator cache cleared
-    3. Next event creates fresh detector/evaluator instances
+    1. Both services present on construction
+    2. Separate processors use independent service objects
     """
-    processor = CTFEventProcessor(redis_client=None)
+    processor_a = CTFEventProcessor(redis_client=None)
+    processor_b = CTFEventProcessor(redis_client=None)
 
-    processor.challenge_service._detectors_cache["ch-1"] = MagicMock()
-    processor.badge_service._evaluators_cache["badge-1"] = MagicMock()
+    assert isinstance(processor_a.challenge_service, ChallengeService)
+    assert isinstance(processor_a.badge_service, BadgeService)
 
-    processor.reload_definitions()
-
-    assert len(processor.challenge_service._detectors_cache) == 0
-    assert len(processor.badge_service._evaluators_cache) == 0
+    # Each processor gets its own service instances
+    assert processor_a.challenge_service is not processor_b.challenge_service
+    assert processor_a.badge_service is not processor_b.badge_service
 
 
 # ============================================================================
@@ -1299,7 +1362,10 @@ async def test_challenge_completed_websocket_event(db):
 
     mock_ws.broadcast_activity.assert_called_once()
     mock_ws.send_to_user.assert_called_once()
-    mock_create.assert_called_once_with("ch-ws-001", "WS Challenge", 50)
+    mock_create.assert_called_once_with(
+        "ch-ws-001", "WS Challenge", 50,
+        effective_points=50, points_modifier=1.0, modifier_details=None,
+    )
 
     db.close()
 
