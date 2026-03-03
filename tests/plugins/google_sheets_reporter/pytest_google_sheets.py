@@ -20,73 +20,50 @@ LLM_CONTEXTUAL_CLIENT = 'LLM Contextual Client'
 COMPLETE_USER_ISOLATION = 'Complete User Isolation'
 ISOLATION_TESTING_FRAMEWORK = 'Isolation Testing Framework TCs'
 SECURE_SESSION_MANAGEMENT = 'Secure Session Management'
+BASE_AGENT_FRAMEWORK = 'Base Agent Framework'
+SPECIALIZED_BUSINESS_AGENT = 'Specialized Business Agent'
+EVENT_DRIVEN_CTF = 'Event Driven CTF'
 
 
 class GoogleSheetsReporter:
     """Handles updating a specific Google Sheets worksheet with test results."""
-    
+
     def __init__(self, worksheet_name: str):
-        """Initialize connection to a specific worksheet."""
+        """Store config; defer Google API connection until first write."""
         self.worksheet_name = worksheet_name
         self.results: List[dict] = []
-        
-        # Get credentials from environment
-        credentials_json = os.getenv('GOOGLE_CREDENTIALS')
-        sheets_id = os.getenv('GOOGLE_SHEETS_ID')
 
-        if not sheets_id:
+        # Validate required env vars eagerly (fast, no network)
+        self._credentials_json = os.getenv('GOOGLE_CREDENTIALS')
+        self._sheets_id = os.getenv('GOOGLE_SHEETS_ID')
+        if not self._sheets_id:
             raise ValueError("GOOGLE_SHEETS_ID not set in environment")
+        self._credentials_file = os.getenv('GOOGLE_CREDENTIALS_FILE', 'google-credentials.json')
 
-        # Authenticate with Google Sheets
+        # Lazily initialized on first write
+        self.worksheet = None
+
+    def _ensure_connected(self):
+        """Connect to Google Sheets on demand (called before any sheet operation)."""
+        if self.worksheet is not None:
+            return
+
         scopes = ['https://www.googleapis.com/auth/spreadsheets']
-        if credentials_json:
-            # JSON string from environment (CI/CD)
-            credentials = Credentials.from_service_account_info(json.loads(credentials_json), scopes=scopes)
+        if self._credentials_json:
+            credentials = Credentials.from_service_account_info(
+                json.loads(self._credentials_json), scopes=scopes
+            )
         else:
-            # Credentials file (local development)
-            credentials_file = os.getenv('GOOGLE_CREDENTIALS_FILE', 'google-credentials.json')
-            credentials = Credentials.from_service_account_file(credentials_file, scopes=scopes)
-        self.client = gspread.authorize(credentials)
-        self.sheet = self.client.open_by_key(sheets_id)
-        
-        # Get or create worksheet
-        try:
-            self.worksheet = self.sheet.worksheet(worksheet_name)
-        except gspread.exceptions.WorksheetNotFound:
-            self.worksheet = self.sheet.add_worksheet(title=worksheet_name, rows=1000, cols=13)
-            self._initialize_headers()
-    
-    def _initialize_headers(self):
-        """Set up column headers if worksheet is new."""
-        if self.worksheet_name == "Summary":
-            headers = [
-                'Timestamp',
-                'Test Suite',
-                'Total Tests',
-                'Passed',
-                'Failed',
-                'Pass Rate',
-                'Duration (s)',
-                'Test Details',
-                'Statuses'
-            ]
-        else:
-            headers = [
-                'US ID',
-                'Dependency',
-                'Creator',
-                'Claimed by',
-                'Title',
-                'Description',
-                'Steps',
-                'Expected Results',
-                'Actual Results',
-                'Placeholder J',
-                'Automation Status',
-                'Automation Notes',
-                'Last Run'
-            ]
-        self.worksheet.append_row(headers)
+            credentials = Credentials.from_service_account_file(
+                self._credentials_file, scopes=scopes
+            )
+        client = gspread.authorize(credentials)
+        # Prevent indefinite hangs on network calls (connect_timeout, read_timeout)
+        client.http_client.timeout = (10, 30)
+        sheet = client.open_by_key(self._sheets_id)
+
+        # Get existing worksheet — never create a new tab
+        self.worksheet = sheet.worksheet(self.worksheet_name)
     
     def record_result(self, test_code: str, test_name: str, status: str, duration: float, message: str = ""):
         """Record a single test result."""
@@ -120,6 +97,7 @@ class GoogleSheetsReporter:
         if not self.results:
             return
 
+        self._ensure_connected()
         col_a = self.worksheet.col_values(1)
         cells_to_update = []
         timestamp = datetime.now().isoformat()
@@ -166,29 +144,30 @@ class GoogleSheetsReporter:
     
     def _save_summary_row_for_worksheet(self, worksheet_name: str, results: list):
         """Create summary row for a specific worksheet."""
+        self._ensure_connected()
         total_tests = len(results)
         passed_tests = sum(1 for r in results if r['status'] == 'PASSED')
         failed_tests = total_tests - passed_tests
         pass_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         total_duration = sum(float(r['duration']) for r in results)
-        
+
         test_names = "\n".join([
             f"{r['code']}: {r['name']} ({r['duration']:.2f}s)"
             for r in results
         ])
-        
+
         statuses_str = "\n".join([r['status'] for r in results])
-        
+
         summary_row = [
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            total_tests,
-            passed_tests,
-            failed_tests,
-            f"{pass_rate:.1f}%",
-            f"{total_duration:.2f}",
-            worksheet_name,
-            test_names,
-            statuses_str
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # Timestamp
+            total_tests,                                    # Total Tests
+            passed_tests,                                   # Passed
+            failed_tests,                                   # Failed
+            f"{pass_rate:.1f}%",                           # Pass Rate
+            f"{total_duration:.2f}",                        # Duration
+            worksheet_name,                                 # Test Suite
+            test_names,                                     # Test Details
+            statuses_str                                    # Statuses
         ]
         self.worksheet.insert_row(summary_row, index=2)
 
@@ -220,11 +199,14 @@ def detect_test_category(item) -> str:
 
     path_worksheet_map = {
         'complete_user_isolation': COMPLETE_USER_ISOLATION,
+        'specialized': SPECIALIZED_BUSINESS_AGENT,
+        'agents': BASE_AGENT_FRAMEWORK,
         'isolation': ISOLATION_TESTING_FRAMEWORK,
         'vendor': ISOLATION_TESTING_FRAMEWORK,
         'auth': SECURE_SESSION_MANAGEMENT,
         'session': SECURE_SESSION_MANAGEMENT,
         'security': 'Security Penetration Testing',
+        'test_event_driven_ctf_backend': EVENT_DRIVEN_CTF,
         'ctf': 'CTF Challenge Validation',
         'performance': 'Performance Testing',
         'browser': 'Cross_Browser',
@@ -248,6 +230,9 @@ class GoogleSheetsPlugin:
         ISOLATION_TESTING_FRAMEWORK,
         SECURE_SESSION_MANAGEMENT,
         COMPLETE_USER_ISOLATION,
+        BASE_AGENT_FRAMEWORK,
+        SPECIALIZED_BUSINESS_AGENT,
+        EVENT_DRIVEN_CTF,
         LLM_CLIENT,
         LLM_MOCK_CLIENT,
         LLM_OLLAMA_CLIENT,
@@ -268,6 +253,9 @@ class GoogleSheetsPlugin:
             worksheets = [
                 ISOLATION_TESTING_FRAMEWORK,
                 SECURE_SESSION_MANAGEMENT,
+                BASE_AGENT_FRAMEWORK,
+                SPECIALIZED_BUSINESS_AGENT,
+                EVENT_DRIVEN_CTF,
                 'Security Penetration Testing',
                 'CTF Challenge Validation',
                 'Performance Testing',
@@ -333,8 +321,16 @@ class GoogleSheetsPlugin:
         """Hook to capture test results and update Google Sheets."""
         outcome = yield
         report = outcome.get_result()
-        
-        if report.when == "call" and self.config.getoption("--google-sheets"):
+
+        if not self.config.getoption("--google-sheets"):
+            return
+
+        # Skipped tests only have a "setup" phase — "call" is never reached.
+        # Passing/failing tests are captured from "call".
+        is_call_result = report.when == "call"
+        is_skip_result = report.when == "setup" and report.skipped
+
+        if is_call_result or is_skip_result:
             worksheet_name = detect_test_category(item)
             self._record_test_result(item, report, worksheet_name)
     
