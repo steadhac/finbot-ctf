@@ -3,12 +3,30 @@ Unit test configuration.
 """
 
 import pytest
-from unittest.mock import patch
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from datetime import datetime, timedelta, timezone
 
 from finbot.core.auth.session import session_manager
-from finbot.core.data.database import SessionLocal
-from finbot.core.data.repositories import VendorRepository
+from finbot.core.data.database import Base
+from finbot.core.data.repositories import VendorRepository, InvoiceRepository
 from finbot.core.data.models import UserSession
+from sqlalchemy.pool import StaticPool
+
+# Use in-memory SQLite for tests
+TEST_DATABASE_URL = "sqlite:///:memory:"
+
+
+@pytest.fixture(scope="function")
+def engine():
+    """Create test database engine with fresh tables each time"""
+    engine = create_engine(
+        TEST_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,  # Ensures the same connection is used
+
+    )
+    return engine
 
 
 @pytest.fixture
@@ -17,35 +35,44 @@ def fast_client(client):
     return client
 
 
-@pytest.fixture
-def client():
-    """Create a test client with mocked startup tasks.
-
-    Patches start_processor_task and load_definitions_on_startup so the
-    FastAPI app can boot without Redis or YAML definitions on disk.
+@pytest.fixture(scope="function")
+def db(engine, monkeypatch):
+    """Database session with automatic cleanup between tests
+    
+    This fixture:
+    1. Creates fresh in-memory database for each test
+    2. Creates all tables before test
+    3. Patches SessionLocal to use test database (critical for session_manager)
+    4. Yields clean session for test
+    5. Drops all tables after test completes
     """
-    from fastapi.testclient import TestClient
-    from finbot.main import app
-
-    with patch("finbot.main.start_processor_task"), \
-         patch("finbot.main.load_definitions_on_startup"):
-        with TestClient(app) as c:
-            yield c
-
-
-@pytest.fixture
-def db():
-    """Get database session with automatic rollback after each test.
-
-    Uses a SAVEPOINT so all inserts/updates within a test are undone
-    on teardown. This ensures test isolation without needing manual
-    cleanup helpers.
-    """
-    session = SessionLocal()
-    session.begin_nested()
+    # Create all tables before test
+    Base.metadata.create_all(bind=engine)
+    
+    # Create test session factory
+    TestSessionLocal = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=engine
+    )
+    
+    # Patch the global SessionLocal used by session_manager and repositories
+    monkeypatch.setattr(
+        "finbot.core.data.database.SessionLocal",
+        TestSessionLocal,
+    )
+    monkeypatch.setattr(
+        "finbot.core.auth.session.SessionLocal",
+        TestSessionLocal,
+    )
+    
+    session = TestSessionLocal()
+    
     yield session
-    session.rollback()
+    
+    # Cleanup after test
     session.close()
+    Base.metadata.drop_all(bind=engine)
 
 
 def create_vendor(vendor_repo, company_name: str, contact_name: str, email: str, tin: str):
@@ -123,5 +150,11 @@ def multi_vendor_setup(db):
             'invoice_id': None,
             'db': db,
         })
-
+    
     return vendors
+
+@pytest.fixture(autouse=True)
+def clean_db(db):
+    for table in reversed(Base.metadata.sorted_tables):
+        db.execute(table.delete())
+    db.commit()
