@@ -134,7 +134,7 @@ def test_invalid_database_type_rejected():
     3. Only "sqlite" and "postgresql" are permitted
     """
     with pytest.raises(ValidationError):
-        Settings(DATABASE_TYPE="mysql")
+        Settings(DATABASE_TYPE="mysql")  # type: ignore
 
 
 # ============================================================================
@@ -499,7 +499,6 @@ def test_create_tables_sqlite(db):
 
     assert len(tables) > 0, "Database should have at least one table"
     assert "user_sessions" in tables, "user_sessions table must exist"
-    db.close()
 
 
 # ============================================================================
@@ -763,7 +762,7 @@ def test_google_sheets_integration_verification():
     except gspread.exceptions.WorksheetNotFound as e:
         pytest.fail(
             f"Worksheet not found: {e}. "
-            f"Run tests with --google-sheets first to auto-create tabs."
+            f"Verify the tab exists in the spreadsheet."
         )
     except Exception as e:
         pytest.fail(f"Google Sheets verification failed: {e}")
