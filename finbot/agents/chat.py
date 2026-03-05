@@ -19,6 +19,7 @@ from openai import AsyncOpenAI
 from finbot.config import settings
 from finbot.core.auth.session import SessionContext
 from finbot.core.data.database import get_db
+from finbot.core.data.models import CTFEvent
 from finbot.core.data.repositories import ChatMessageRepository
 from finbot.core.messaging import event_bus
 from finbot.tools import (
@@ -32,6 +33,7 @@ from finbot.tools import (
 logger = logging.getLogger(__name__)
 
 CHAT_HISTORY_LIMIT = 100
+CHAT_IDLE_TIMEOUT_SECONDS = 3600  # 1 hour
 
 
 class ChatAssistant:
@@ -48,10 +50,35 @@ class ChatAssistant:
         self.background_tasks = background_tasks
         self.max_history = max_history
         self.agent_name = agent_name
-        self._workflow_id = f"wf_chat_{session_context.session_id}"
+        self._workflow_id = self._resolve_workflow_id()
         self._client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
         self._model = settings.LLM_DEFAULT_MODEL
         self._tool_callables = self._build_tool_callables()
+
+    def _resolve_workflow_id(self) -> str:
+        """Continue the last chat workflow if recent, otherwise start a new one."""
+        try:
+            db = next(get_db())
+            last_event = (
+                db.query(CTFEvent.workflow_id, CTFEvent.timestamp)
+                .filter(
+                    CTFEvent.session_id == self.session_context.session_id,
+                    CTFEvent.agent_name == self.agent_name,
+                    CTFEvent.workflow_id.isnot(None),
+                )
+                .order_by(CTFEvent.timestamp.desc())
+                .first()
+            )
+            db.close()
+
+            if last_event and last_event.workflow_id:
+                elapsed = (datetime.now(UTC) - last_event.timestamp.replace(tzinfo=UTC)).total_seconds()
+                if elapsed < CHAT_IDLE_TIMEOUT_SECONDS:
+                    return last_event.workflow_id
+        except Exception:
+            logger.debug("Could not resolve previous chat workflow, starting new one")
+
+        return f"wf_chat_{secrets.token_urlsafe(12)}"
 
     def _get_system_prompt(self) -> str:
         return f"""You are FinBot, the AI assistant for CineFlow Productions' vendor portal.
@@ -287,7 +314,7 @@ Current date: {datetime.now(UTC).strftime("%Y-%m-%d")}"""
             return json.dumps({"error": f"Unknown tool: {name}"})
         try:
             return await callable_fn(**arguments)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error("Tool %s failed: %s", name, e)
             return json.dumps({"error": f"Tool {name} failed: {str(e)}"})
 
