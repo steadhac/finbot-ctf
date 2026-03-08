@@ -27,6 +27,7 @@ from finbot.mcp.servers.findrive import models as _findrive_models  # noqa: F401
 from finbot.mcp.servers.finstripe import models as _finstripe_models  # noqa: F401
 from finbot.core.data.database import create_tables
 from finbot.core.error_handlers import register_error_handlers
+from finbot.apps.ctf.rendering import get_renderer
 from finbot.core.websocket import websocket_router
 
 # CTF
@@ -72,7 +73,21 @@ async def lifespan(app: FastAPI):
     except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"⚠️ CTF processor start failed: {e}")
 
+    # 5. Pre-warm the Playwright renderer (headless Chromium for OG images)
+    renderer = get_renderer()
+    try:
+        await renderer.start()
+        print("🖼️ Playwright renderer ready")
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"⚠️ Playwright renderer start skipped: {e}")
+
     yield  # App is running
+
+    # Shut down Playwright renderer
+    try:
+        await renderer.shutdown()
+    except Exception:  # pylint: disable=broad-exception-caught
+        pass
 
     # Stop CTF event processor gracefully
     try:

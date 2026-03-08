@@ -8,14 +8,12 @@ import secrets
 import uuid
 from datetime import UTC, datetime
 from typing import Any
-
 from finbot.core.auth.session import SessionContext
 from finbot.core.data.models import LLMRequest, LLMResponse
 from finbot.core.llm.client import LLMClient, get_llm_client
 from finbot.core.messaging import event_bus
 
 logger = logging.getLogger(__name__)
-
 
 class ContextualLLMClient:
     """
@@ -112,19 +110,18 @@ class ContextualLLMClient:
         interaction_id = str(uuid.uuid4())
         self.call_count += 1
 
-        if not request.provider:
-            request.provider = self.llm_client.provider
-        if not request.model:
-            request.model = self.llm_client.default_model
-        if not request.temperature:
-            request.temperature = self.llm_client.default_temperature
-
+        resolved_model = request.model or self.llm_client.default_model
+        resolved_temperature = (
+            self.llm_client.default_temperature 
+            if request.temperature is None 
+            else request.temperature
+        )
         user_message_info = self._extract_user_message_info(request.messages)
-
+        
         event_data = {
             "interaction_id": interaction_id,
-            "model": request.model or self.llm_client.default_model,
-            "temperature": request.temperature or self.llm_client.default_temperature,
+            "model": resolved_model,
+            "temperature": resolved_temperature,
             "message_count": len(request.messages or []),
             "agent_name": self.agent_name,
             "call_count": self.call_count,
@@ -150,6 +147,7 @@ class ContextualLLMClient:
         start_time = datetime.now(UTC)
 
         try:
+            # Pass original request unchanged — underlying client resolves its own defaults
             response = await self.llm_client.chat(request=request)
 
             duration_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
