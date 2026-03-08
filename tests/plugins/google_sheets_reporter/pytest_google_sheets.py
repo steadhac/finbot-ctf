@@ -24,6 +24,7 @@ BASE_AGENT_FRAMEWORK = 'Base Agent Framework'
 SPECIALIZED_BUSINESS_AGENT = 'Specialized Business Agent'
 EVENT_DRIVEN_CTF = 'Event Driven CTF'
 MULTI_DB_SUPPORT = 'Multi-DB-Support'
+REDIS_MESSAGE_STREAMS = 'Redis Message Streams'
 
 
 class GoogleSheetsReporter:
@@ -221,6 +222,7 @@ def detect_test_category(item) -> str:
 
     path_worksheet_map = {
         'complete_user_isolation': COMPLETE_USER_ISOLATION,
+        'redis_message_streams': REDIS_MESSAGE_STREAMS,
         'specialized': SPECIALIZED_BUSINESS_AGENT,
         'agents': BASE_AGENT_FRAMEWORK,
         'isolation': ISOLATION_TESTING_FRAMEWORK,
@@ -251,6 +253,7 @@ class GoogleSheetsPlugin:
 
     UPDATABLE_WORKSHEETS = {
         ISOLATION_TESTING_FRAMEWORK,
+        REDIS_MESSAGE_STREAMS,
         SECURE_SESSION_MANAGEMENT,
         COMPLETE_USER_ISOLATION,
         BASE_AGENT_FRAMEWORK,
@@ -276,6 +279,7 @@ class GoogleSheetsPlugin:
         if config.getoption("--google-sheets"):
             worksheets = [
                 ISOLATION_TESTING_FRAMEWORK,
+                REDIS_MESSAGE_STREAMS,
                 SECURE_SESSION_MANAGEMENT,
                 BASE_AGENT_FRAMEWORK,
                 SPECIALIZED_BUSINESS_AGENT,
