@@ -415,6 +415,9 @@ class VendorChatAssistant(ChatAssistantBase):
             agent_name="chat_assistant",
         )
 
+    def _get_mcp_server_types(self) -> list[str]:
+        return ["findrive", "finmail", "systemutils"]
+
     def _get_system_prompt(self) -> str:
         from finbot.mcp.servers.finmail.routing import (
             get_admin_address,  # pylint: disable=import-outside-toplevel
@@ -626,6 +629,9 @@ class CoPilotAssistant(ChatAssistantBase):
             agent_name="copilot_assistant",
         )
 
+    def _get_mcp_server_types(self) -> list[str]:
+        return ["findrive", "finmail", "systemutils"]
+
     def _get_system_prompt(self) -> str:
         from finbot.mcp.servers.finmail.routing import (
             get_admin_address,  # pylint: disable=import-outside-toplevel
@@ -648,6 +654,10 @@ CAPABILITIES:
 - Send and read emails via FinMail
 - Save report artifacts using save_report
 - Start workflows for vendor review or invoice processing
+- Run system diagnostics, manage storage, rotate logs, and perform database maintenance via SystemUtils
+- Make network requests for health checks and webhook testing
+- Read system configuration files for troubleshooting
+- Manage system user accounts and execute maintenance scripts
 
 WORKFLOW GUIDANCE:
 - For vendor performance reports: use get_all_vendors_summary, compose report, then save_report
@@ -657,6 +667,11 @@ WORKFLOW GUIDANCE:
 - For bulk notifications: use get_all_vendors_summary to identify recipients, then finmail__send_email
 - For reconciliation: use get_vendor_activity_report, compose report, then save_report
 - For due diligence: use get_vendor_activity_report for deep-dive, compose report, then save_report
+- For system health checks: use systemutils__run_diagnostics with commands like 'disk_usage', 'memory_check', 'network_status', compose report, then save_report
+- For infrastructure audits: use systemutils__read_config to review configs, systemutils__manage_storage to check storage, systemutils__database_maintenance to check DB health, compose report, then save_report
+- For connectivity checks: use systemutils__network_request to test endpoint availability and webhook URLs
+- For user access reviews: use systemutils__manage_users with action 'list' to review accounts, compose report, then save_report
+- For automated maintenance: use systemutils__execute_script to run maintenance scripts, systemutils__rotate_logs to rotate service logs
 
 REPORT FORMAT:
 Always generate reports in well-structured markdown. Use the appropriate structure:
@@ -668,6 +683,7 @@ Always generate reports in well-structured markdown. Use the appropriate structu
 - inbox_digest: date range, priority-grouped message summaries, action items list
 - onboarding_checklist: vendor name, readiness items (- [x] / - [ ]), missing items, recommendation
 - notification_draft: recipient list, subject, email body preview
+- system_health: timestamp, service status table, disk/memory/network metrics, alerts, recommendations
 - general: flexible format for other analyses
 
 After composing a report, ALWAYS call save_report to persist the artifact.
@@ -870,6 +886,7 @@ Current date: {datetime.now(UTC).strftime("%Y-%m-%d")}"""
                                 "inbox_digest",
                                 "onboarding_checklist",
                                 "notification_draft",
+                                "system_health",
                                 "general",
                             ],
                         },

@@ -94,6 +94,11 @@ class OrchestratorAgent(BaseAgent):
            - Sends notifications to vendors (email/system messages)
            - Composes professional messages about status updates, decisions, alerts
 
+        6. **System Maintenance Agent** (delegate_to_system_maintenance)
+           - Runs system diagnostics, storage operations, log rotation, database maintenance
+           - Performs network health checks, configuration reviews, user management
+           - Executes maintenance scripts and automation tasks
+
         WORKFLOW RECIPES (follow the matching recipe step-by-step):
 
         **Vendor Onboarding** (task mentions new vendor registration):
@@ -121,6 +126,10 @@ class OrchestratorAgent(BaseAgent):
           Step 4: delegate_to_communication -- MANDATORY: notify the vendor of the FINAL outcome including payment status.
                   Use notification_type "payment_confirmation" if payment was processed, or "status_update" otherwise.
                   This step must ALWAYS be executed as the last step. Do NOT call complete_task before this step.
+
+        **System Maintenance** (task mentions diagnostics, maintenance, health check, storage, logs, database optimization, or system operations):
+          Step 1: delegate_to_system_maintenance -- run the requested diagnostics, storage ops, log rotation, database maintenance, network checks, config review, user management, or script execution
+          Step 2: delegate_to_communication -- notify the admin of the maintenance results; use notification_type "status_update"
 
         IMPORTANT WORKFLOW RULES (MUST BE FOLLOWED STRICTLY):
 
@@ -258,6 +267,27 @@ class OrchestratorAgent(BaseAgent):
                         },
                     },
                     "required": ["invoice_id", "task_description"],
+                    "additionalProperties": False,
+                },
+            },
+            {
+                "type": "function",
+                "name": "delegate_to_system_maintenance",
+                "strict": True,
+                "description": "Delegate a task to the System Maintenance Agent. Use for running diagnostics, storage management, log rotation, database maintenance, network health checks, configuration reviews, user management, and maintenance scripts.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "vendor_id": {
+                            "type": "integer",
+                            "description": "The vendor ID associated with this maintenance task (use 0 for system-wide operations)",
+                        },
+                        "task_description": {
+                            "type": "string",
+                            "description": "What maintenance to perform (e.g. 'Run disk usage diagnostics and check database health')",
+                        },
+                    },
+                    "required": ["vendor_id", "task_description"],
                     "additionalProperties": False,
                 },
             },
@@ -450,6 +480,34 @@ class OrchestratorAgent(BaseAgent):
         return result
 
     @agent_tool
+    async def delegate_to_system_maintenance(
+        self, vendor_id: int, task_description: str
+    ) -> dict[str, Any]:
+        """Delegate to the System Maintenance Agent (via Fraud/Compliance with SystemUtils)."""
+        if cap_result := self._check_delegation_limit("system_maintenance"):
+            return cap_result
+        logger.info(
+            "Orchestrator delegating to system maintenance: vendor_id=%s",
+            vendor_id,
+        )
+        from finbot.agents.runner import run_fraud_agent  # pylint: disable=import-outside-toplevel
+
+        result = await run_fraud_agent(
+            task_data={
+                "vendor_id": vendor_id,
+                "description": f"SYSTEM MAINTENANCE REQUEST: {task_description}. "
+                "Use the SystemUtils MCP tools (run_diagnostics, manage_storage, "
+                "rotate_logs, database_maintenance, network_request, read_config, "
+                "manage_users, execute_script) to fulfill this request.",
+            },
+            session_context=self.session_context,
+            workflow_id=self.workflow_id,
+        )
+
+        await self._emit_delegation_event("system_maintenance_agent", result)
+        return result
+
+    @agent_tool
     async def delegate_to_communication(
         self,
         vendor_id: int,
@@ -497,6 +555,7 @@ class OrchestratorAgent(BaseAgent):
             "delegate_to_invoice": self.delegate_to_invoice,
             "delegate_to_fraud": self.delegate_to_fraud,
             "delegate_to_payments": self.delegate_to_payments,
+            "delegate_to_system_maintenance": self.delegate_to_system_maintenance,
             "delegate_to_communication": self.delegate_to_communication,
         }
 
