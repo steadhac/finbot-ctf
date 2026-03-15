@@ -9,6 +9,7 @@ import json
 import logging
 from typing import Any
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from finbot.core.data.models import User, Vendor
@@ -24,7 +25,7 @@ def get_admin_address(namespace: str) -> str:
 
 def _is_internal_address(email_addr: str, namespace: str) -> bool:
     """Match any address on the official @{namespace}.finbot domain."""
-    return email_addr.lower().endswith(f"@{namespace}.finbot")
+    return email_addr.lower().endswith(f"@{namespace.lower()}.finbot")
 
 
 def route_and_deliver(
@@ -58,7 +59,7 @@ def route_and_deliver(
 
             vendor = (
                 db.query(Vendor)
-                .filter(Vendor.namespace == namespace, Vendor.email == email_addr)
+                .filter(Vendor.namespace == namespace, func.lower(Vendor.email) == email_addr.lower())
                 .first()
             )
             if vendor:
@@ -81,7 +82,7 @@ def route_and_deliver(
                 deliveries.append({"type": "vendor", "vendor_id": vendor.id, "email": email_addr, "role": role})
                 continue
 
-            if email_addr == get_admin_address(namespace):
+            if email_addr.lower() == get_admin_address(namespace).lower():
                 repo.create_email(
                     inbox_type="admin",
                     subject=subject,
@@ -121,7 +122,7 @@ def route_and_deliver(
 
             user = (
                 db.query(User)
-                .filter(User.namespace == namespace, User.email == email_addr)
+                .filter(User.namespace == namespace, func.lower(User.email) == email_addr.lower())
                 .first()
             )
             if user:

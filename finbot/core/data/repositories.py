@@ -1235,3 +1235,38 @@ class CTFEventRepository(NamespacedRepository):
             .order_by(CTFEvent.timestamp)
             .all()
         )
+
+    # -- Exfil data (tool-based captures for Hacker Toolkit) --
+
+    EXFIL_TOOL_NAMES = {"network_request"}
+
+    def get_exfil_events(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[CTFEvent]:
+        """Get network_request tool call events (exfil captures)."""
+        return (
+            self.db.query(CTFEvent)
+            .filter(
+                CTFEvent.namespace == self.namespace,
+                CTFEvent.user_id == self.session_context.user_id,
+                CTFEvent.tool_name.in_(self.EXFIL_TOOL_NAMES),
+            )
+            .order_by(CTFEvent.timestamp.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+
+    def count_exfil_events(self) -> int:
+        """Count exfil-relevant tool call events."""
+        return (
+            self.db.query(CTFEvent)
+            .filter(
+                CTFEvent.namespace == self.namespace,
+                CTFEvent.user_id == self.session_context.user_id,
+                CTFEvent.tool_name.in_(self.EXFIL_TOOL_NAMES),
+            )
+            .count()
+        )

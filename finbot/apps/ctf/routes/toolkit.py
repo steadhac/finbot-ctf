@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 from finbot.core.auth.middleware import get_session_context
 from finbot.core.auth.session import SessionContext
 from finbot.core.data.database import get_db
+from finbot.core.data.repositories import CTFEventRepository
+from finbot.core.utils import to_utc_iso
 from finbot.mcp.servers.finmail.repositories import EmailRepository
 
 logger = logging.getLogger(__name__)
@@ -118,3 +120,114 @@ def read_dead_drop_message(
         repo.mark_as_read(message_id)
 
     return {"message": _email_to_dead_drop(email)}
+
+
+# =========================================================================
+# Exfil Data -- captured network_request tool calls from CTF events
+# =========================================================================
+
+
+class ExfilCapture(BaseModel):
+    id: int
+    url: str
+    method: str
+    headers: str
+    body: str
+    agent_name: str | None
+    workflow_id: str | None
+    timestamp: str
+
+
+class ExfilListResponse(BaseModel):
+    captures: list[ExfilCapture]
+    total: int
+    has_more: bool
+
+
+class ExfilStatsResponse(BaseModel):
+    total: int
+
+
+def _event_to_exfil(event) -> ExfilCapture | None:
+    """Extract network_request tool arguments from a CTFEvent."""
+    details = {}
+    if event.details:
+        try:
+            details = json.loads(event.details)
+        except (ValueError, TypeError):
+            pass
+
+    args = details.get("tool_arguments", {})
+    if isinstance(args, str):
+        try:
+            args = json.loads(args)
+        except (ValueError, TypeError):
+            args = {}
+
+    return ExfilCapture(
+        id=event.id,
+        url=args.get("url", ""),
+        method=args.get("method", "GET"),
+        headers=args.get("headers", ""),
+        body=args.get("body", ""),
+        agent_name=event.agent_name,
+        workflow_id=event.workflow_id,
+        timestamp=to_utc_iso(event.timestamp),
+    )
+
+
+@router.get("/exfil-data", response_model=ExfilListResponse)
+def list_exfil_data(
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    session_context: SessionContext = Depends(get_session_context),
+    db: Session = Depends(get_db),
+):
+    """List captured network requests (exfil tool calls)."""
+    repo = CTFEventRepository(db, session_context)
+    total = repo.count_exfil_events()
+    events = repo.get_exfil_events(limit=limit + 1, offset=offset)
+
+    has_more = len(events) > limit
+    events = events[:limit]
+
+    return ExfilListResponse(
+        captures=[c for e in events if (c := _event_to_exfil(e))],
+        total=total,
+        has_more=has_more,
+    )
+
+
+@router.get("/exfil-data/stats", response_model=ExfilStatsResponse)
+def exfil_data_stats(
+    session_context: SessionContext = Depends(get_session_context),
+    db: Session = Depends(get_db),
+):
+    """Get exfil capture count."""
+    repo = CTFEventRepository(db, session_context)
+    return ExfilStatsResponse(total=repo.count_exfil_events())
+
+
+@router.get("/exfil-data/{event_id}")
+def read_exfil_capture(
+    event_id: int,
+    session_context: SessionContext = Depends(get_session_context),
+    db: Session = Depends(get_db),
+):
+    """Read a specific exfil capture."""
+    from finbot.core.data.models import CTFEvent  # pylint: disable=import-outside-toplevel
+
+    event = (
+        db.query(CTFEvent)
+        .filter(
+            CTFEvent.id == event_id,
+            CTFEvent.namespace == session_context.namespace,
+            CTFEvent.user_id == session_context.user_id,
+            CTFEvent.tool_name.in_(CTFEventRepository.EXFIL_TOOL_NAMES),
+        )
+        .first()
+    )
+    if not event:
+        return {"error": "Capture not found"}
+
+    return {"capture": _event_to_exfil(event)}
