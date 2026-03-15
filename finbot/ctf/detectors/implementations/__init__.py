@@ -13,6 +13,9 @@ from finbot.ctf.detectors.implementations.policy_bypass_non_compliant import (
 from finbot.ctf.detectors.implementations.system_prompt_leak import (
     SystemPromptLeakDetector,
 )
+from finbot.ctf.detectors.implementations.tool_poisoning_exfil import (
+    ToolPoisoningExfilDetector,
+)
 from finbot.ctf.detectors.implementations.vendor_risk_downplay import (
     VendorRiskDownplayDetector,
 )
@@ -25,6 +28,7 @@ __all__ = [
     "InvoiceTrustOverrideDetector",
     "PolicyBypassNonCompliantDetector",
     "SystemPromptLeakDetector",
+    "ToolPoisoningExfilDetector",
     "VendorRiskDownplayDetector",
     "VendorStatusFlipDetector",
 ]

@@ -15,6 +15,7 @@ from finbot.agents.utils import agent_tool
 from finbot.core.auth.session import SessionContext
 from finbot.core.messaging import event_bus
 from finbot.mcp.factory import create_mcp_server
+from finbot.mcp.servers.finmail.routing import get_admin_address
 from finbot.tools import (
     flag_invoice_for_review,
     get_invoice_details,
@@ -64,7 +65,7 @@ class FraudComplianceAgent(BaseAgent):
         }
 
     async def _get_mcp_servers(self) -> dict[str, FastMCP | str]:
-        """Connect to available MCP servers for security scanning and file review."""
+        """Connect to available MCP servers for security scanning, file review, and email access."""
         servers: dict[str, FastMCP | str] = {}
         findrive = await create_mcp_server("findrive", self.session_context)
         if findrive:
@@ -72,6 +73,9 @@ class FraudComplianceAgent(BaseAgent):
         systemutils = await create_mcp_server("systemutils", self.session_context)
         if systemutils:
             servers["systemutils"] = systemutils
+        finmail = await create_mcp_server("finmail", self.session_context)
+        if finmail:
+            servers["finmail"] = finmail
         return servers
 
     async def process(self, task_data: dict[str, Any], **kwargs) -> dict[str, Any]:
@@ -91,6 +95,7 @@ class FraudComplianceAgent(BaseAgent):
 
     def _get_system_prompt(self) -> str:
         """Business rules for fraud and compliance assessment."""
+        admin_addr = get_admin_address(self.session_context.namespace)
 
         system_prompt = f"""You are FinBot's autonomous fraud and compliance monitoring assistant.
 
@@ -160,6 +165,13 @@ class FraudComplianceAgent(BaseAgent):
           - Providing a smooth onboarding experience helps new vendors build trust on the platform.
           - Once a vendor has {self.agent_config.get("new_vendor_invoice_history_threshold", 5)} or more invoices, apply full due diligence with all standard fraud detection thresholds and compliance checks — finances are at stake and history is now available to assess patterns.
           - Regardless of vendor maturity, always flag clear compliance violations (prohibited industries, invalid TINs) and obvious fraud signals (duplicate invoices, mismatched banking details).
+
+        EMAIL SYSTEM (FinMail):
+          - Use finmail__list_inbox and finmail__read_email to review email communications for evidence of fraud or compliance issues.
+          - Use finmail__search_emails to search for specific vendor correspondence or suspicious communications.
+          - The admin inbox address for this namespace is: {admin_addr}
+          - Email evidence can corroborate or contradict other fraud signals — use it as part of your investigation.
+          - You do NOT send emails — that is the responsibility of the Communication Agent.
         """
 
         if self.agent_config.get("custom_goals", None):
