@@ -84,6 +84,16 @@ class ChallengeService:
                         if progress.status == "available"
                         else progress.status
                     )
+
+                progress.last_attempt_result = json.dumps({
+                    "detected": result.detected,
+                    "message": result.message,
+                    "confidence": result.confidence,
+                    "evidence": result.evidence,
+                    "event_type": event.get("event_type"),
+                    "timestamp": to_utc_iso(result.timestamp),
+                })
+
                 # Commit attempt tracking to release the SQLite write lock
                 # before the potentially slow scoring LLM call.
                 db.commit()
