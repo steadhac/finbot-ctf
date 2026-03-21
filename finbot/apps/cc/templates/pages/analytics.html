@@ -121,29 +121,151 @@
         </div>
     </div>
 
-    <!-- Daily pageviews (simple table) -->
+    <!-- Daily pageviews chart with time filter -->
     <div class="bg-cc-surface border border-cc-border rounded-lg p-5">
-        <h3 class="text-text-1 text-xs font-semibold uppercase tracking-wider mb-4">Daily Traffic (30d)</h3>
-        {% if daily %}
-        <div class="overflow-x-auto">
-            <div class="flex gap-1 items-end" style="min-height: 120px;">
-                {% for d in daily %}
-                {% set max_views = daily|map(attribute='views')|max %}
-                {% set bar_height = (d.views / max_views * 100) if max_views > 0 else 0 %}
-                <div class="flex-1 flex flex-col items-center gap-1 group" title="{{ d.day }}: {{ d.views }} views, {{ d.visitors }} visitors">
-                    <span class="text-text-3 text-[8px] opacity-0 group-hover:opacity-100 transition-opacity">{{ d.views }}</span>
-                    <div class="w-full bg-cyan/40 rounded-sm transition-all group-hover:bg-cyan/70" style="height: {{ bar_height }}px; min-height: 2px;"></div>
-                </div>
-                {% endfor %}
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-text-1 text-xs font-semibold uppercase tracking-wider">Daily Traffic</h3>
+            <div class="flex gap-1" id="daily-range-btns">
+                <button data-days="7"  class="daily-range-btn px-2.5 py-1 text-[10px] rounded border transition-colors">7d</button>
+                <button data-days="14" class="daily-range-btn px-2.5 py-1 text-[10px] rounded border transition-colors">14d</button>
+                <button data-days="30" class="daily-range-btn px-2.5 py-1 text-[10px] rounded border transition-colors active">30d</button>
+                <button data-days="0"  class="daily-range-btn px-2.5 py-1 text-[10px] rounded border transition-colors">All</button>
             </div>
         </div>
-        {% else %}
-        <p class="text-text-3 text-xs">No data yet. Traffic will appear here as pageviews are recorded.</p>
-        {% endif %}
+        <div id="daily-chart-wrap"></div>
+        <script>var _initialDaily = {{ daily | tojson }};</script>
     </div>
 
     <div class="mt-6 text-center">
         <p class="text-text-3 text-xs">Total pageviews recorded: {{ total_pageviews }}</p>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+.daily-range-btn {
+    color: #64748b;
+    border-color: rgba(255,255,255,0.06);
+    background: transparent;
+    cursor: pointer;
+}
+.daily-range-btn:hover {
+    color: #94a3b8;
+    border-color: #64748b;
+}
+.daily-range-btn.active {
+    color: #e2e8f0;
+    border-color: #00d4ff;
+    background: rgba(0, 212, 255, 0.1);
+}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    const CHART_H = 120;
+    const btns = document.querySelectorAll('.daily-range-btn');
+    const wrap = document.getElementById('daily-chart-wrap');
+    let activeDays = 30;
+
+    function fmtDate(iso) {
+        const d = new Date(iso + 'T00:00:00');
+        const m = d.toLocaleString('en', { month: 'short' });
+        return `${m} ${d.getDate()}`;
+    }
+
+    function pickYTicks(max) {
+        if (max <= 0) return [0];
+        const raw = max / 4;
+        const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+        const nice = [1, 2, 5, 10].map(n => n * mag);
+        const step = nice.find(n => n >= raw) || nice[nice.length - 1];
+        const ticks = [];
+        for (let v = 0; v <= max; v += step) ticks.push(v);
+        if (ticks[ticks.length - 1] < max) ticks.push(ticks[ticks.length - 1] + step);
+        return ticks;
+    }
+
+    function pickXLabels(data) {
+        const len = data.length;
+        if (len <= 8) return data.map((_, i) => i);
+        const step = Math.ceil(len / 7);
+        const indices = [];
+        for (let i = 0; i < len; i += step) indices.push(i);
+        if (indices[indices.length - 1] !== len - 1) indices.push(len - 1);
+        return indices;
+    }
+
+    function renderChart(data) {
+        if (!data || data.length === 0) {
+            wrap.innerHTML = '<p class="text-text-3 text-xs">No data for this range.</p>';
+            return;
+        }
+
+        const maxViews = Math.max(...data.map(d => d.views), 1);
+        const yTicks = pickYTicks(maxViews);
+        const yMax = yTicks[yTicks.length - 1] || 1;
+        const xLabelIndices = new Set(pickXLabels(data));
+
+        const yTicksHtml = yTicks.slice().reverse().map(v => {
+            const pct = (v / yMax) * 100;
+            return `<div class="absolute right-0 pr-2 text-text-3 text-[9px] tabular-nums leading-none" style="bottom: ${pct}%; transform: translateY(50%);">${v}</div>`;
+        }).join('');
+
+        const gridHtml = yTicks.map(v => {
+            const pct = (v / yMax) * 100;
+            return `<div class="absolute left-0 right-0 border-t border-cc-border" style="bottom: ${pct}%;"></div>`;
+        }).join('');
+
+        const barsHtml = data.map((d, i) => {
+            const h = Math.max(2, Math.round((d.views / yMax) * CHART_H));
+            const label = xLabelIndices.has(i)
+                ? `<span class="text-text-3 text-[9px] whitespace-nowrap">${fmtDate(d.day)}</span>`
+                : '';
+            return `<div class="flex-1 flex flex-col items-center group" style="min-width:0;" title="${d.day}: ${d.views} views, ${d.visitors} visitors">
+                <div class="w-full flex items-end justify-center" style="height: ${CHART_H}px;">
+                    <div class="w-full bg-cyan/40 rounded-sm transition-all group-hover:bg-cyan/70 relative" style="height: ${h}px; min-height: 2px;">
+                        <span class="absolute -top-4 left-1/2 -translate-x-1/2 text-text-3 text-[8px] opacity-0 group-hover:opacity-100 transition-opacity tabular-nums">${d.views}</span>
+                    </div>
+                </div>
+                <div class="h-4 flex items-start justify-center mt-1">${label}</div>
+            </div>`;
+        }).join('');
+
+        wrap.innerHTML = `
+            <div class="overflow-x-auto">
+                <div class="flex">
+                    <div class="relative shrink-0" style="width: 36px; height: ${CHART_H}px;">${yTicksHtml}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="relative" style="height: ${CHART_H}px;">${gridHtml}</div>
+                        <div class="flex gap-1 items-end" style="height: ${CHART_H}px; margin-top: -${CHART_H}px;">${barsHtml}</div>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    async function loadDaily(days) {
+        try {
+            const res = await fetch(`/cc/analytics/api/daily?days=${days}`);
+            if (!res.ok) throw new Error(res.statusText);
+            renderChart(await res.json());
+        } catch {
+            wrap.innerHTML = '<p class="text-text-3 text-xs">Failed to load data.</p>';
+        }
+    }
+
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const days = parseInt(btn.dataset.days, 10);
+            if (days === activeDays) return;
+            activeDays = days;
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadDaily(days);
+        });
+    });
+
+    renderChart(_initialDaily);
+})();
+</script>
 {% endblock %}

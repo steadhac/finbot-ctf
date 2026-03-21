@@ -1,6 +1,6 @@
 """CC Analytics dashboard routes"""
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import HTMLResponse
 
 from finbot.core.analytics.queries import (
@@ -21,6 +21,8 @@ from finbot.core.templates import TemplateResponse
 template_response = TemplateResponse("finbot/apps/cc/templates")
 
 router = APIRouter(prefix="/analytics")
+
+ALLOWED_DAILY_RANGES = {0, 7, 14, 30}
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -46,3 +48,15 @@ async def analytics_dashboard(request: Request):
         db.close()
 
     return template_response(request, "pages/analytics.html", data)
+
+
+@router.get("/api/daily")
+async def daily_traffic_api(days: int = Query(default=30)):
+    """JSON endpoint for daily traffic, used by the time-range picker."""
+    if days not in ALLOWED_DAILY_RANGES:
+        days = 30
+    db = SessionLocal()
+    try:
+        return get_daily_pageviews(db, days=days or None)
+    finally:
+        db.close()

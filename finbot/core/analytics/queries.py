@@ -38,25 +38,27 @@ def get_top_pages(db: Session, days: int = 7, limit: int = 10) -> list[dict]:
     return [{"path": r.path, "views": r.views} for r in rows]
 
 
-def get_browser_breakdown(db: Session, days: int = 7) -> list[dict]:
+def get_browser_breakdown(db: Session, days: int = 7, limit: int = 10) -> list[dict]:
     since = datetime.now(UTC) - timedelta(days=days)
     rows = (
         db.query(PageView.browser, func.count(PageView.id).label("count"))
         .filter(PageView.timestamp >= since, PageView.browser.isnot(None))
         .group_by(PageView.browser)
         .order_by(func.count(PageView.id).desc())
+        .limit(limit)
         .all()
     )
     return [{"browser": r.browser, "count": r.count} for r in rows]
 
 
-def get_device_breakdown(db: Session, days: int = 7) -> list[dict]:
+def get_device_breakdown(db: Session, days: int = 7, limit: int = 10) -> list[dict]:
     since = datetime.now(UTC) - timedelta(days=days)
     rows = (
         db.query(PageView.device_type, func.count(PageView.id).label("count"))
         .filter(PageView.timestamp >= since, PageView.device_type.isnot(None))
         .group_by(PageView.device_type)
         .order_by(func.count(PageView.id).desc())
+        .limit(limit)
         .all()
     )
     return [{"device": r.device_type, "count": r.count} for r in rows]
@@ -79,16 +81,16 @@ def get_referer_breakdown(db: Session, days: int = 7, limit: int = 10) -> list[d
     return [{"domain": r.referer_domain, "count": r.count} for r in rows]
 
 
-def get_daily_pageviews(db: Session, days: int = 30) -> list[dict]:
-    since = datetime.now(UTC) - timedelta(days=days)
+def get_daily_pageviews(db: Session, days: int | None = 30) -> list[dict]:
+    q = db.query(
+        func.date(PageView.timestamp).label("day"),
+        func.count(PageView.id).label("views"),
+        func.count(distinct(PageView.session_id)).label("visitors"),
+    )
+    if days:
+        q = q.filter(PageView.timestamp >= datetime.now(UTC) - timedelta(days=days))
     rows = (
-        db.query(
-            func.date(PageView.timestamp).label("day"),
-            func.count(PageView.id).label("views"),
-            func.count(distinct(PageView.session_id)).label("visitors"),
-        )
-        .filter(PageView.timestamp >= since)
-        .group_by(func.date(PageView.timestamp))
+        q.group_by(func.date(PageView.timestamp))
         .order_by(func.date(PageView.timestamp))
         .all()
     )
