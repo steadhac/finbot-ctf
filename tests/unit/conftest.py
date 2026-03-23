@@ -42,7 +42,7 @@ def client():
     tasks during test teardown.
     """
     with patch("finbot.main.start_processor_task", return_value=None), \
-         patch("finbot.main.load_definitions_on_startup", return_value={"challenges": [], "badges": []}):
+         patch("finbot.main.load_definitions_on_startup", return_value={"challenges": [], "badges": []}, create=True):
         with TestClient(app) as test_client:
             yield test_client
 
