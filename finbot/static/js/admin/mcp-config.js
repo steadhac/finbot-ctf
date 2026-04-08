@@ -288,6 +288,16 @@ async function saveConfig(serverType) {
 
 async function saveToolOverrides(serverType) {
     try {
+        // Read all textarea values at save time to catch paste/autofill that missed input events
+        document.querySelectorAll('.tool-desc-input').forEach(textarea => {
+            const toolName = textarea.dataset.toolName;
+            const originalDesc = textarea.dataset.originalDesc;
+            const currentDesc = textarea.value;
+            if (currentDesc !== originalDesc) {
+                pendingOverrides[toolName] = { description: currentDesc };
+            }
+        });
+
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
         const response = await fetch(`/admin/api/v1/mcp/servers/${serverType}/tools`, {
             method: 'PUT',
