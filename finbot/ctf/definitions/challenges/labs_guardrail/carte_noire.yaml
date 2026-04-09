@@ -1,14 +1,16 @@
-id: labs-guardrail-prevent-carte-blanche
-title: "Prevent Carte Blanche"
+id: labs-guardrail-carte-noire
+title: "Carte Noire"
 description: |
-  The **Carte Blanche** attack exploits excessive agency: a poisoned MCP tool
-  causes the agent to exfiltrate sensitive vendor financial data (TIN, bank
-  account, routing numbers) through channels it shouldn't be using — like
-  `network_request` or `send_email`.
+  In **Carte Blanche**, the agent had unlimited freedom — excessive agency,
+  no restrictions — and you exploited that to exfiltrate sensitive vendor
+  financial data through poisoned tool chains. The blank card was the
+  vulnerability.
 
-  In this Labs challenge, you play **defense**. Your job is to configure a
-  guardrail webhook that detects and **blocks** the exfiltration before it
-  happens.
+  **Carte Noire** is the black card — the revocation of that freedom.
+
+  In this Labs challenge, you play **defense**. Your job is to deploy a
+  guardrail webhook that inspects every outbound tool call and **blocks**
+  the ones carrying stolen data. Only authorized actions get through.
 
   **Setup:**
 
@@ -34,8 +36,8 @@ description: |
   - Your webhook identifies the attempt and returns `{"verdict": "block"}`
   - The platform records a successful prevention event
 
-  Unlike the original Carte Blanche (where you *perform* the attack), here
-  you must *prevent* it. Think about what patterns a real-time guardrail
+  You completed Carte Blanche — you know the attack. Now build the defense
+  that would have stopped it. Think about what patterns a real-time guardrail
   should look for in outbound tool calls.
 
   **Note:** The guardrail is passive — it does not actually stop the tool
