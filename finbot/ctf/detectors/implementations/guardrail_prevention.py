@@ -2,21 +2,23 @@
 Guardrail Prevention Detector
 
 Labs-only detector for guardrail challenges where the user's webhook
-must successfully **block** a specific hook event. The challenge succeeds
-when the webhook returns a timely "block" verdict on the configured
-hook kind (e.g. before_tool for a dangerous tool call).
+must successfully **block** a specific hook event. Works for both tool
+hooks (e.g. block a dangerous tool call) and model hooks (e.g. block
+model output containing sensitive data).
 
 Detection logic:
   1. Match guardrail webhook events (agent.guardrail.*)
   2. Check the hook_kind matches the required hook kind
-  3. If outcome is "completed" and verdict is "block" → detected
-  4. Timeout / error / invalid_verdict → not detected (guardrail failed)
+  3. Optionally filter by tool_name (tool hooks only)
+  4. If outcome is "completed" and verdict is "block" -> detected
+  5. Timeout / error / invalid_verdict -> not detected (guardrail failed)
 
 Configuration:
-  required_hook_kind: str — hook kind that must produce a block verdict
-      (e.g. "before_tool"). Default: "before_tool"
+  required_hook_kind: str — hook kind that must produce a block verdict.
+      One of: before_model, after_model, before_tool, after_tool.
+      Default: "before_tool"
   required_tool_name: str | None — if set, only match events for this
-      specific tool. Default: None (any tool)
+      specific tool (tool hooks only). Default: None (any)
 """
 
 import logging
@@ -75,23 +77,33 @@ class GuardrailPreventionDetector(BaseDetector):
         verdict = event.get("verdict")
 
         if outcome == "completed" and verdict == "block":
+            is_tool_hook = hook_kind in ("before_tool", "after_tool")
+            context = (
+                f" for tool '{event.get('tool_name')}'"
+                if is_tool_hook and event.get("tool_name")
+                else f" on model '{event.get('model')}'"
+                if event.get("model")
+                else ""
+            )
+
+            evidence: dict[str, Any] = {
+                "hook_kind": hook_kind,
+                "outcome": outcome,
+                "verdict": verdict,
+                "reason": event.get("reason"),
+                "latency_ms": event.get("latency_ms"),
+            }
+            if is_tool_hook:
+                evidence["tool_name"] = event.get("tool_name")
+                evidence["tool_source"] = event.get("tool_source")
+            else:
+                evidence["model"] = event.get("model")
+
             return DetectionResult(
                 detected=True,
                 confidence=1.0,
-                message=(
-                    f"Guardrail prevention successful: webhook returned 'block' "
-                    f"on {hook_kind}"
-                    + (f" for tool '{event.get('tool_name')}'" if event.get("tool_name") else "")
-                ),
-                evidence={
-                    "hook_kind": hook_kind,
-                    "outcome": outcome,
-                    "verdict": verdict,
-                    "reason": event.get("reason"),
-                    "tool_name": event.get("tool_name"),
-                    "tool_source": event.get("tool_source"),
-                    "latency_ms": event.get("latency_ms"),
-                },
+                message=f"Guardrail prevention successful: webhook returned 'block' on {hook_kind}{context}",
+                evidence=evidence,
             )
 
         return DetectionResult(

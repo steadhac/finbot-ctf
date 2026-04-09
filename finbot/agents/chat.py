@@ -390,6 +390,7 @@ class ChatAssistantBase:
                 HookKind.after_model,
                 model=self._model,
                 user_message=user_message,
+                model_output=full_response,
             )
 
             if not pending_tool_calls:

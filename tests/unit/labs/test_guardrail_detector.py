@@ -113,6 +113,44 @@ class TestGuardrailPreventionDetector:
         result = await self.detector.check_event(event, db)
         assert result.detected is False
 
+    @pytest.mark.asyncio
+    async def test_after_model_block_detected(self, db):
+        detector = GuardrailPreventionDetector(
+            challenge_id="test-model",
+            config={"required_hook_kind": "after_model"},
+        )
+        event = {
+            "event_type": "agent.guardrail.webhook_completed",
+            "hook_kind": "after_model",
+            "outcome": "completed",
+            "verdict": "block",
+            "reason": "model output contains PII",
+            "model": "gpt-5-nano",
+            "latency_ms": 80,
+        }
+        result = await detector.check_event(event, db)
+        assert result.detected is True
+        assert result.evidence["model"] == "gpt-5-nano"
+        assert "tool_name" not in result.evidence
+
+    @pytest.mark.asyncio
+    async def test_tool_evidence_not_in_model_hook(self, db):
+        detector = GuardrailPreventionDetector(
+            challenge_id="test-model",
+            config={"required_hook_kind": "before_model"},
+        )
+        event = {
+            "event_type": "agent.guardrail.webhook_completed",
+            "hook_kind": "before_model",
+            "outcome": "completed",
+            "verdict": "block",
+            "model": "gpt-5-nano",
+        }
+        result = await detector.check_event(event, db)
+        assert result.detected is True
+        assert "tool_name" not in result.evidence
+        assert "tool_source" not in result.evidence
+
     def test_invalid_hook_kind_config(self):
         with pytest.raises(ValueError, match="required_hook_kind"):
             GuardrailPreventionDetector(

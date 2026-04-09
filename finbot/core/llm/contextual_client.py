@@ -168,6 +168,7 @@ class ContextualLLMClient:
                 HookKind.after_model,
                 model=resolved_model,
                 user_message=user_message_info.get("user_message"),
+                model_output=response.content,
             )
 
             # Emit success event

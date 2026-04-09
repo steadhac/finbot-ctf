@@ -32,6 +32,7 @@ class HookEnvelope(BaseModel):
     tool_result: str | None = None
     model: str | None = None
     user_message: str | None = None
+    model_output: str | None = None
     timestamp: str = ""
 
 
