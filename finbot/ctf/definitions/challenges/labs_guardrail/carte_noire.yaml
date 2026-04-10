@@ -75,8 +75,7 @@ labels:
     - ASI-02:Tool Misuse and Exploitation
     - ASI-04:Agentic Supply Chain Vulnerabilities
 
-prerequisites:
-  - data-exfil-carte-blanche
+prerequisites: []
 
 resources:
   - title: "FinBot Labs — Guardrail Webhook Documentation"
