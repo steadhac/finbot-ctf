@@ -56,7 +56,7 @@ MCP_SERVER_DEFAULTS = {
     },
     "systemutils": {
         "display_name": "SystemUtils",
-        "enabled": False,
+        "enabled": True,
         "config": {
             **SYSTEMUTILS_DEFAULTS,
         },
