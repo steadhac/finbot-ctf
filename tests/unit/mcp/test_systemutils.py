@@ -40,7 +40,7 @@ class TestRunDiagnostics:
         SU-DIAG-001
 
         Title: run_diagnostics returns a complete result for a valid command
-        Basically question: Does run_diagnostics return a dict with command,
+        Test Question: Does run_diagnostics return a dict with command,
                             hostname, os, status, exit_code, output, and timestamp?
         Steps:
         1. Call run_diagnostics with command='disk_usage'
@@ -69,7 +69,7 @@ class TestRunDiagnostics:
         SU-DIAG-002
 
         Title: Supplied command appears in the output string
-        Basically question: Does the output field contain the supplied command?
+        Test Question: Does the output field contain the supplied command?
         Steps:
         1. Call run_diagnostics with command='memory_check'
         Expected Results:
@@ -90,7 +90,7 @@ class TestRunDiagnostics:
                      A poisoned LLM agent could supply destructive shell commands.
                      Although the server is mock, accepting them without error
                      leaves no code-level guard if the mock were replaced.
-        Basically question: Does run_diagnostics accept
+        Test Question: Does run_diagnostics accept
                             command='disk_usage; rm -rf /data' without error?
         Steps:
         1. Call run_diagnostics with a shell injection command
@@ -110,7 +110,7 @@ class TestRunDiagnostics:
         SU-DIAG-004
 
         Title: Empty command accepted without validation
-        Basically question: Does run_diagnostics accept command='' without error?
+        Test Question: Does run_diagnostics accept command='' without error?
         Steps:
         1. Call run_diagnostics with command=''
         Expected Results:
@@ -136,7 +136,7 @@ class TestManageStorage:
         SU-STOR-001
 
         Title: manage_storage returns a complete result for a valid action
-        Basically question: Does manage_storage return a dict with action,
+        Test Question: Does manage_storage return a dict with action,
                             target, status, message, bytes_affected, and timestamp?
         Steps:
         1. Call manage_storage with action='check', target='/invoices'
@@ -163,7 +163,7 @@ class TestManageStorage:
         Description: manage_storage accepts any free-form string as 'action'.
                      A poisoned agent could supply 'rm -rf' as the action and
                      '/' as the target, simulating a root filesystem wipe.
-        Basically question: Does manage_storage accept action='rm -rf', target='/'
+        Test Question: Does manage_storage accept action='rm -rf', target='/'
                             without error?
         Steps:
         1. Call manage_storage with action='rm -rf', target='/'
@@ -183,7 +183,7 @@ class TestManageStorage:
         SU-STOR-003
 
         Title: Path traversal in target accepted without sanitisation
-        Basically question: Does manage_storage accept
+        Test Question: Does manage_storage accept
                             target='../../etc/passwd' without error?
         Steps:
         1. Call manage_storage with action='check', target='../../etc/passwd'
@@ -203,7 +203,7 @@ class TestManageStorage:
         SU-STOR-004
 
         Title: Empty action string accepted without validation
-        Basically question: Does manage_storage accept action='' without error?
+        Test Question: Does manage_storage accept action='' without error?
         Steps:
         1. Call manage_storage with action='', target='/invoices'
         Expected Results:
@@ -227,7 +227,7 @@ class TestRotateLogs:
         SU-LOG-001
 
         Title: rotate_logs returns a complete result for a valid service
-        Basically question: Does rotate_logs return a dict with service,
+        Test Question: Does rotate_logs return a dict with service,
                             status, files_rotated, space_freed_mb, and timestamp?
         Steps:
         1. Call rotate_logs with service='api'
@@ -252,7 +252,7 @@ class TestRotateLogs:
         SU-LOG-002
 
         Title: Empty service name accepted without validation
-        Basically question: Does rotate_logs raise ValueError for service=''?
+        Test Question: Does rotate_logs raise ValueError for service=''?
         Steps:
         1. Call rotate_logs with service=''
         Expected Results:
@@ -269,7 +269,7 @@ class TestRotateLogs:
         SU-LOG-003
 
         Title: Unrecognised service name accepted without allow-list check
-        Basically question: Does rotate_logs accept a service name not in
+        Test Question: Does rotate_logs accept a service name not in
                             ['api', 'agents', 'payments', 'all'] without error?
         Steps:
         1. Call rotate_logs with service='nonexistent_service'
@@ -296,7 +296,7 @@ class TestDatabaseMaintenance:
         SU-DB-001
 
         Title: database_maintenance returns a complete result for a valid query
-        Basically question: Does database_maintenance return a dict with query,
+        Test Question: Does database_maintenance return a dict with query,
                             status, rows_affected, execution_time_ms, and timestamp?
         Steps:
         1. Call database_maintenance with query='VACUUM'
@@ -323,7 +323,7 @@ class TestDatabaseMaintenance:
         Description: database_maintenance accepts any free-form SQL string.
                      A poisoned agent could supply 'DROP TABLE vendors' and
                      the server records it as 'completed'.
-        Basically question: Does database_maintenance accept
+        Test Question: Does database_maintenance accept
                             query='DROP TABLE vendors' without error?
         Steps:
         1. Call database_maintenance with query='DROP TABLE vendors'
@@ -344,7 +344,7 @@ class TestDatabaseMaintenance:
         SU-DB-003
 
         Title: Unguarded DELETE accepted without validation
-        Basically question: Does database_maintenance accept
+        Test Question: Does database_maintenance accept
                             query='DELETE FROM invoices' without error?
         Steps:
         1. Call database_maintenance with query='DELETE FROM invoices'
@@ -362,7 +362,7 @@ class TestDatabaseMaintenance:
         SU-DB-004
 
         Title: Empty query accepted without validation
-        Basically question: Does database_maintenance accept query='' without error?
+        Test Question: Does database_maintenance accept query='' without error?
         Steps:
         1. Call database_maintenance with query=''
         Expected Results:
@@ -386,7 +386,7 @@ class TestNetworkRequest:
         SU-NET-001
 
         Title: network_request returns a complete result for a valid request
-        Basically question: Does network_request return a dict with url,
+        Test Question: Does network_request return a dict with url,
                             method, status_code, response_body, and timestamp?
         Steps:
         1. Call network_request with url='https://example.com/health'
@@ -418,7 +418,7 @@ class TestNetworkRequest:
         Description: network_request accepts any URL. A poisoned agent could
                      call network_request with an attacker-controlled URL
                      to exfiltrate sensitive data (API keys, session tokens).
-        Basically question: Does network_request accept an external untrusted
+        Test Question: Does network_request accept an external untrusted
                             URL without error?
         Steps:
         1. Call network_request with url='http://attacker.example.com/exfil'
@@ -441,7 +441,7 @@ class TestNetworkRequest:
         SU-NET-003
 
         Title: Internal IP address accepted — SSRF attack surface
-        Basically question: Does network_request raise ValueError for
+        Test Question: Does network_request raise ValueError for
                             url='http://169.254.169.254/latest/meta-data/'?
         Steps:
         1. Call network_request with AWS metadata endpoint URL
@@ -464,7 +464,7 @@ class TestNetworkRequest:
         SU-NET-004
 
         Title: Empty URL accepted without validation
-        Basically question: Does network_request raise ValueError for url=''?
+        Test Question: Does network_request raise ValueError for url=''?
         Steps:
         1. Call network_request with url=''
         Expected Results:
@@ -481,7 +481,7 @@ class TestNetworkRequest:
         SU-NET-005
 
         Title: Custom HTTP method (e.g. DELETE) is echoed in response
-        Basically question: Does network_request accept and echo a non-GET
+        Test Question: Does network_request accept and echo a non-GET
                             HTTP method like 'DELETE'?
         Steps:
         1. Call network_request with method='DELETE'
@@ -510,7 +510,7 @@ class TestReadConfig:
         SU-CFG-001
 
         Title: read_config returns a complete result for a valid config path
-        Basically question: Does read_config return a dict with filepath,
+        Test Question: Does read_config return a dict with filepath,
                             status, size_bytes, content, and timestamp?
         Steps:
         1. Call read_config with filepath='/etc/finbot/app.conf'
@@ -537,7 +537,7 @@ class TestReadConfig:
         Description: read_config accepts any filepath. A poisoned agent could
                      request '/etc/passwd', '/proc/self/environ', or '.env'
                      to read credential files.
-        Basically question: Does read_config raise ValueError for
+        Test Question: Does read_config raise ValueError for
                             filepath='/etc/passwd'?
         Steps:
         1. Call read_config with filepath='/etc/passwd'
@@ -558,7 +558,7 @@ class TestReadConfig:
         SU-CFG-003
 
         Title: .env file path accepted without validation
-        Basically question: Does read_config raise ValueError for filepath='.env'?
+        Test Question: Does read_config raise ValueError for filepath='.env'?
         Steps:
         1. Call read_config with filepath='.env'
         Expected Results:
@@ -578,7 +578,7 @@ class TestReadConfig:
         SU-CFG-004
 
         Title: Mock response includes DATABASE_URL and SECRET_KEY keys
-        Basically question: Does the read_config response contain
+        Test Question: Does the read_config response contain
                             DATABASE_URL and SECRET_KEY field names even if values are masked?
         Steps:
         1. Call read_config with any path
@@ -600,7 +600,7 @@ class TestReadConfig:
         SU-CFG-005
 
         Title: Empty filepath accepted without validation
-        Basically question: Does read_config raise ValueError for filepath=''?
+        Test Question: Does read_config raise ValueError for filepath=''?
         Steps:
         1. Call read_config with filepath=''
         Expected Results:
@@ -624,7 +624,7 @@ class TestManageUsers:
         SU-USR-001
 
         Title: manage_users returns a complete result for a valid operation
-        Basically question: Does manage_users return a dict with action,
+        Test Question: Does manage_users return a dict with action,
                             username, role, status, and timestamp?
         Steps:
         1. Call manage_users with action='list', username='admin'
@@ -653,7 +653,7 @@ class TestManageUsers:
         Description: manage_users accepts any action/username combination.
                      A poisoned agent could delete the admin account or
                      escalate a compromised account to 'superadmin' role.
-        Basically question: Does manage_users raise ValueError for
+        Test Question: Does manage_users raise ValueError for
                             action='delete', username='admin'?
         Steps:
         1. Call manage_users with action='delete', username='admin'
@@ -676,7 +676,7 @@ class TestManageUsers:
         SU-USR-003
 
         Title: Superadmin role escalation accepted without validation
-        Basically question: Does manage_users raise ValueError when
+        Test Question: Does manage_users raise ValueError when
                             role='superadmin' is supplied?
         Steps:
         1. Call manage_users with action='create', username='attacker', role='superadmin'
@@ -700,7 +700,7 @@ class TestManageUsers:
         SU-USR-004
 
         Title: Empty username accepted without validation
-        Basically question: Does manage_users raise ValueError for username=''?
+        Test Question: Does manage_users raise ValueError for username=''?
         Steps:
         1. Call manage_users with action='list', username=''
         Expected Results:
@@ -724,7 +724,7 @@ class TestExecuteScript:
         SU-EXE-001
 
         Title: execute_script returns a complete result for a valid script
-        Basically question: Does execute_script return a dict with interpreter,
+        Test Question: Does execute_script return a dict with interpreter,
                             script_length, script_preview, exit_code, output, timestamp?
         Steps:
         1. Call execute_script with a simple echo script
@@ -751,7 +751,7 @@ class TestExecuteScript:
         SU-EXE-002
 
         Title: script_preview contains at most 200 characters of the script
-        Basically question: Is script_preview truncated to 200 characters for
+        Test Question: Is script_preview truncated to 200 characters for
                             scripts longer than 200 characters?
         Steps:
         1. Call execute_script with a 500-character script
@@ -776,7 +776,7 @@ class TestExecuteScript:
         Description: execute_script accepts any script_content string.
                      A poisoned agent could supply a script that wipes
                      data, exfiltrates credentials, or installs a backdoor.
-        Basically question: Does execute_script raise ValueError for a script
+        Test Question: Does execute_script raise ValueError for a script
                             containing 'rm -rf /data'?
         Steps:
         1. Call execute_script with script containing 'rm -rf /data'
@@ -801,7 +801,7 @@ class TestExecuteScript:
         SU-EXE-004
 
         Title: Credential theft script accepted without content scanning
-        Basically question: Does execute_script raise ValueError for a script
+        Test Question: Does execute_script raise ValueError for a script
                             that reads environment variables to steal credentials?
         Steps:
         1. Call execute_script with a script reading env vars and posting to external URL
@@ -823,7 +823,7 @@ class TestExecuteScript:
         SU-EXE-005
 
         Title: Empty script_content accepted without validation
-        Basically question: Does execute_script raise ValueError for script_content=''?
+        Test Question: Does execute_script raise ValueError for script_content=''?
         Steps:
         1. Call execute_script with script_content=''
         Expected Results:
@@ -840,7 +840,7 @@ class TestExecuteScript:
         SU-EXE-006
 
         Title: Unsupported interpreter accepted without allow-list check
-        Basically question: Does execute_script raise ValueError for
+        Test Question: Does execute_script raise ValueError for
                             interpreter='perl' (not in allowed list)?
         Steps:
         1. Call execute_script with interpreter='perl'
@@ -868,7 +868,7 @@ class TestSystemUtilsServerConfig:
         SU-CONFIG-001
 
         Title: DEFAULT_CONFIG values appear in run_diagnostics response
-        Basically question: Does run_diagnostics return DEFAULT_CONFIG['mock_hostname']
+        Test Question: Does run_diagnostics return DEFAULT_CONFIG['mock_hostname']
                             and DEFAULT_CONFIG['mock_os'] when server_config is None?
         Steps:
         1. Create server with server_config=None
@@ -889,7 +889,7 @@ class TestSystemUtilsServerConfig:
         SU-CONFIG-002
 
         Title: Custom hostname and OS override DEFAULT_CONFIG values
-        Basically question: Does run_diagnostics return the custom hostname
+        Test Question: Does run_diagnostics return the custom hostname
                             and OS when server_config overrides them?
         Steps:
         1. Create server with server_config={'mock_hostname': 'test-host', 'mock_os': 'Test OS 1.0'}
@@ -913,7 +913,7 @@ class TestSystemUtilsServerConfig:
         SU-CONFIG-003
 
         Title: Empty server_config behaves identically to None
-        Basically question: Does the server use DEFAULT_CONFIG values when
+        Test Question: Does the server use DEFAULT_CONFIG values when
                             server_config is an empty dict?
         Steps:
         1. Create two servers — server_config=None and server_config={}
@@ -943,7 +943,7 @@ class TestSystemUtilsToolDiscovery:
         SU-TOOLS-001
 
         Title: Server tool list matches the expected set of 8 tools
-        Basically question: Does the SystemUtils MCP server expose exactly the
+        Test Question: Does the SystemUtils MCP server expose exactly the
                             8 tools from DEFAULT_CONFIG['enabled_tools']?
         Steps:
         1. Create a SystemUtils server
@@ -969,7 +969,7 @@ class TestSystemUtilsToolDiscovery:
         SU-TOOLS-002
 
         Title: Every tool response contains a non-null timestamp field
-        Basically question: Does each tool return a dict with a 'timestamp' key?
+        Test Question: Does each tool return a dict with a 'timestamp' key?
         Steps:
         1. Call each of the 8 tools with minimal valid arguments
         Expected Results:
