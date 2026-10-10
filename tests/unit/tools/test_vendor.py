@@ -70,7 +70,7 @@ class TestGetVendorDetails:
         """VND-GET-001: get_vendor_details returns dict for valid vendor
 
         Title: get_vendor_details returns vendor as dictionary
-        Basically question: Does get_vendor_details return a dict with the
+        Test Question: Does get_vendor_details return a dict with the
                             vendor data when given a valid vendor_id?
         Steps:
         1. Create a vendor in the test database
@@ -95,7 +95,7 @@ class TestGetVendorDetails:
         """VND-GET-002: get_vendor_details raises ValueError for missing vendor
 
         Title: get_vendor_details raises ValueError when vendor not found
-        Basically question: Does get_vendor_details raise ValueError when
+        Test Question: Does get_vendor_details raise ValueError when
                             the vendor_id does not exist?
         Steps:
         1. Call get_vendor_details with a non-existent vendor_id (99999)
@@ -114,7 +114,7 @@ class TestGetVendorDetails:
         """VND-GET-005: get_vendor_details raises ValueError for vendor_id=0
 
         Title: get_vendor_details rejects vendor_id=0 (lower boundary)
-        Basically question: Does vendor_id=0 raise ValueError the same way
+        Test Question: Does vendor_id=0 raise ValueError the same way
                             as a non-existent large ID?
         Steps:
         1. Call get_vendor_details with vendor_id=0
@@ -133,7 +133,7 @@ class TestGetVendorDetails:
         """VND-GET-006: get_vendor_details raises ValueError for vendor_id=-1
 
         Title: get_vendor_details rejects negative vendor_id
-        Basically question: Does a negative vendor_id raise ValueError?
+        Test Question: Does a negative vendor_id raise ValueError?
         Steps:
         1. Call get_vendor_details with vendor_id=-1
         Expected Results:
@@ -151,7 +151,7 @@ class TestGetVendorDetails:
         """VND-GET-003: get_vendor_details cannot access vendor from another namespace
 
         Title: get_vendor_details enforces namespace isolation
-        Basically question: Does get_vendor_details prevent a user in one
+        Test Question: Does get_vendor_details prevent a user in one
                             namespace from reading a vendor belonging to
                             another namespace?
         Steps:
@@ -183,7 +183,7 @@ class TestGetVendorContactInfo:
         """VND-CONTACT-001: get_vendor_contact_info returns contact subset
 
         Title: get_vendor_contact_info returns limited contact fields
-        Basically question: Does get_vendor_contact_info return only the
+        Test Question: Does get_vendor_contact_info return only the
                             contact-relevant fields (not full vendor record)?
         Steps:
         1. Create a vendor
@@ -211,7 +211,7 @@ class TestGetVendorContactInfo:
         """VND-CONTACT-004: get_vendor_contact_info raises ValueError for vendor_id=0
 
         Title: get_vendor_contact_info rejects vendor_id=0 (lower boundary)
-        Basically question: Does vendor_id=0 raise ValueError?
+        Test Question: Does vendor_id=0 raise ValueError?
         Steps:
         1. Call get_vendor_contact_info with vendor_id=0
         Expected Results:
@@ -229,7 +229,7 @@ class TestGetVendorContactInfo:
         """VND-CONTACT-005: get_vendor_contact_info raises ValueError for vendor_id=-1
 
         Title: get_vendor_contact_info rejects negative vendor_id
-        Basically question: Does a negative vendor_id raise ValueError?
+        Test Question: Does a negative vendor_id raise ValueError?
         Steps:
         1. Call get_vendor_contact_info with vendor_id=-1
         Expected Results:
@@ -246,7 +246,7 @@ class TestGetVendorContactInfo:
         """VND-CONTACT-006: get_vendor_contact_info does not expose any sensitive financial fields
 
         Title: get_vendor_contact_info omits all bank and TIN fields
-        Basically question: Does get_vendor_contact_info omit tin,
+        Test Question: Does get_vendor_contact_info omit tin,
                             bank_account_number, bank_routing_number, and
                             bank_account_holder_name?
         Steps:
@@ -272,7 +272,7 @@ class TestGetVendorContactInfo:
         """VND-CONTACT-002: get_vendor_contact_info raises ValueError for missing vendor
 
         Title: get_vendor_contact_info raises ValueError when vendor not found
-        Basically question: Does get_vendor_contact_info raise ValueError when
+        Test Question: Does get_vendor_contact_info raise ValueError when
                             vendor_id does not exist?
         Steps:
         1. Call get_vendor_contact_info with vendor_id 99999
@@ -290,7 +290,7 @@ class TestGetVendorContactInfo:
         """VND-CONTACT-003: get_vendor_contact_info enforces namespace isolation
 
         Title: get_vendor_contact_info prevents cross-namespace access
-        Basically question: Does get_vendor_contact_info prevent a user in namespace B
+        Test Question: Does get_vendor_contact_info prevent a user in namespace B
                             from reading contact info of a vendor in namespace A?
         Steps:
         1. Create vendor in namespace A
@@ -321,7 +321,7 @@ class TestUpdateVendorStatus:
         """VND-UPD-001: update_vendor_status updates status and returns dict
 
         Title: update_vendor_status persists new status
-        Basically question: Does update_vendor_status correctly change the
+        Test Question: Does update_vendor_status correctly change the
                             vendor status and return the updated vendor?
         Steps:
         1. Create vendor (default status "pending")
@@ -347,7 +347,7 @@ class TestUpdateVendorStatus:
         """VND-UPD-002: update_vendor_status captures full previous state
 
         Title: update_vendor_status captures status, trust_level, and risk_level
-        Basically question: Does _previous_state include all three fields?
+        Test Question: Does _previous_state include all three fields?
         Steps:
         1. Create vendor (default: pending/low/high)
         2. Call update_vendor_status changing all three fields
@@ -373,7 +373,7 @@ class TestUpdateVendorStatus:
         """VND-UPD-003: update_vendor_status appends to existing agent_notes
 
         Title: update_vendor_status appends notes instead of overwriting
-        Basically question: Does update_vendor_status append new notes to
+        Test Question: Does update_vendor_status append new notes to
                             existing agent_notes rather than replacing them?
         Steps:
         1. Create vendor and manually set agent_notes to "First note"
@@ -401,7 +401,7 @@ class TestUpdateVendorStatus:
         """VND-UPD-010: update_vendor_status raises ValueError for vendor_id=0
 
         Title: update_vendor_status rejects vendor_id=0 (lower boundary)
-        Basically question: Does vendor_id=0 raise ValueError?
+        Test Question: Does vendor_id=0 raise ValueError?
         Steps:
         1. Call update_vendor_status with vendor_id=0
         Expected Results:
@@ -419,7 +419,7 @@ class TestUpdateVendorStatus:
         """VND-UPD-011: update_vendor_status raises ValueError for vendor_id=-1
 
         Title: update_vendor_status rejects negative vendor_id
-        Basically question: Does a negative vendor_id raise ValueError?
+        Test Question: Does a negative vendor_id raise ValueError?
         Steps:
         1. Call update_vendor_status with vendor_id=-1
         Expected Results:
@@ -476,7 +476,7 @@ class TestUpdateVendorStatus:
         """VND-UPD-004: update_vendor_status raises ValueError for missing vendor
 
         Title: update_vendor_status raises ValueError when vendor not found
-        Basically question: Does update_vendor_status raise ValueError for
+        Test Question: Does update_vendor_status raise ValueError for
                             a non-existent vendor_id?
         Steps:
         1. Call update_vendor_status with vendor_id 99999
@@ -495,7 +495,7 @@ class TestUpdateVendorStatus:
         """VND-UPD-005: update_vendor_status cannot update vendor from another namespace
 
         Title: update_vendor_status enforces namespace isolation
-        Basically question: Does update_vendor_status prevent a user from
+        Test Question: Does update_vendor_status prevent a user from
                             updating a vendor that belongs to a different namespace?
         Steps:
         1. Create vendor in namespace A
@@ -519,7 +519,7 @@ class TestUpdateVendorStatus:
         """VND-UPD-006: update_vendor_status accepts arbitrary status strings
 
         Title: update_vendor_status does not validate status against allowed values
-        Basically question: Does update_vendor_status reject an invalid status
+        Test Question: Does update_vendor_status reject an invalid status
                             string instead of persisting it?
         Steps:
         1. Create a vendor
@@ -541,7 +541,7 @@ class TestUpdateVendorStatus:
         """VND-UPD-007: update_vendor_status accepts arbitrary trust_level strings
 
         Title: update_vendor_status does not validate trust_level
-        Basically question: Does update_vendor_status reject an invalid
+        Test Question: Does update_vendor_status reject an invalid
                             trust_level string instead of persisting it?
         Steps:
         1. Create a vendor
@@ -563,7 +563,7 @@ class TestUpdateVendorStatus:
         """VND-UPD-008: update_vendor_status with agent_notes=None inserts literal "None"
 
         Title: None agent_notes produces literal "None" string in notes field
-        Basically question: Does passing agent_notes=None to update_vendor_status
+        Test Question: Does passing agent_notes=None to update_vendor_status
                             result in the literal string "None" being written
                             to the vendor notes?
         Steps:
@@ -585,7 +585,7 @@ class TestUpdateVendorStatus:
         """VND-UPD-009: update_vendor_status accepts arbitrary risk_level strings
 
         Title: update_vendor_status does not validate risk_level
-        Basically question: Does update_vendor_status reject an invalid risk_level
+        Test Question: Does update_vendor_status reject an invalid risk_level
                             string instead of persisting it?
         Steps:
         1. Create a vendor
@@ -629,7 +629,7 @@ class TestGetVendorDetailsDefects:
         """VND-GET-004: get_vendor_details does not close db session when vendor not found
 
         Title: Database session leaks when vendor is not found
-        Basically question: Is the database session closed even when
+        Test Question: Is the database session closed even when
                             get_vendor_details raises ValueError?
         Steps:
         1. Call get_vendor_details with a non-existent vendor_id
@@ -659,7 +659,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-001: update_vendor_agent_notes appends to existing notes
 
         Title: update_vendor_agent_notes appends without overwriting
-        Basically question: Does update_vendor_agent_notes append new notes
+        Test Question: Does update_vendor_agent_notes append new notes
                             to existing agent_notes?
         Steps:
         1. Create vendor with agent_notes "Existing note"
@@ -685,7 +685,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-005: update_vendor_agent_notes raises ValueError for vendor_id=0
 
         Title: update_vendor_agent_notes rejects vendor_id=0 (lower boundary)
-        Basically question: Does vendor_id=0 raise ValueError?
+        Test Question: Does vendor_id=0 raise ValueError?
         Steps:
         1. Call update_vendor_agent_notes with vendor_id=0
         Expected Results:
@@ -703,7 +703,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-006: update_vendor_agent_notes raises ValueError for vendor_id=-1
 
         Title: update_vendor_agent_notes rejects negative vendor_id
-        Basically question: Does a negative vendor_id raise ValueError?
+        Test Question: Does a negative vendor_id raise ValueError?
         Steps:
         1. Call update_vendor_agent_notes with vendor_id=-1
         Expected Results:
@@ -720,7 +720,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-002: update_vendor_agent_notes raises ValueError for missing vendor
 
         Title: update_vendor_agent_notes raises ValueError when vendor not found
-        Basically question: Does update_vendor_agent_notes raise ValueError
+        Test Question: Does update_vendor_agent_notes raise ValueError
                             when given a non-existent vendor_id?
         Steps:
         1. Call update_vendor_agent_notes with vendor_id 99999
@@ -739,7 +739,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-003: update_vendor_agent_notes accumulates across multiple calls
 
         Title: Repeated update_vendor_agent_notes calls preserve all prior entries
-        Basically question: If update_vendor_agent_notes is called three times,
+        Test Question: If update_vendor_agent_notes is called three times,
                             do all three notes appear in the final agent_notes?
         Steps:
         1. Create a vendor
@@ -767,7 +767,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-004: update_vendor_agent_notes with agent_notes=None inserts literal "None"
 
         Title: None agent_notes produces literal "None" string in notes field
-        Basically question: Does passing agent_notes=None to update_vendor_agent_notes
+        Test Question: Does passing agent_notes=None to update_vendor_agent_notes
                             result in the literal string "None" being appended?
         Steps:
         1. Create a vendor with no existing notes
@@ -788,7 +788,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-007: update_vendor_agent_notes accepts whitespace-only agent_notes (defect)
 
         Title: update_vendor_agent_notes does not reject whitespace-only notes
-        Basically question: Does update_vendor_agent_notes raise ValueError when
+        Test Question: Does update_vendor_agent_notes raise ValueError when
                             agent_notes contains only whitespace (e.g. "   ")?
         Steps:
         1. Create a vendor
@@ -810,7 +810,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-008: update_vendor_agent_notes accepts notes exceeding 10,000 characters (defect)
 
         Title: update_vendor_agent_notes has no maximum length limit on notes
-        Basically question: Does update_vendor_agent_notes raise ValueError when
+        Test Question: Does update_vendor_agent_notes raise ValueError when
                             agent_notes exceeds 10,000 characters?
         Steps:
         1. Create a vendor
@@ -832,7 +832,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-009: update_vendor_agent_notes accepts newlines-only agent_notes (defect)
 
         Title: update_vendor_agent_notes does not reject newline-only notes
-        Basically question: Does update_vendor_agent_notes raise ValueError when
+        Test Question: Does update_vendor_agent_notes raise ValueError when
                             agent_notes="\\n\\n"?
         Steps:
         1. Create a vendor
@@ -853,7 +853,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-010: update_vendor_agent_notes accepts tab-only agent_notes (defect)
 
         Title: update_vendor_agent_notes does not reject tab-only notes
-        Basically question: Does update_vendor_agent_notes raise ValueError when
+        Test Question: Does update_vendor_agent_notes raise ValueError when
                             agent_notes="\\t"?
         Steps:
         1. Create a vendor
@@ -874,7 +874,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-011: update_vendor_agent_notes accepts injected agent prefix in notes (defect)
 
         Title: update_vendor_agent_notes does not sanitize injected prefix in notes
-        Basically question: Does update_vendor_agent_notes raise ValueError when
+        Test Question: Does update_vendor_agent_notes raise ValueError when
                             agent_notes contains a forged "[Fraud Agent]" prefix?
         Steps:
         1. Create a vendor
@@ -897,7 +897,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-012: update_vendor_agent_notes accepts notes of exactly 10,000 characters
 
         Title: update_vendor_agent_notes accepts notes at the 10,000-character boundary
-        Basically question: Does update_vendor_agent_notes accept agent_notes of
+        Test Question: Does update_vendor_agent_notes accept agent_notes of
                             exactly 10,000 characters without raising?
         Steps:
         1. Create a vendor
@@ -918,7 +918,7 @@ class TestUpdateVendorAgentNotes:
         """VND-NOTES-013: update_vendor_agent_notes accepts notes of 9,999 characters
 
         Title: update_vendor_agent_notes accepts notes well within the 10,000-character limit
-        Basically question: Does update_vendor_agent_notes accept agent_notes of
+        Test Question: Does update_vendor_agent_notes accept agent_notes of
                             9,999 characters without raising?
         Steps:
         1. Create a vendor

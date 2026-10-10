@@ -88,7 +88,7 @@ class TestGetVendorRiskProfile:
         """FRAUD-RISK-001: get_vendor_risk_profile returns dict with risk fields
 
         Title: get_vendor_risk_profile returns complete risk profile
-        Basically question: Does get_vendor_risk_profile return a dict with
+        Test Question: Does get_vendor_risk_profile return a dict with
                             vendor metadata AND invoice statistics?
         Steps:
         1. Create vendor and two invoices (different amounts, same status)
@@ -118,7 +118,7 @@ class TestGetVendorRiskProfile:
         """FRAUD-RISK-002: get_vendor_risk_profile aggregates invoices by status
 
         Title: get_vendor_risk_profile groups invoice counts by status
-        Basically question: Does invoices_by_status correctly count invoices
+        Test Question: Does invoices_by_status correctly count invoices
                             per status?
         Steps:
         1. Create vendor with 2 submitted and 1 approved invoice
@@ -145,7 +145,7 @@ class TestGetVendorRiskProfile:
         """FRAUD-RISK-003: get_vendor_risk_profile raises ValueError for missing vendor
 
         Title: get_vendor_risk_profile raises ValueError when vendor not found
-        Basically question: Does get_vendor_risk_profile raise ValueError
+        Test Question: Does get_vendor_risk_profile raise ValueError
                             when vendor_id does not exist?
         Steps:
         1. Call get_vendor_risk_profile with vendor_id 99999
@@ -163,7 +163,7 @@ class TestGetVendorRiskProfile:
         """FRAUD-RISK-004: get_vendor_risk_profile enforces namespace isolation
 
         Title: get_vendor_risk_profile prevents cross-namespace vendor access
-        Basically question: Does get_vendor_risk_profile prevent a user from
+        Test Question: Does get_vendor_risk_profile prevent a user from
                             reading risk profiles of vendors in another namespace?
         Steps:
         1. Create vendor in namespace A
@@ -185,7 +185,7 @@ class TestGetVendorRiskProfile:
         """FRAUD-RISK-006: get_vendor_risk_profile returns zeros for vendor with no invoices
 
         Title: get_vendor_risk_profile handles vendor with no invoices
-        Basically question: Does get_vendor_risk_profile return zero totals and
+        Test Question: Does get_vendor_risk_profile return zero totals and
                             an empty invoices_by_status dict when the vendor
                             has no invoices?
         Steps:
@@ -212,7 +212,7 @@ class TestGetVendorRiskProfile:
         """FRAUD-RISK-008: get_vendor_risk_profile raises ValueError for vendor_id=0
 
         Title: get_vendor_risk_profile rejects vendor_id=0 (lower boundary)
-        Basically question: Does vendor_id=0 raise ValueError the same way
+        Test Question: Does vendor_id=0 raise ValueError the same way
                             as a non-existent large ID?
         Steps:
         1. Call get_vendor_risk_profile with vendor_id=0
@@ -231,7 +231,7 @@ class TestGetVendorRiskProfile:
         """FRAUD-RISK-009: get_vendor_risk_profile raises ValueError for vendor_id=-1
 
         Title: get_vendor_risk_profile rejects negative vendor_id
-        Basically question: Does a negative vendor_id raise ValueError?
+        Test Question: Does a negative vendor_id raise ValueError?
         Steps:
         1. Call get_vendor_risk_profile with vendor_id=-1
         Expected Results:
@@ -249,7 +249,7 @@ class TestGetVendorRiskProfile:
         """FRAUD-RISK-010: get_vendor_risk_profile handles very large invoice amounts
 
         Title: get_vendor_risk_profile sums 1e15 amounts without overflow
-        Basically question: Does get_vendor_risk_profile correctly return a
+        Test Question: Does get_vendor_risk_profile correctly return a
                             total_invoice_amount of 1e15 without rounding or crashing?
         Steps:
         1. Create vendor with one invoice of amount=1e15
@@ -272,7 +272,7 @@ class TestGetVendorRiskProfile:
         """FRAUD-RISK-007: get_vendor_risk_profile includes negative-amount invoices in total
 
         Title: get_vendor_risk_profile sums negative amounts without validation
-        Basically question: Does get_vendor_risk_profile correctly include a
+        Test Question: Does get_vendor_risk_profile correctly include a
                             negative-amount invoice (e.g. a credit memo) in
                             total_invoice_amount, and does it do so without
                             crashing or raising?
@@ -310,7 +310,7 @@ class TestGetVendorInvoices:
         """FRAUD-INV-001: get_vendor_invoices returns list of invoice dicts
 
         Title: get_vendor_invoices returns all vendor invoices as list
-        Basically question: Does get_vendor_invoices return a list with each
+        Test Question: Does get_vendor_invoices return a list with each
                             invoice as a dict?
         Steps:
         1. Create vendor with 2 invoices
@@ -336,7 +336,7 @@ class TestGetVendorInvoices:
         """FRAUD-INV-002: get_vendor_invoices returns empty list when no invoices
 
         Title: get_vendor_invoices returns [] for vendor with no invoices
-        Basically question: Does get_vendor_invoices return an empty list
+        Test Question: Does get_vendor_invoices return an empty list
                             (not None or error) when vendor has no invoices?
         Steps:
         1. Create vendor with no invoices
@@ -357,7 +357,7 @@ class TestGetVendorInvoices:
         """FRAUD-INV-003: get_vendor_invoices does not validate vendor existence
 
         Title: get_vendor_invoices silently returns [] for non-existent vendor (defect)
-        Basically question: Does get_vendor_invoices raise ValueError when the
+        Test Question: Does get_vendor_invoices raise ValueError when the
                             vendor_id does not exist, or does it silently
                             return an empty list?
         Steps:
@@ -379,7 +379,7 @@ class TestGetVendorInvoices:
         """FRAUD-INV-004: get_vendor_invoices enforces namespace isolation
 
         Title: get_vendor_invoices prevents cross-namespace invoice access
-        Basically question: Does get_vendor_invoices prevent a user from reading
+        Test Question: Does get_vendor_invoices prevent a user from reading
                             invoices belonging to a vendor in a different namespace?
         Steps:
         1. Create vendor and invoice in namespace A
@@ -410,7 +410,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-001: update_vendor_risk updates risk_level and returns dict
 
         Title: update_vendor_risk persists new risk_level
-        Basically question: Does update_vendor_risk correctly update risk_level
+        Test Question: Does update_vendor_risk correctly update risk_level
                             and return the updated vendor?
         Steps:
         1. Create vendor (default risk_level "high")
@@ -433,7 +433,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-002: update_vendor_risk prefixes notes with [Fraud Agent]
 
         Title: update_vendor_risk adds [Fraud Agent] prefix to notes
-        Basically question: Does update_vendor_risk prepend "[Fraud Agent]" to
+        Test Question: Does update_vendor_risk prepend "[Fraud Agent]" to
                             the agent_notes before appending?
         Steps:
         1. Create vendor
@@ -455,7 +455,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-003: update_vendor_risk raises ValueError for missing vendor
 
         Title: update_vendor_risk raises ValueError when vendor not found
-        Basically question: Does update_vendor_risk raise ValueError for
+        Test Question: Does update_vendor_risk raise ValueError for
                             a non-existent vendor_id?
         Steps:
         1. Call update_vendor_risk with vendor_id 99999
@@ -474,7 +474,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-004: update_vendor_risk enforces namespace isolation
 
         Title: update_vendor_risk prevents cross-namespace vendor updates
-        Basically question: Does update_vendor_risk prevent a user from
+        Test Question: Does update_vendor_risk prevent a user from
                             updating a vendor in a different namespace?
         Steps:
         1. Create vendor in namespace A
@@ -496,7 +496,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-005: update_vendor_risk accepts arbitrary risk_level strings
 
         Title: update_vendor_risk does not validate risk_level
-        Basically question: Does update_vendor_risk reject an invalid risk_level
+        Test Question: Does update_vendor_risk reject an invalid risk_level
                             string instead of persisting it?
         Steps:
         1. Create a vendor
@@ -518,7 +518,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-006: update_vendor_risk with agent_notes=None inserts "[Fraud Agent] None"
 
         Title: None agent_notes produces "[Fraud Agent] None" in notes field
-        Basically question: Does passing agent_notes=None to update_vendor_risk
+        Test Question: Does passing agent_notes=None to update_vendor_risk
                             result in the literal string "None" being written
                             to the vendor notes?
         Steps:
@@ -540,7 +540,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-008: update_vendor_risk accepts empty string as risk_level (defect)
 
         Title: update_vendor_risk does not reject empty string risk_level
-        Basically question: Does update_vendor_risk raise ValueError when
+        Test Question: Does update_vendor_risk raise ValueError when
                             risk_level="" (empty string)?
         Steps:
         1. Create a vendor
@@ -561,7 +561,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-009: update_vendor_risk accepts "HIGH" (uppercase) as risk_level (defect)
 
         Title: update_vendor_risk does not enforce case on risk_level
-        Basically question: Does update_vendor_risk raise ValueError when
+        Test Question: Does update_vendor_risk raise ValueError when
                             risk_level="HIGH" (uppercase)?
         Steps:
         1. Create a vendor
@@ -582,7 +582,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-010: update_vendor_risk accepts "high " (trailing space) as risk_level (defect)
 
         Title: update_vendor_risk does not strip or reject whitespace in risk_level
-        Basically question: Does update_vendor_risk raise ValueError when
+        Test Question: Does update_vendor_risk raise ValueError when
                             risk_level="high " (trailing space)?
         Steps:
         1. Create a vendor
@@ -603,7 +603,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-011: update_vendor_risk accepts None as risk_level (defect)
 
         Title: update_vendor_risk does not reject None risk_level
-        Basically question: Does update_vendor_risk raise ValueError when
+        Test Question: Does update_vendor_risk raise ValueError when
                             risk_level=None?
         Steps:
         1. Create a vendor
@@ -624,7 +624,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-012: update_vendor_risk accepts " low" (leading space) as risk_level (defect)
 
         Title: update_vendor_risk does not reject leading whitespace in risk_level
-        Basically question: Does update_vendor_risk raise ValueError when
+        Test Question: Does update_vendor_risk raise ValueError when
                             risk_level=" low" (leading space)?
         Steps:
         1. Create a vendor
@@ -645,7 +645,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-013: update_vendor_risk accepts "Medium" (mixed case) as risk_level (defect)
 
         Title: update_vendor_risk does not enforce lowercase on risk_level
-        Basically question: Does update_vendor_risk raise ValueError when
+        Test Question: Does update_vendor_risk raise ValueError when
                             risk_level="Medium" (title case)?
         Steps:
         1. Create a vendor
@@ -666,7 +666,7 @@ class TestUpdateVendorRisk:
         """FRAUD-UPD-007: flag_invoice_for_review does not reject invoices with negative amounts
 
         Title: flag_invoice_for_review accepts negative-amount invoice without validation (defect)
-        Basically question: Does flag_invoice_for_review raise ValueError when
+        Test Question: Does flag_invoice_for_review raise ValueError when
                             the invoice has a negative amount (e.g. -$500)?
         Steps:
         1. Create a vendor and invoice with amount=-500.0
@@ -700,7 +700,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-001: flag_invoice_for_review appends structured fraud note
 
         Title: flag_invoice_for_review writes flag_reason into agent_notes
-        Basically question: Does flag_invoice_for_review append a structured
+        Test Question: Does flag_invoice_for_review append a structured
                             [Fraud Agent] FLAG note with flag_reason to agent_notes?
         Steps:
         1. Create vendor and invoice
@@ -728,7 +728,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-002: flag_invoice_for_review auto-rejects submitted invoice
 
         Title: flag_invoice_for_review sets status to rejected when action is reject
-        Basically question: Does flag_invoice_for_review automatically change
+        Test Question: Does flag_invoice_for_review automatically change
                             invoice status to "rejected" when recommended_action
                             is "reject" and status is "submitted"?
         Steps:
@@ -756,7 +756,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-003: flag_invoice_for_review does not reject approved invoices
 
         Title: flag_invoice_for_review leaves approved invoices unchanged
-        Basically question: Does flag_invoice_for_review skip the auto-reject
+        Test Question: Does flag_invoice_for_review skip the auto-reject
                             when invoice status is already "approved"?
         Steps:
         1. Create invoice with status "approved"
@@ -781,7 +781,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-004: flag_invoice_for_review raises ValueError for missing invoice
 
         Title: flag_invoice_for_review raises ValueError when invoice not found
-        Basically question: Does flag_invoice_for_review raise ValueError
+        Test Question: Does flag_invoice_for_review raise ValueError
                             when invoice_id does not exist?
         Steps:
         1. Call flag_invoice_for_review with invoice_id 99999
@@ -802,7 +802,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-005: flag_invoice_for_review accepts arbitrary recommended_action strings
 
         Title: flag_invoice_for_review does not validate recommended_action
-        Basically question: Does flag_invoice_for_review reject an invalid
+        Test Question: Does flag_invoice_for_review reject an invalid
                             recommended_action string instead of persisting it?
         Steps:
         1. Create a vendor and invoice
@@ -827,7 +827,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-007: flag_invoice_for_review raises ValueError for invoice_id=0
 
         Title: flag_invoice_for_review rejects invoice_id=0 (lower boundary)
-        Basically question: Does invoice_id=0 raise ValueError the same way
+        Test Question: Does invoice_id=0 raise ValueError the same way
                             as a non-existent large ID?
         Steps:
         1. Call flag_invoice_for_review with invoice_id=0
@@ -846,7 +846,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-008: flag_invoice_for_review raises ValueError for invoice_id=-1
 
         Title: flag_invoice_for_review rejects negative invoice_id
-        Basically question: Does a negative invoice_id raise ValueError?
+        Test Question: Does a negative invoice_id raise ValueError?
         Steps:
         1. Call flag_invoice_for_review with invoice_id=-1
         Expected Results:
@@ -864,7 +864,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-009: flag_invoice_for_review accepts empty string recommended_action (defect)
 
         Title: flag_invoice_for_review does not reject empty recommended_action
-        Basically question: Does flag_invoice_for_review raise ValueError when
+        Test Question: Does flag_invoice_for_review raise ValueError when
                             recommended_action="" (empty string)?
         Steps:
         1. Create a vendor and invoice
@@ -888,7 +888,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-010: flag_invoice_for_review accepts "HOLD" (uppercase) recommended_action (defect)
 
         Title: flag_invoice_for_review does not enforce case on recommended_action
-        Basically question: Does flag_invoice_for_review raise ValueError when
+        Test Question: Does flag_invoice_for_review raise ValueError when
                             recommended_action="HOLD" (uppercase)?
         Steps:
         1. Create a vendor and invoice
@@ -912,7 +912,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-011: flag_invoice_for_review reject action on paid invoice leaves status unchanged
 
         Title: flag_invoice_for_review does not auto-reject paid invoices
-        Basically question: Does flag_invoice_for_review leave "paid" invoice
+        Test Question: Does flag_invoice_for_review leave "paid" invoice
                             status unchanged when recommended_action="reject"?
         Steps:
         1. Create invoice with status "paid"
@@ -938,7 +938,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-006: flag_invoice_for_review with reject on processing invoice
 
         Title: flag_invoice_for_review reject action on processing invoice leaves status unchanged
-        Basically question: Does flag_invoice_for_review auto-reject a "processing"
+        Test Question: Does flag_invoice_for_review auto-reject a "processing"
                             invoice when recommended_action is "reject"?
         Steps:
         1. Create invoice with status "processing"
@@ -964,7 +964,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-012: flag_invoice_for_review accepts empty string flag_reason (defect)
 
         Title: flag_invoice_for_review does not reject empty flag_reason
-        Basically question: Does flag_invoice_for_review raise ValueError when
+        Test Question: Does flag_invoice_for_review raise ValueError when
                             flag_reason="" (empty string)?
         Steps:
         1. Create a vendor and invoice
@@ -986,7 +986,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-013: flag_invoice_for_review accepts None as flag_reason (defect)
 
         Title: flag_invoice_for_review does not reject None flag_reason
-        Basically question: Does flag_invoice_for_review raise ValueError when
+        Test Question: Does flag_invoice_for_review raise ValueError when
                             flag_reason=None?
         Steps:
         1. Create a vendor and invoice
@@ -1008,7 +1008,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-014: flag_invoice_for_review accepts whitespace-only flag_reason (defect)
 
         Title: flag_invoice_for_review does not reject whitespace-only flag_reason
-        Basically question: Does flag_invoice_for_review raise ValueError when
+        Test Question: Does flag_invoice_for_review raise ValueError when
                             flag_reason="   " (spaces only)?
         Steps:
         1. Create a vendor and invoice
@@ -1030,7 +1030,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-015: flag_invoice_for_review accepts flag_reason exceeding 10,000 characters (defect)
 
         Title: flag_invoice_for_review has no maximum length limit on flag_reason
-        Basically question: Does flag_invoice_for_review raise ValueError when
+        Test Question: Does flag_invoice_for_review raise ValueError when
                             flag_reason exceeds 10,000 characters?
         Steps:
         1. Create a vendor and invoice
@@ -1052,7 +1052,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-016: flag_invoice_for_review accepts [Fraud Agent] prefix injection in flag_reason (defect)
 
         Title: flag_invoice_for_review does not sanitize [Fraud Agent] prefix in flag_reason
-        Basically question: Does flag_invoice_for_review raise ValueError when
+        Test Question: Does flag_invoice_for_review raise ValueError when
                             flag_reason contains the "[Fraud Agent]" prefix?
         Steps:
         1. Create a vendor and invoice
@@ -1077,7 +1077,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-017: flag_invoice_for_review accepts None as recommended_action (defect)
 
         Title: flag_invoice_for_review does not reject None recommended_action
-        Basically question: Does flag_invoice_for_review raise ValueError when
+        Test Question: Does flag_invoice_for_review raise ValueError when
                             recommended_action=None?
         Steps:
         1. Create a vendor and invoice
@@ -1100,7 +1100,7 @@ class TestFlagInvoiceForReview:
         """FRAUD-FLAG-018: flag_invoice_for_review accepts " hold" (leading space) as recommended_action (defect)
 
         Title: flag_invoice_for_review does not reject leading whitespace in recommended_action
-        Basically question: Does flag_invoice_for_review raise ValueError when
+        Test Question: Does flag_invoice_for_review raise ValueError when
                             recommended_action=" hold" (leading space)?
         Steps:
         1. Create a vendor and invoice
@@ -1130,7 +1130,7 @@ class TestUpdateFraudAgentNotes:
         """FRAUD-NOTES-001: update_fraud_agent_notes prefixes and appends notes
 
         Title: update_fraud_agent_notes adds [Fraud Agent] prefix and appends
-        Basically question: Does update_fraud_agent_notes prefix notes with
+        Test Question: Does update_fraud_agent_notes prefix notes with
                             "[Fraud Agent]" and append to existing notes?
         Steps:
         1. Create vendor with agent_notes "Prior note"
@@ -1157,7 +1157,7 @@ class TestUpdateFraudAgentNotes:
         """FRAUD-NOTES-002: update_fraud_agent_notes raises ValueError for missing vendor
 
         Title: update_fraud_agent_notes raises ValueError when vendor not found
-        Basically question: Does update_fraud_agent_notes raise ValueError
+        Test Question: Does update_fraud_agent_notes raise ValueError
                             when vendor_id does not exist?
         Steps:
         1. Call update_fraud_agent_notes with vendor_id 99999
@@ -1176,7 +1176,7 @@ class TestUpdateFraudAgentNotes:
         """FRAUD-NOTES-004: update_fraud_agent_notes raises ValueError for vendor_id=0
 
         Title: update_fraud_agent_notes rejects vendor_id=0 (lower boundary)
-        Basically question: Does vendor_id=0 raise ValueError?
+        Test Question: Does vendor_id=0 raise ValueError?
         Steps:
         1. Call update_fraud_agent_notes with vendor_id=0
         Expected Results:
@@ -1193,7 +1193,7 @@ class TestUpdateFraudAgentNotes:
         """FRAUD-NOTES-005: update_fraud_agent_notes raises ValueError for vendor_id=-1
 
         Title: update_fraud_agent_notes rejects negative vendor_id
-        Basically question: Does a negative vendor_id raise ValueError?
+        Test Question: Does a negative vendor_id raise ValueError?
         Steps:
         1. Call update_fraud_agent_notes with vendor_id=-1
         Expected Results:
@@ -1210,7 +1210,7 @@ class TestUpdateFraudAgentNotes:
         """FRAUD-NOTES-003: update_fraud_agent_notes with notes=None inserts "[Fraud Agent] None"
 
         Title: None notes argument produces "[Fraud Agent] None" in agent_notes (defect)
-        Basically question: Does passing notes=None to update_fraud_agent_notes
+        Test Question: Does passing notes=None to update_fraud_agent_notes
                             result in the literal string "None" being appended
                             to the vendor's agent_notes?
         Steps:
@@ -1233,7 +1233,7 @@ class TestUpdateFraudAgentNotes:
         """FRAUD-NOTES-006: update_fraud_agent_notes accepts whitespace-only notes (defect)
 
         Title: update_fraud_agent_notes does not reject whitespace-only notes
-        Basically question: Does update_fraud_agent_notes raise ValueError when
+        Test Question: Does update_fraud_agent_notes raise ValueError when
                             agent_notes contains only whitespace (e.g. "   ")?
         Steps:
         1. Create a vendor
@@ -1255,7 +1255,7 @@ class TestUpdateFraudAgentNotes:
         """FRAUD-NOTES-007: update_fraud_agent_notes accepts notes exceeding 10,000 characters (defect)
 
         Title: update_fraud_agent_notes has no maximum length limit on notes
-        Basically question: Does update_fraud_agent_notes raise ValueError when
+        Test Question: Does update_fraud_agent_notes raise ValueError when
                             agent_notes exceeds 10,000 characters?
         Steps:
         1. Create a vendor
@@ -1277,7 +1277,7 @@ class TestUpdateFraudAgentNotes:
         """FRAUD-NOTES-008: update_fraud_agent_notes accepts newlines-only agent_notes (defect)
 
         Title: update_fraud_agent_notes does not reject newline-only notes
-        Basically question: Does update_fraud_agent_notes raise ValueError when
+        Test Question: Does update_fraud_agent_notes raise ValueError when
                             agent_notes contains only newline characters?
         Steps:
         1. Create a vendor
@@ -1299,7 +1299,7 @@ class TestUpdateFraudAgentNotes:
         """FRAUD-NOTES-009: update_fraud_agent_notes accepts tab-only agent_notes (defect)
 
         Title: update_fraud_agent_notes does not reject tab-only notes
-        Basically question: Does update_fraud_agent_notes raise ValueError when
+        Test Question: Does update_fraud_agent_notes raise ValueError when
                             agent_notes contains only tab characters?
         Steps:
         1. Create a vendor
@@ -1320,7 +1320,7 @@ class TestUpdateFraudAgentNotes:
         """FRAUD-NOTES-010: update_fraud_agent_notes accepts [Fraud Agent] prefix injection (defect)
 
         Title: update_fraud_agent_notes does not sanitize injected [Fraud Agent] prefix
-        Basically question: Does update_fraud_agent_notes raise ValueError when
+        Test Question: Does update_fraud_agent_notes raise ValueError when
                             agent_notes contains the "[Fraud Agent]" prefix string?
         Steps:
         1. Create a vendor
@@ -1344,7 +1344,7 @@ class TestUpdateFraudAgentNotes:
         """FRAUD-NOTES-011: update_fraud_agent_notes accepts notes of exactly 10,000 characters
 
         Title: update_fraud_agent_notes accepts notes at the 10,000-character boundary
-        Basically question: Does update_fraud_agent_notes accept agent_notes of
+        Test Question: Does update_fraud_agent_notes accept agent_notes of
                             exactly 10,000 characters without raising?
         Steps:
         1. Create a vendor
@@ -1366,7 +1366,7 @@ class TestUpdateFraudAgentNotes:
         """FRAUD-NOTES-012: update_fraud_agent_notes accepts notes of 9,999 characters
 
         Title: update_fraud_agent_notes accepts notes well within the 10,000-character limit
-        Basically question: Does update_fraud_agent_notes accept agent_notes of
+        Test Question: Does update_fraud_agent_notes accept agent_notes of
                             9,999 characters without raising?
         Steps:
         1. Create a vendor
@@ -1408,7 +1408,7 @@ class TestGetVendorRiskProfileDefects:
         """FRAUD-RISK-005: get_vendor_risk_profile does not close db session when vendor not found
 
         Title: Database session leaks when vendor is not found
-        Basically question: Is the database session closed even when
+        Test Question: Is the database session closed even when
                             get_vendor_risk_profile raises ValueError?
         Steps:
         1. Call get_vendor_risk_profile with a non-existent vendor_id
