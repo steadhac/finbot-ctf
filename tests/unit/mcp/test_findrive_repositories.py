@@ -68,7 +68,7 @@ class TestDeleteFile:
         FD-REPO-001
 
         Title: delete_file returns True when the file exists and is deleted
-        Basically question: Does delete_file return True and remove the file when it exists?
+        Test Question: Does delete_file return True and remove the file when it exists?
 
         Steps:
             1. Create a file.
@@ -90,7 +90,7 @@ class TestDeleteFile:
         FD-REPO-002
 
         Title: delete_file returns False when the file does not exist
-        Basically question: Does delete_file return False gracefully for a non-existent file_id?
+        Test Question: Does delete_file return False gracefully for a non-existent file_id?
 
         Steps:
             1. Call delete_file with file_id=99999.
@@ -116,7 +116,7 @@ class TestUpdateFile:
         FD-REPO-003
 
         Title: update_file returns None for a non-existent file_id
-        Basically question: Does update_file return None gracefully when the file does not exist?
+        Test Question: Does update_file return None gracefully when the file does not exist?
 
         Steps:
             1. Call update_file with file_id=99999.
@@ -135,7 +135,7 @@ class TestUpdateFile:
         FD-REPO-004
 
         Title: update_file updates the filename when only filename is provided
-        Basically question: Does update_file correctly change the filename while leaving content unchanged?
+        Test Question: Does update_file correctly change the filename while leaving content unchanged?
 
         Steps:
             1. Create a file with filename="old.pdf".
@@ -158,7 +158,7 @@ class TestUpdateFile:
         FD-REPO-005
 
         Title: update_file updates content_text and recalculates file_size
-        Basically question: Does update_file correctly update content_text and update file_size accordingly?
+        Test Question: Does update_file correctly update content_text and update file_size accordingly?
 
         Steps:
             1. Create a file with short content.
@@ -182,7 +182,7 @@ class TestUpdateFile:
         FD-REPO-006
 
         Title: update_file updates both filename and content_text when both are provided
-        Basically question: Does update_file handle updating both fields simultaneously?
+        Test Question: Does update_file handle updating both fields simultaneously?
 
         Steps:
             1. Create a file.
@@ -204,7 +204,7 @@ class TestUpdateFile:
         FD-REPO-007
 
         Title: update_file changes are durable — re-fetch reflects updates
-        Basically question: Does update_file commit changes so a subsequent get_file returns updated data?
+        Test Question: Does update_file commit changes so a subsequent get_file returns updated data?
 
         Steps:
             1. Create a file.
@@ -234,7 +234,7 @@ class TestGetFileCount:
         FD-REPO-008
 
         Title: get_file_count returns total file count with no vendor filter
-        Basically question: Does get_file_count return the correct total number of files when no vendor_id is given?
+        Test Question: Does get_file_count return the correct total number of files when no vendor_id is given?
 
         Steps:
             1. Create 3 files with no vendor_id.
@@ -257,7 +257,7 @@ class TestGetFileCount:
         FD-REPO-009
 
         Title: get_file_count filters correctly by vendor_id
-        Basically question: Does get_file_count return only the count for a specific vendor when vendor_id is provided?
+        Test Question: Does get_file_count return only the count for a specific vendor when vendor_id is provided?
 
         Steps:
             1. Create two vendors; create 2 files for vendor_a and 1 file for vendor_b.
@@ -283,7 +283,7 @@ class TestGetFileCount:
         FD-REPO-010
 
         Title: get_file_count returns 0 when no files exist
-        Basically question: Does get_file_count return 0 for an empty namespace?
+        Test Question: Does get_file_count return 0 for an empty namespace?
 
         Steps:
             1. No files created.
@@ -310,7 +310,7 @@ class TestListFiles:
         FD-REPO-011
 
         Title: list_files filters correctly by folder_path
-        Basically question: Does list_files return only files in the specified folder?
+        Test Question: Does list_files return only files in the specified folder?
 
         Steps:
             1. Create files in two different folders.
@@ -335,7 +335,7 @@ class TestListFiles:
         FD-REPO-012
 
         Title: list_files respects the limit parameter
-        Basically question: Does list_files return at most limit files?
+        Test Question: Does list_files return at most limit files?
 
         Steps:
             1. Create 5 files.
@@ -358,7 +358,7 @@ class TestListFiles:
         FD-REPO-013
 
         Title: get_file returns None for a file belonging to a different namespace
-        Basically question: Does the namespace filter prevent cross-namespace file access?
+        Test Question: Does the namespace filter prevent cross-namespace file access?
 
         Steps:
             1. Create a file under namespace_a.
@@ -389,7 +389,7 @@ class TestFinDriveFileModel:
         FD-REPO-014
 
         Title: FinDriveFile __repr__ returns expected string
-        Basically question: Does FinDriveFile.__repr__ include the id, filename, and namespace?
+        Test Question: Does FinDriveFile.__repr__ include the id, filename, and namespace?
 
         Steps:
             1. Create a file.
@@ -411,7 +411,7 @@ class TestFinDriveFileModel:
         FD-REPO-015
 
         Title: to_dict_with_content includes content_text field
-        Basically question: Does to_dict_with_content return the base dict plus content_text?
+        Test Question: Does to_dict_with_content return the base dict plus content_text?
 
         Steps:
             1. Create a file with known content.
