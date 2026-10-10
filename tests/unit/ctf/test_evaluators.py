@@ -112,7 +112,7 @@ class TestInvoiceCountEvaluator:
         """EVAL-IC-001: InvoiceCountEvaluator raises ValueError when min_count missing
 
         Title: InvoiceCountEvaluator validates that min_count is in config
-        Basically question: Does InvoiceCountEvaluator raise ValueError at
+        Test Question: Does InvoiceCountEvaluator raise ValueError at
                             init time when config has no min_count?
         Steps:
         1. Instantiate InvoiceCountEvaluator with empty config
@@ -130,7 +130,7 @@ class TestInvoiceCountEvaluator:
         """EVAL-IC-002: InvoiceCountEvaluator rejects invalid invoice_status
 
         Title: InvoiceCountEvaluator validates invoice_status in config
-        Basically question: Does InvoiceCountEvaluator raise ValueError when
+        Test Question: Does InvoiceCountEvaluator raise ValueError when
                             invoice_status is not a valid status?
         Steps:
         1. Instantiate with invoice_status="bogus"
@@ -148,7 +148,7 @@ class TestInvoiceCountEvaluator:
         """EVAL-IC-003: InvoiceCountEvaluator detects when invoice count >= min_count
 
         Title: InvoiceCountEvaluator returns detected=True when threshold met
-        Basically question: Does InvoiceCountEvaluator return detected=True
+        Test Question: Does InvoiceCountEvaluator return detected=True
                             when the namespace has enough invoices?
         Steps:
         1. Create 3 invoices in namespace "ns-test"
@@ -176,7 +176,7 @@ class TestInvoiceCountEvaluator:
         """EVAL-IC-004: InvoiceCountEvaluator not detected when count < min_count
 
         Title: InvoiceCountEvaluator returns detected=False when threshold not met
-        Basically question: Does InvoiceCountEvaluator return detected=False
+        Test Question: Does InvoiceCountEvaluator return detected=False
                             with partial confidence when count is below min_count?
         Steps:
         1. Create 1 invoice in namespace "ns-partial"
@@ -202,7 +202,7 @@ class TestInvoiceCountEvaluator:
         """EVAL-IC-005: InvoiceCountEvaluator returns not-detected for missing namespace
 
         Title: InvoiceCountEvaluator handles missing namespace in event
-        Basically question: Does InvoiceCountEvaluator return detected=False
+        Test Question: Does InvoiceCountEvaluator return detected=False
                             (not raise) when event has no namespace?
         Steps:
         1. Call check_event with event missing "namespace" key
@@ -222,7 +222,7 @@ class TestInvoiceCountEvaluator:
         """EVAL-IC-006: InvoiceCountEvaluator filters by invoice_status
 
         Title: InvoiceCountEvaluator only counts invoices matching status filter
-        Basically question: Does InvoiceCountEvaluator exclude invoices whose
+        Test Question: Does InvoiceCountEvaluator exclude invoices whose
                             status does not match invoice_status config?
         Steps:
         1. Create 2 approved and 1 submitted invoice in "ns-filter"
@@ -252,7 +252,7 @@ class TestInvoiceCountEvaluator:
         """EVAL-IC-007: InvoiceCountEvaluator.get_progress returns current/target/percentage
 
         Title: get_progress returns structured progress dict
-        Basically question: Does get_progress return the right fields with
+        Test Question: Does get_progress return the right fields with
                             correct percentage calculation?
         Steps:
         1. Create 2 invoices in "ns-prog"
@@ -283,7 +283,7 @@ class TestInvoiceCountEvaluator:
                      user created them. In a shared namespace, invoices from any team member
                      count toward the badge. This test documents that behavior so it is explicit
                      and intentional rather than a hidden surprise.
-        Basically question: Does InvoiceCountEvaluator count invoices created by other users
+        Test Question: Does InvoiceCountEvaluator count invoices created by other users
                             in the same namespace toward the badge threshold?
         Steps:
         1. Create 3 invoices in "ns-shared-inv" (no user_id association on the Invoice model)
@@ -315,7 +315,7 @@ class TestInvoiceAmountEvaluator:
         """EVAL-IA-001: InvoiceAmountEvaluator raises ValueError when min_amount missing
 
         Title: InvoiceAmountEvaluator validates that min_amount is in config
-        Basically question: Does InvoiceAmountEvaluator raise ValueError at
+        Test Question: Does InvoiceAmountEvaluator raise ValueError at
                             init time when config has no min_amount?
         Steps:
         1. Instantiate with empty config
@@ -333,7 +333,7 @@ class TestInvoiceAmountEvaluator:
         """EVAL-IA-002: InvoiceAmountEvaluator detects when total amount >= min_amount
 
         Title: InvoiceAmountEvaluator returns detected=True when threshold met
-        Basically question: Does InvoiceAmountEvaluator sum invoice amounts
+        Test Question: Does InvoiceAmountEvaluator sum invoice amounts
                             and detect when total meets min_amount?
         Steps:
         1. Create invoices totaling $1500 in "ns-amount"
@@ -360,7 +360,7 @@ class TestInvoiceAmountEvaluator:
         """EVAL-IA-003: InvoiceAmountEvaluator not detected when total < min_amount
 
         Title: InvoiceAmountEvaluator returns detected=False with partial confidence
-        Basically question: Does InvoiceAmountEvaluator return detected=False
+        Test Question: Does InvoiceAmountEvaluator return detected=False
                             and correct partial confidence below threshold?
         Steps:
         1. Create $200 invoice in "ns-low"
@@ -385,7 +385,7 @@ class TestInvoiceAmountEvaluator:
         """EVAL-IA-004: InvoiceAmountEvaluator filters by invoice_status
 
         Title: InvoiceAmountEvaluator only sums invoices matching status filter
-        Basically question: Does invoice_status config correctly exclude invoices
+        Test Question: Does invoice_status config correctly exclude invoices
                             whose status does not match?
         Steps:
         1. Create $800 approved and $500 submitted invoice in "ns-amtfilter"
@@ -414,7 +414,7 @@ class TestInvoiceAmountEvaluator:
         """EVAL-IA-005: InvoiceAmountEvaluator returns total_amount=0 when no invoices
 
         Title: InvoiceAmountEvaluator handles empty namespace gracefully
-        Basically question: Does InvoiceAmountEvaluator return 0 (not None/error)
+        Test Question: Does InvoiceAmountEvaluator return 0 (not None/error)
                             when namespace has no invoices?
         Steps:
         1. Call check_event for namespace "ns-empty-amt" with no invoices
@@ -439,7 +439,7 @@ class TestInvoiceAmountEvaluator:
                      on namespace, so the badge fires as soon as the namespace-wide invoice total
                      reaches min_amount — regardless of which user submitted those invoices.
                      A player in a shared namespace benefits from their teammates' invoices.
-        Basically question: Does InvoiceAmountEvaluator award the badge based on the total
+        Test Question: Does InvoiceAmountEvaluator award the badge based on the total
                             invoice amount across the whole namespace, not just the current user's invoices?
         Steps:
         1. Create 2 invoices in "ns-shared-amt" with amounts $600 each (total $1200)
@@ -476,7 +476,7 @@ class TestVendorCountEvaluator:
         """EVAL-VC-001: VendorCountEvaluator raises ValueError when min_count missing
 
         Title: VendorCountEvaluator validates min_count in config
-        Basically question: Does VendorCountEvaluator raise ValueError when
+        Test Question: Does VendorCountEvaluator raise ValueError when
                             config has no min_count?
         Steps:
         1. Instantiate with empty config
@@ -493,7 +493,7 @@ class TestVendorCountEvaluator:
         """EVAL-VC-002: VendorCountEvaluator rejects invalid vendor_status
 
         Title: VendorCountEvaluator validates vendor_status in config
-        Basically question: Does VendorCountEvaluator raise ValueError when
+        Test Question: Does VendorCountEvaluator raise ValueError when
                             vendor_status is not in valid set?
         Steps:
         1. Instantiate with vendor_status="hacked"
@@ -511,7 +511,7 @@ class TestVendorCountEvaluator:
         """EVAL-VC-003: VendorCountEvaluator detects when vendor count >= min_count
 
         Title: VendorCountEvaluator returns detected=True when threshold met
-        Basically question: Does VendorCountEvaluator count vendors in namespace
+        Test Question: Does VendorCountEvaluator count vendors in namespace
                             and detect when min_count is reached?
         Steps:
         1. Create 2 vendors in "ns-vendor"
@@ -538,7 +538,7 @@ class TestVendorCountEvaluator:
         """EVAL-VC-004: VendorCountEvaluator filters by vendor_status
 
         Title: VendorCountEvaluator only counts vendors with matching status
-        Basically question: Does vendor_status config exclude vendors whose
+        Test Question: Does vendor_status config exclude vendors whose
                             status does not match?
         Steps:
         1. Create 1 active vendor and 1 pending vendor in "ns-vstatus"
@@ -567,7 +567,7 @@ class TestVendorCountEvaluator:
         """EVAL-VC-005: VendorCountEvaluator.get_progress returns current/target/percentage
 
         Title: VendorCountEvaluator.get_progress returns correct progress data
-        Basically question: Does get_progress compute percentage correctly?
+        Test Question: Does get_progress compute percentage correctly?
         Steps:
         1. Create 1 vendor in "ns-vprog"
         2. Instantiate with min_count=4
@@ -596,7 +596,7 @@ class TestVendorCountEvaluator:
                      user created them. In a shared namespace, vendors onboarded by any team
                      member count toward the badge. This test documents that behavior so it is
                      explicit and intentional rather than a hidden surprise.
-        Basically question: Does VendorCountEvaluator count vendors created by other users
+        Test Question: Does VendorCountEvaluator count vendors created by other users
                             in the same namespace toward the badge threshold?
         Steps:
         1. Create 2 vendors in "ns-shared-v" (no user_id association on the Vendor model)
@@ -627,7 +627,7 @@ class TestVendorCountEvaluator:
                      guard skips the filter entirely. The query then counts vendors of all statuses
                      (pending, active, inactive). The documented default and the actual behavior
                      are contradictory.
-        Basically question: Does VendorCountEvaluator count pending and inactive vendors when
+        Test Question: Does VendorCountEvaluator count pending and inactive vendors when
                             no vendor_status is set in config, despite the docstring claiming the default is "active"?
         Steps:
         1. Create 1 vendor with status="pending" and 1 with status="inactive" in "ns-vendor-default"
@@ -666,7 +666,7 @@ class TestChallengeCompletionEvaluator:
         """EVAL-CC-001: ChallengeCompletionEvaluator raises ValueError when min_count missing
 
         Title: ChallengeCompletionEvaluator validates min_count in config
-        Basically question: Does ChallengeCompletionEvaluator raise ValueError
+        Test Question: Does ChallengeCompletionEvaluator raise ValueError
                             when config has no min_count?
         Steps:
         1. Instantiate with empty config
@@ -684,7 +684,7 @@ class TestChallengeCompletionEvaluator:
         """EVAL-CC-002: ChallengeCompletionEvaluator detects when completed count >= min_count
 
         Title: ChallengeCompletionEvaluator returns detected=True when threshold met
-        Basically question: Does ChallengeCompletionEvaluator count completed
+        Test Question: Does ChallengeCompletionEvaluator count completed
                             challenges for a specific namespace+user_id and detect
                             when min_count is reached?
         Steps:
@@ -715,7 +715,7 @@ class TestChallengeCompletionEvaluator:
         """EVAL-CC-003: ChallengeCompletionEvaluator only counts status="completed"
 
         Title: ChallengeCompletionEvaluator ignores non-completed progress entries
-        Basically question: Does ChallengeCompletionEvaluator exclude challenges
+        Test Question: Does ChallengeCompletionEvaluator exclude challenges
                             with status != "completed" from the count?
         Steps:
         1. Create challenge with in_progress status and one with completed
@@ -744,7 +744,7 @@ class TestChallengeCompletionEvaluator:
         """EVAL-CC-004: ChallengeCompletionEvaluator returns not-detected for missing user_id
 
         Title: ChallengeCompletionEvaluator handles missing user_id in event
-        Basically question: Does ChallengeCompletionEvaluator return detected=False
+        Test Question: Does ChallengeCompletionEvaluator return detected=False
                             (not raise) when event has no user_id?
         Steps:
         1. Call check_event with event missing user_id
@@ -764,7 +764,7 @@ class TestChallengeCompletionEvaluator:
         """EVAL-CC-005: ChallengeCompletionEvaluator filters by challenge_category
 
         Title: ChallengeCompletionEvaluator only counts challenges in specified category
-        Basically question: Does challenge_category config limit counting to only
+        Test Question: Does challenge_category config limit counting to only
                             challenges in that category?
         Steps:
         1. Complete 1 "recon" challenge and 1 "injection" challenge
@@ -796,7 +796,7 @@ class TestChallengeCompletionEvaluator:
         """EVAL-CC-006: ChallengeCompletionEvaluator isolates progress by user_id
 
         Title: ChallengeCompletionEvaluator does not count other users' completions
-        Basically question: Does ChallengeCompletionEvaluator use user_id to
+        Test Question: Does ChallengeCompletionEvaluator use user_id to
                             scope the completed challenge count per player?
         Steps:
         1. Mark challenge completed for user-other in same namespace

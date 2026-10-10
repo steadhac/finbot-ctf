@@ -237,7 +237,7 @@ class TestMatchesPattern:
         """PRM-PAT-028: Valid regex that does not match returns (False, None) — no literal fallback
 
         Title: _matches_pattern with valid regex and no match returns (False, None) without literal fallback
-        Basically question: Does a valid regex that does not match the text prevent a false
+        Test Question: Does a valid regex that does not match the text prevent a false
                             positive from the literal fallback?
         Description: When is_regex=True and the pattern is a valid regex but the regex
                      does not match the text, the function falls through to a literal
@@ -1297,7 +1297,7 @@ class TestToolCallDetector:
         """PRM-TOL-018: 'contains' operator with mixed-case expected value never matches
 
         Title: _check_condition with contains and uppercase expected returns True
-        Basically question: Does the contains operator detect a match when the expected
+        Test Question: Does the contains operator detect a match when the expected
                             value has uppercase letters?
         Description: The contains operator lowercases str(actual) before checking, but
                      does NOT lowercase expected. The comparison is therefore:
