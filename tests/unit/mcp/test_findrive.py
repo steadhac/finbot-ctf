@@ -81,7 +81,7 @@ class TestUploadFile:
         """FD-UPLOAD-001: upload_file returns complete file metadata
 
         Title: upload_file returns file_id, filename, file_size, folder, status
-        Basically question: Does upload_file return a dict with file_id,
+        Test Question: Does upload_file return a dict with file_id,
                             filename, file_size, folder, and status='uploaded'?
         Steps:
         1. Call upload_file with valid filename and content
@@ -113,7 +113,7 @@ class TestUploadFile:
         """FD-UPLOAD-002: upload_file calculates file_size as UTF-8 byte length of content
 
         Title: file_size matches the byte length of the uploaded content
-        Basically question: Is file_size in the response equal to the
+        Test Question: Is file_size in the response equal to the
                             UTF-8 encoded byte length of the content string?
         Steps:
         1. Upload content with known byte length
@@ -139,7 +139,7 @@ class TestUploadFile:
         """FD-UPLOAD-003: upload_file returns error dict when content exceeds max_file_size_kb
 
         Title: Oversized upload returns error — does not raise
-        Basically question: Does upload_file return an error dict (not raise)
+        Test Question: Does upload_file return an error dict (not raise)
                             when content exceeds DEFAULT_CONFIG['max_file_size_kb']?
         Steps:
         1. Create content larger than 500KB
@@ -167,7 +167,7 @@ class TestUploadFile:
         """FD-UPLOAD-004: upload_file defaults folder to '/invoices' when not specified
 
         Title: Default folder is '/invoices' when folder argument is omitted
-        Basically question: Does upload_file use '/invoices' as the default
+        Test Question: Does upload_file use '/invoices' as the default
                             folder when no folder argument is provided?
         Steps:
         1. Call upload_file without a folder argument
@@ -191,7 +191,7 @@ class TestUploadFile:
         """FD-UPLOAD-005: upload_file stores custom folder path
 
         Title: Custom folder path is stored and returned in response
-        Basically question: Does upload_file accept and store a custom folder
+        Test Question: Does upload_file accept and store a custom folder
                             path different from the default '/invoices'?
         Steps:
         1. Call upload_file with folder='/receipts'
@@ -216,7 +216,7 @@ class TestUploadFile:
         """FD-UPLOAD-006: Files uploaded by session A are not visible to session B
 
         Title: upload_file enforces namespace isolation
-        Basically question: Can session B retrieve a file uploaded by session A?
+        Test Question: Can session B retrieve a file uploaded by session A?
         Steps:
         1. Upload file in session A
         2. Call get_file from session B with session A's file_id
@@ -246,7 +246,7 @@ class TestUploadFile:
         Title: Empty filename stored without validation
         Description: No format check prevents an empty filename from being stored.
                      A file with no name cannot be identified or audited.
-        Basically question: Does upload_file raise ValueError for filename=''?
+        Test Question: Does upload_file raise ValueError for filename=''?
         Steps:
         1. Call upload_file with filename=''
         Expected Results:
@@ -270,7 +270,7 @@ class TestUploadFile:
         Title: Empty file content stored without validation
         Description: Uploading a file with empty content creates a useless
                      record with file_size=0. No validation prevents this.
-        Basically question: Does upload_file raise ValueError for content=''?
+        Test Question: Does upload_file raise ValueError for content=''?
         Steps:
         1. Call upload_file with content=''
         Expected Results:
@@ -296,7 +296,7 @@ class TestUploadFile:
         Description: folder='../../etc' is stored verbatim with no path
                      sanitization. In a real file system this would allow
                      directory traversal attacks.
-        Basically question: Does upload_file raise ValueError when folder
+        Test Question: Does upload_file raise ValueError when folder
                             contains path traversal sequences?
         Steps:
         1. Call upload_file with folder='../../etc'
@@ -334,7 +334,7 @@ class TestFileNameValidation:
                      get_file responses. A malicious vendor can craft a filename
                      containing LLM instruction overrides that enter the admin
                      agent's context window when it lists or retrieves files.
-        Basically question: Does upload_file raise ValueError when filename
+        Test Question: Does upload_file raise ValueError when filename
                             contains a prompt injection payload?
         Steps:
         1. Call upload_file with filename containing LLM instruction override
@@ -363,7 +363,7 @@ class TestFileNameValidation:
         Description: filename='../../../etc/passwd' is stored verbatim. If the
                      mock were backed by a real file system, this would allow
                      writing to arbitrary paths outside the storage root.
-        Basically question: Does upload_file raise ValueError when filename
+        Test Question: Does upload_file raise ValueError when filename
                             contains path traversal sequences (../)?
         Steps:
         1. Call upload_file with filename='../../../etc/passwd'
@@ -390,7 +390,7 @@ class TestFileNameValidation:
         Description: The server logs filename verbatim via logger.info(). A
                      filename containing a newline can inject fake log entries,
                      poisoning audit trails and misleading incident response.
-        Basically question: Does upload_file raise ValueError when filename
+        Test Question: Does upload_file raise ValueError when filename
                             contains a newline character?
         Steps:
         1. Call upload_file with filename containing '\\n'
@@ -420,7 +420,7 @@ class TestFileNameValidation:
                      the stored path would be 'invoice.pdf' but the extension
                      '.exe' would survive at the byte level — classic null-byte
                      injection for extension spoofing.
-        Basically question: Does upload_file raise ValueError when filename
+        Test Question: Does upload_file raise ValueError when filename
                             contains a null byte?
         Steps:
         1. Call upload_file with filename='invoice.pdf\\x00.exe'
@@ -447,7 +447,7 @@ class TestFileNameValidation:
         Description: Unlike a content injection which requires get_file, a
                      filename injection reaches the agent on every list_files
                      call — a lower-effort, higher-reach attack surface.
-        Basically question: Does list_files return filenames verbatim without
+        Test Question: Does list_files return filenames verbatim without
                             any sanitization or escaping?
         Steps:
         1. Upload a file with a prompt injection payload as filename.
@@ -485,7 +485,7 @@ class TestGetFile:
         """FD-GET-001: get_file returns all metadata fields and extracted_text
 
         Title: get_file returns filename, extracted_text, file_size, folder, vendor_id, created_at
-        Basically question: Does get_file return a complete dict including
+        Test Question: Does get_file return a complete dict including
                             extracted_text, file_id, filename, folder, and created_at?
         Steps:
         1. Upload a file
@@ -517,7 +517,7 @@ class TestGetFile:
         """FD-GET-002: get_file returns error dict for unknown file_id
 
         Title: get_file returns error — does not raise — for missing file
-        Basically question: Does get_file return an error dict (not raise)
+        Test Question: Does get_file return an error dict (not raise)
                             when the file_id does not exist?
         Steps:
         1. Call get_file with file_id=99999
@@ -537,7 +537,7 @@ class TestGetFile:
         """FD-GET-003: get_file does not return files from other namespaces
 
         Title: get_file enforces namespace isolation
-        Basically question: Does session B receive an error when fetching a
+        Test Question: Does session B receive an error when fetching a
                             file_id that belongs to session A?
         Steps:
         1. Upload file in session A
@@ -566,7 +566,7 @@ class TestGetFile:
         """FD-GET-004: Vendor session cannot access files with vendor_id=None (admin files)
 
         Title: Admin-scoped files (vendor_id=NULL) are hidden from vendor sessions
-        Basically question: Does get_file return 'Access denied' when a vendor
+        Test Question: Does get_file return 'Access denied' when a vendor
                             session requests a file with vendor_id=NULL?
         Steps:
         1. Upload file in admin session (vendor_id=0 → stored as NULL)
@@ -605,7 +605,7 @@ class TestGetFile:
                      admin files (vendor_id=NULL). Vendor A can read files
                      belonging to Vendor B within the same namespace.
                      This is the intended indirect prompt injection delivery path.
-        Basically question: Does a vendor A session receive vendor B's file content?
+        Test Question: Does a vendor A session receive vendor B's file content?
         Steps:
         1. Upload file for vendor B (admin session, same namespace)
         2. Request file from vendor A session (same namespace, vendor portal)
@@ -650,7 +650,7 @@ class TestListFiles:
         """FD-LIST-001: list_files returns files array and count
 
         Title: list_files returns count and non-empty files array
-        Basically question: Does list_files return the correct count and
+        Test Question: Does list_files return the correct count and
                             file metadata for uploaded files?
         Steps:
         1. Upload 2 files
@@ -677,7 +677,7 @@ class TestListFiles:
         """FD-LIST-002: list_files filters by folder when folder is specified
 
         Title: list_files returns only files in the specified folder
-        Basically question: Does list_files return only files whose folder
+        Test Question: Does list_files return only files whose folder
                             matches the requested folder path?
         Steps:
         1. Upload one file in /invoices and one in /receipts
@@ -703,7 +703,7 @@ class TestListFiles:
         """FD-LIST-003: list_files returns count=0 for a session with no uploads
 
         Title: list_files returns empty result for new session
-        Basically question: Does list_files return count=0 and an empty files
+        Test Question: Does list_files return count=0 and an empty files
                             array for a session with no uploaded files?
         Steps:
         1. Call list_files without uploading anything
@@ -724,7 +724,7 @@ class TestListFiles:
         """FD-LIST-004: list_files does not return files from other namespaces
 
         Title: list_files enforces namespace isolation
-        Basically question: Does session B see count=0 when session A has files?
+        Test Question: Does session B see count=0 when session A has files?
         Steps:
         1. Upload a file in session A
         2. Call list_files from session B
@@ -748,7 +748,7 @@ class TestListFiles:
         """FD-LIST-005: list_files returns at most 'limit' files
 
         Title: list_files honours the limit parameter
-        Basically question: Does list_files return no more than limit files
+        Test Question: Does list_files return no more than limit files
                             when more files exist?
         Steps:
         1. Upload 5 files
@@ -774,7 +774,7 @@ class TestListFiles:
         Description: list_files with vendor_id=vendor_b.id from a vendor A
                      session returns vendor B's files. No ownership check
                      prevents this cross-vendor data access.
-        Basically question: Does a vendor A session receive files when
+        Test Question: Does a vendor A session receive files when
                             explicitly querying vendor B's vendor_id?
         Steps:
         1. Upload files for vendor B (admin session, same namespace)
@@ -814,7 +814,7 @@ class TestDeleteFile:
         """FD-DEL-001: delete_file returns deleted=True for an existing file
 
         Title: delete_file returns status='deleted' and deleted=True
-        Basically question: Does delete_file return a dict with deleted=True
+        Test Question: Does delete_file return a dict with deleted=True
                             and status='deleted' for a file that exists?
         Steps:
         1. Upload a file
@@ -840,7 +840,7 @@ class TestDeleteFile:
         """FD-DEL-002: get_file returns error after file is deleted
 
         Title: Deleted file cannot be retrieved
-        Basically question: Does get_file return an error for a file_id
+        Test Question: Does get_file return an error for a file_id
                             that has been deleted?
         Steps:
         1. Upload a file
@@ -864,7 +864,7 @@ class TestDeleteFile:
         """FD-DEL-003: delete_file returns error dict for unknown file_id
 
         Title: delete_file returns error — does not raise — for missing file
-        Basically question: Does delete_file return an error dict (not raise)
+        Test Question: Does delete_file return an error dict (not raise)
                             when the file_id does not exist?
         Steps:
         1. Call delete_file with file_id=99999
@@ -884,7 +884,7 @@ class TestDeleteFile:
         """FD-DEL-004: Session B cannot delete files uploaded by session A
 
         Title: delete_file enforces namespace isolation
-        Basically question: Does session B receive an error when attempting
+        Test Question: Does session B receive an error when attempting
                             to delete a file owned by session A?
         Steps:
         1. Upload file in session A
@@ -914,7 +914,7 @@ class TestDeleteFile:
         """FD-DEL-005: Vendor session cannot delete admin-scoped files (vendor_id=NULL)
 
         Title: delete_file blocks vendor sessions from deleting admin files
-        Basically question: Does delete_file return 'Access denied' when a
+        Test Question: Does delete_file return 'Access denied' when a
                             vendor session tries to delete a file with vendor_id=NULL?
         Steps:
         1. Upload file in admin session (vendor_id=0 → NULL, same namespace)
@@ -946,7 +946,7 @@ class TestDeleteFile:
         Description: delete_file only blocks vendor sessions from admin files
                      (vendor_id=NULL). A vendor A session can delete files
                      belonging to vendor B within the same namespace.
-        Basically question: Does vendor A successfully delete vendor B's file?
+        Test Question: Does vendor A successfully delete vendor B's file?
         Steps:
         1. Upload file for vendor B (admin session, same namespace)
         2. Delete from vendor A session (same namespace, vendor portal)
@@ -984,7 +984,7 @@ class TestSearchFiles:
         """FD-SRCH-001: search_files finds files matching the query in filename
 
         Title: search_files returns files whose filename contains the query
-        Basically question: Does search_files return a file when the query
+        Test Question: Does search_files return a file when the query
                             string appears in its filename?
         Steps:
         1. Upload file with filename containing 'invoice'
@@ -1009,7 +1009,7 @@ class TestSearchFiles:
         """FD-SRCH-002: search_files finds files matching the query in content_text
 
         Title: search_files returns files whose extracted text contains the query
-        Basically question: Does search_files return a file when the query
+        Test Question: Does search_files return a file when the query
                             string appears in its content (not filename)?
         Steps:
         1. Upload file with content containing 'CONFIDENTIAL'
@@ -1032,7 +1032,7 @@ class TestSearchFiles:
         """FD-SRCH-003: search_files returns empty results when no files match
 
         Title: search_files returns count=0 for a query with no matches
-        Basically question: Does search_files return an empty result when
+        Test Question: Does search_files return an empty result when
                             no file matches the query?
         Steps:
         1. Upload a file
@@ -1056,7 +1056,7 @@ class TestSearchFiles:
         """FD-SRCH-004: search_files does not return files from other namespaces
 
         Title: search_files enforces namespace isolation
-        Basically question: Does session B see count=0 when searching for
+        Test Question: Does session B see count=0 when searching for
                             content only present in session A's files?
         Steps:
         1. Upload file with unique content in session A
@@ -1085,7 +1085,7 @@ class TestSearchFiles:
         Description: An attacker uploads a file with malicious LLM instructions
                      in its content. search_files returns the poisoned content
                      in the results, directly exposing it to the agent.
-        Basically question: Does search_files return results with poisoned
+        Test Question: Does search_files return results with poisoned
                             content when queried with a trigger keyword?
         Steps:
         1. Upload file with prompt injection payload in content
@@ -1129,7 +1129,7 @@ class TestFinDriveServerConfig:
         """FD-CFG-001: Server uses DEFAULT_CONFIG when no server_config is supplied
 
         Title: DEFAULT_CONFIG values are active when server_config is None
-        Basically question: Does upload_file use DEFAULT_CONFIG['max_file_size_kb']
+        Test Question: Does upload_file use DEFAULT_CONFIG['max_file_size_kb']
                             when server_config is None?
         Steps:
         1. Create server with server_config=None
@@ -1152,7 +1152,7 @@ class TestFinDriveServerConfig:
         """FD-CFG-002: server_config overrides max_file_size_kb
 
         Title: Custom max_file_size_kb from server_config replaces the default
-        Basically question: Does upload_file reject content when server_config
+        Test Question: Does upload_file reject content when server_config
                             sets a smaller max_file_size_kb than the default?
         Steps:
         1. Create server with server_config={'max_file_size_kb': 1}
@@ -1174,7 +1174,7 @@ class TestFinDriveServerConfig:
         """FD-CFG-003: Passing an empty dict as server_config uses all DEFAULT_CONFIG values
 
         Title: Empty server_config dict falls back to all defaults
-        Basically question: When server_config is {}, does upload_file behave
+        Test Question: When server_config is {}, does upload_file behave
                             identically to when server_config is None?
         Steps:
         1. Create server with server_config={}
@@ -1201,7 +1201,7 @@ class TestFinDriveToolDiscovery:
         """FD-TOOLS-001: FinDrive server exposes exactly the 5 expected tools
 
         Title: Server tool list matches the expected set of 5 tools
-        Basically question: Does the FinDrive MCP server expose exactly
+        Test Question: Does the FinDrive MCP server expose exactly
                             upload_file, get_file, list_files, delete_file,
                             and search_files — no more, no less?
         Steps:
@@ -1233,7 +1233,7 @@ class TestIntFieldEdgeCases:
         """FD-INT-001: get_file returns error for file_id=0
 
         Title: file_id=0 returns error — not an exception
-        Basically question: Does get_file return an error dict (not raise)
+        Test Question: Does get_file return an error dict (not raise)
                             when file_id=0 is supplied?
         Steps:
         1. Call get_file with file_id=0
@@ -1251,7 +1251,7 @@ class TestIntFieldEdgeCases:
         """FD-INT-002: get_file returns error for negative file_id
 
         Title: Negative file_id returns error — not an exception
-        Basically question: Does get_file return an error dict for file_id=-1?
+        Test Question: Does get_file return an error dict for file_id=-1?
         Steps:
         1. Call get_file with file_id=-1
         Expected Results:
@@ -1267,7 +1267,7 @@ class TestIntFieldEdgeCases:
         """FD-INT-003: delete_file returns error for file_id=0
 
         Title: file_id=0 in delete_file returns error — not an exception
-        Basically question: Does delete_file return an error dict for file_id=0?
+        Test Question: Does delete_file return an error dict for file_id=0?
         Steps:
         1. Call delete_file with file_id=0
         Expected Results:
@@ -1283,7 +1283,7 @@ class TestIntFieldEdgeCases:
         """FD-INT-004: list_files with limit=0 returns no files
 
         Title: limit=0 returns an empty files list
-        Basically question: Does list_files return an empty list when limit=0
+        Test Question: Does list_files return an empty list when limit=0
                             even if files exist?
         Steps:
         1. Upload a file
@@ -1302,7 +1302,7 @@ class TestIntFieldEdgeCases:
         """FD-INT-005: list_files should raise for negative limit
 
         Title: Negative limit accepted without validation
-        Basically question: Does list_files raise ValueError for limit=-1?
+        Test Question: Does list_files raise ValueError for limit=-1?
         Steps:
         1. Call list_files with limit=-1
         Expected Results:
@@ -1320,7 +1320,7 @@ class TestIntFieldEdgeCases:
         """FD-INT-006: search_files should raise for negative limit
 
         Title: Negative limit in search_files accepted without validation
-        Basically question: Does search_files raise ValueError for limit=-1?
+        Test Question: Does search_files raise ValueError for limit=-1?
         Steps:
         1. Call search_files with limit=-1
         Expected Results:
@@ -1336,7 +1336,7 @@ class TestIntFieldEdgeCases:
         """FD-INT-007: list_files with very large limit returns all files
 
         Title: Large limit value returns all existing files without error
-        Basically question: Does list_files return all 3 files when limit=10000?
+        Test Question: Does list_files return all 3 files when limit=10000?
         Steps:
         1. Upload 3 files
         2. Call list_files with limit=10000
@@ -1363,7 +1363,7 @@ class TestStrFieldEdgeCases:
         """FD-STR-001: upload_file should raise for whitespace-only filename
 
         Title: Whitespace-only filename stored without validation
-        Basically question: Does upload_file raise ValueError when filename
+        Test Question: Does upload_file raise ValueError when filename
                             is only whitespace characters?
         Steps:
         1. Call upload_file with filename='   '
@@ -1384,7 +1384,7 @@ class TestStrFieldEdgeCases:
         Title: Filename longer than 255 characters stored without length check
         Description: The DB column is String(255) but no pre-insert validation
                      truncates or rejects longer filenames.
-        Basically question: Does upload_file raise ValueError for a filename
+        Test Question: Does upload_file raise ValueError for a filename
                             that is 500 characters long?
         Steps:
         1. Call upload_file with a 500-character filename
@@ -1405,7 +1405,7 @@ class TestStrFieldEdgeCases:
         """FD-STR-003: SQL injection string in filename stored safely via ORM
 
         Title: SQL injection in filename is sanitised by the ORM parameterisation
-        Basically question: Is a SQL injection string in filename stored verbatim
+        Test Question: Is a SQL injection string in filename stored verbatim
                             without executing as SQL?
         Steps:
         1. Upload file with SQL injection in filename
@@ -1431,7 +1431,7 @@ class TestStrFieldEdgeCases:
         """FD-STR-004: Unicode characters in filename stored and returned correctly
 
         Title: Filename with Unicode characters survives round-trip
-        Basically question: Does get_file return a filename with Japanese,
+        Test Question: Does get_file return a filename with Japanese,
                             French, and Spanish characters unchanged?
         Steps:
         1. Upload file with multilingual filename
@@ -1452,7 +1452,7 @@ class TestStrFieldEdgeCases:
         """FD-STR-005: Unicode content stored and returned correctly
 
         Title: File content with Japanese, French, Italian, Spanish characters survives round-trip
-        Basically question: Does get_file return the exact Unicode content
+        Test Question: Does get_file return the exact Unicode content
                             that was uploaded?
         Steps:
         1. Upload file with multilingual content
@@ -1481,7 +1481,7 @@ class TestStrFieldEdgeCases:
         Description: list_files returns filenames without content. If an attacker
                      embeds LLM instructions in a filename, they enter the agent
                      context window via listing results.
-        Basically question: Does list_files return the injected filename exactly?
+        Test Question: Does list_files return the injected filename exactly?
         Steps:
         1. Upload file with LLM instruction payload in filename
         2. Call list_files
@@ -1505,7 +1505,7 @@ class TestStrFieldEdgeCases:
         """FD-STR-007: search_files with empty query string returns all files
 
         Title: Empty query string matches all files in the namespace
-        Basically question: Does search_files with query='' return all files
+        Test Question: Does search_files with query='' return all files
                             (ilike '%' matches everything)?
         Steps:
         1. Upload 3 files with different names
@@ -1529,7 +1529,7 @@ class TestStrFieldEdgeCases:
         """FD-STR-008: upload_file should raise for whitespace-only content
 
         Title: Whitespace-only content stored without validation
-        Basically question: Does upload_file raise ValueError when content
+        Test Question: Does upload_file raise ValueError when content
                             is only whitespace?
         Steps:
         1. Call upload_file with content='   '
@@ -1549,7 +1549,7 @@ class TestStrFieldEdgeCases:
         """FD-STR-009: upload_file accepts content at exactly the max_file_size_kb boundary
 
         Title: Content at the exact size limit is accepted (boundary value)
-        Basically question: Does upload_file succeed when content is exactly
+        Test Question: Does upload_file succeed when content is exactly
                             max_file_size_kb * 1024 bytes?
         Steps:
         1. Create content of exactly 500 * 1024 bytes
@@ -1583,7 +1583,7 @@ class TestMaxFilesPerVendor:
                      value can be overridden. However, upload_file never calls
                      repo.get_file_count() to check the current count before
                      allowing the upload. A vendor can upload unlimited files.
-        Basically question: Does upload_file return an error when the vendor has
+        Test Question: Does upload_file return an error when the vendor has
                             already reached max_files_per_vendor?
         Steps:
             1. Create server with max_files_per_vendor=3.
@@ -1618,7 +1618,7 @@ class TestMaxFilesPerVendor:
         """FD-LIMIT-002: DEFAULT_CONFIG max_files_per_vendor is 50
 
         Title: DEFAULT_CONFIG has max_files_per_vendor=50
-        Basically question: Is DEFAULT_CONFIG["max_files_per_vendor"] == 50?
+        Test Question: Is DEFAULT_CONFIG["max_files_per_vendor"] == 50?
         Steps:
             1. Check DEFAULT_CONFIG.
         Expected Results:
@@ -1637,7 +1637,7 @@ class TestFileTypeValidation:
         """FD-TYPE-001: upload_file stores file_type="pdf" by default
 
         Title: Default file_type is pdf
-        Basically question: Does upload_file default to file_type="pdf" when
+        Test Question: Does upload_file default to file_type="pdf" when
                             no file_type is provided?
         Steps:
             1. Call upload_file without specifying file_type.
@@ -1671,7 +1671,7 @@ class TestFileTypeValidation:
                      types (pdf, docx, png, etc.). A malicious agent could tag
                      uploads as "exe", "sh", "bat", or other executable types,
                      bypassing downstream content checks that rely on file_type.
-        Basically question: Does upload_file accept disallowed file types without error?
+        Test Question: Does upload_file accept disallowed file types without error?
         Steps:
             1. Call upload_file with a dangerous or empty file_type.
         Expected Results:
@@ -1694,7 +1694,7 @@ class TestFileTypeValidation:
         """FD-TYPE-005: Common document file types are accepted
 
         Title: pdf, docx, png, jpg, csv file types are accepted
-        Basically question: Does upload_file accept standard document file types?
+        Test Question: Does upload_file accept standard document file types?
         Steps:
             1. Upload files with file_type in [pdf, docx, png, jpg, csv].
         Expected Results:
