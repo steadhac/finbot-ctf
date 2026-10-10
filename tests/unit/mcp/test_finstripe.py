@@ -88,7 +88,7 @@ class TestCreateTransfer:
         """MCP-CREATE-001: create_transfer returns dict with all expected fields
 
         Title: create_transfer returns a complete transfer record
-        Basically question: Does create_transfer return transfer_id, status,
+        Test Question: Does create_transfer return transfer_id, status,
                             amount, currency, vendor_account, invoice_reference?
         Steps:
         1. Create vendor and invoice
@@ -132,7 +132,7 @@ class TestCreateTransfer:
         """MCP-CREATE-002: Each create_transfer call generates a unique transfer_id
 
         Title: transfer_id is unique per call
-        Basically question: Does create_transfer generate a different transfer_id
+        Test Question: Does create_transfer generate a different transfer_id
                             each time it is called?
         Steps:
         1. Create vendor and two invoices
@@ -173,7 +173,7 @@ class TestCreateTransfer:
         """MCP-CREATE-003: create_transfer persists the transaction to the database
 
         Title: Transfer record is saved and retrievable via get_transfer
-        Basically question: Is the created transaction persisted so it can
+        Test Question: Is the created transaction persisted so it can
                             be retrieved by transfer_id?
         Steps:
         1. Create vendor and invoice
@@ -207,7 +207,7 @@ class TestCreateTransfer:
         """MCP-CREATE-004: create_transfer defaults payment_method to 'bank_transfer'
 
         Title: Default payment_method is bank_transfer when not specified
-        Basically question: Does create_transfer use 'bank_transfer' as the
+        Test Question: Does create_transfer use 'bank_transfer' as the
                             default payment_method?
         Steps:
         1. Create vendor and invoice
@@ -238,7 +238,7 @@ class TestCreateTransfer:
         """MCP-CREATE-005: create_transfer stores custom payment_method
 
         Title: Custom payment_method (e.g. 'wire') is stored correctly
-        Basically question: Does create_transfer accept and store a custom
+        Test Question: Does create_transfer accept and store a custom
                             payment_method string?
         Steps:
         1. Create vendor and invoice
@@ -269,7 +269,7 @@ class TestCreateTransfer:
         """MCP-CREATE-006: Transfers from different namespaces are isolated
 
         Title: create_transfer enforces namespace isolation
-        Basically question: Can a session from namespace B see a transfer
+        Test Question: Can a session from namespace B see a transfer
                             created by namespace A?
         Steps:
         1. Create two sessions (different namespaces)
@@ -306,7 +306,7 @@ class TestCreateTransfer:
         """MCP-CREATE-007: create_transfer persists description to the database
 
         Title: Custom description is stored and retrievable via get_transfer
-        Basically question: Is the description field persisted so it appears
+        Test Question: Is the description field persisted so it appears
                             when the transfer is fetched by transfer_id?
         Steps:
         1. Create vendor and invoice
@@ -347,7 +347,7 @@ class TestGetTransfer:
         """MCP-GET-001: get_transfer returns correct transfer by ID
 
         Title: get_transfer retrieves a previously created transfer
-        Basically question: Does get_transfer return the full transfer dict
+        Test Question: Does get_transfer return the full transfer dict
                             when given a valid transfer_id?
         Steps:
         1. Create a transfer
@@ -383,7 +383,7 @@ class TestGetTransfer:
         """MCP-GET-002: get_transfer returns error dict for unknown transfer_id
 
         Title: get_transfer returns error — does not raise — for missing ID
-        Basically question: Does get_transfer return an error dict (not raise
+        Test Question: Does get_transfer return an error dict (not raise
                             an exception) when the transfer_id does not exist?
         Steps:
         1. Call get_transfer with a non-existent transfer_id
@@ -405,7 +405,7 @@ class TestGetTransfer:
         """MCP-GET-003: get_transfer does not return transfers from other namespaces
 
         Title: get_transfer enforces namespace isolation
-        Basically question: Does namespace B see an error when fetching a
+        Test Question: Does namespace B see an error when fetching a
                             transfer_id that belongs to namespace A?
         Steps:
         1. Create transfer in session A
@@ -447,7 +447,7 @@ class TestGetAccountBalance:
         """MCP-BAL-001: get_account_balance returns default mock balance of $10M
 
         Title: Default mock balance is 10,000,000.00
-        Basically question: Does get_account_balance return the default
+        Test Question: Does get_account_balance return the default
                             mock_balance from DEFAULT_CONFIG?
         Steps:
         1. Create server with no custom config
@@ -472,7 +472,7 @@ class TestGetAccountBalance:
         """MCP-BAL-002: get_account_balance uses custom mock_balance from server_config
 
         Title: Server config overrides default mock_balance
-        Basically question: Does server_config override the default mock_balance
+        Test Question: Does server_config override the default mock_balance
                             in get_account_balance?
         Steps:
         1. Create server with server_config mock_balance=500000
@@ -493,7 +493,7 @@ class TestGetAccountBalance:
         """MCP-BAL-003: get_account_balance accepts any account_id without validation
 
         Title: get_account_balance does not validate account_id
-        Basically question: Does get_account_balance return a balance for
+        Test Question: Does get_account_balance return a balance for
                             any account_id including made-up ones?
         Steps:
         1. Call get_account_balance with a fake account_id
@@ -521,7 +521,7 @@ class TestListTransfers:
         """MCP-LIST-001: list_transfers returns all transfers for a vendor
 
         Title: list_transfers returns correct count and vendor_id
-        Basically question: Does list_transfers return the transfers created
+        Test Question: Does list_transfers return the transfers created
                             for a specific vendor?
         Steps:
         1. Create vendor and 2 invoices
@@ -569,7 +569,7 @@ class TestListTransfers:
         """MCP-LIST-002: list_transfers returns empty list for vendor with no transfers
 
         Title: list_transfers returns count=0 and empty list for new vendor
-        Basically question: Does list_transfers return an empty result for
+        Test Question: Does list_transfers return an empty result for
                             a vendor with no payment history?
         Steps:
         1. Create a vendor with no transfers
@@ -592,7 +592,7 @@ class TestListTransfers:
         """MCP-LIST-003: list_transfers respects the limit parameter
 
         Title: list_transfers returns at most 'limit' records
-        Basically question: Does list_transfers honour the limit parameter
+        Test Question: Does list_transfers honour the limit parameter
                             and return no more than limit transfers?
         Steps:
         1. Create 3 transfers for a vendor
@@ -624,7 +624,7 @@ class TestListTransfers:
         """MCP-LIST-004: list_transfers does not return transfers from other namespaces
 
         Title: list_transfers enforces namespace isolation
-        Basically question: Does namespace B see an empty list when vendor
+        Test Question: Does namespace B see an empty list when vendor
                             from namespace A has transfers?
         Steps:
         1. Create transfer for vendor in namespace A
@@ -669,7 +669,7 @@ class TestCreateTransferValidation:
         Description: DEFAULT_CONFIG sets max_payment=50000, but create_transfer
                      never checks the amount against this limit. An LLM agent
                      could transfer any amount without hitting a guard.
-        Basically question: Does create_transfer accept amount=100000 (2x the limit)
+        Test Question: Does create_transfer accept amount=100000 (2x the limit)
                             without error?
         Steps:
         1. Create server with default config (max_payment=50000)
@@ -704,7 +704,7 @@ class TestCreateTransferValidation:
                      It is never checked against vendor.bank_account_number.
                      An agent could be manipulated to send funds to an
                      attacker-controlled account number.
-        Basically question: Does create_transfer raise ValueError when
+        Test Question: Does create_transfer raise ValueError when
                             vendor_account does not match the vendor's bank account?
         Steps:
         1. Create vendor with bank_account_number='123456789012'
@@ -739,7 +739,7 @@ class TestCreateTransferValidation:
                      The value is never stored. get_transfer cannot return it.
                      An attacker could redirect funds to a different account and
                      leave no record of the target account in the database.
-        Basically question: Does get_transfer return the vendor_account used
+        Test Question: Does get_transfer return the vendor_account used
                             when the transfer was created?
         Steps:
         1. Create vendor and invoice
@@ -779,7 +779,7 @@ class TestServerConfig:
         """MCP-CFG-001: Server uses DEFAULT_CONFIG when no server_config is supplied
 
         Title: DEFAULT_CONFIG values are active when server_config is None
-        Basically question: Does the server fall back to DEFAULT_CONFIG when
+        Test Question: Does the server fall back to DEFAULT_CONFIG when
                             no server_config is provided?
         Steps:
         1. Create server with server_config=None
@@ -801,7 +801,7 @@ class TestServerConfig:
         """MCP-CFG-002: Provided server_config merges with and overrides DEFAULT_CONFIG
 
         Title: server_config values take precedence over DEFAULT_CONFIG
-        Basically question: Does passing server_config override specific keys
+        Test Question: Does passing server_config override specific keys
                             while leaving others at their defaults?
         Steps:
         1. Create server with server_config={'mock_balance': 1000, 'currency': 'eur'}
@@ -834,7 +834,7 @@ class TestFloatFieldEdgeCases:
         """MCP-FLOAT-001: create_transfer stores fractional cent amounts without rounding
 
         Title: Sub-cent amount stored without rounding
-        Basically question: Does create_transfer store amount=0.001 exactly
+        Test Question: Does create_transfer store amount=0.001 exactly
                             without rounding to the nearest cent?
         Steps:
             1. Call create_transfer with amount=0.001.
@@ -860,7 +860,7 @@ class TestFloatFieldEdgeCases:
         Title: Amount one cent over max_payment accepted without enforcement
         Description: DEFAULT_CONFIG["max_payment"]=50000 but create_transfer never
                      reads or checks this config value. Any amount is accepted.
-        Basically question: Does create_transfer raise an error for amount=50000.01
+        Test Question: Does create_transfer raise an error for amount=50000.01
                             when max_payment=50000?
         Steps:
             1. Call create_transfer with amount=50000.01.
@@ -887,7 +887,7 @@ class TestFloatFieldEdgeCases:
         Description: There is no upper bound check on the amount field beyond
                      the unenforced max_payment config. A billion-dollar transfer
                      is accepted silently.
-        Basically question: Does create_transfer accept amount=1,000,000,000 without error?
+        Test Question: Does create_transfer accept amount=1,000,000,000 without error?
         Steps:
             1. Call create_transfer with amount=1e9.
         Expected Results:
@@ -913,7 +913,7 @@ class TestFloatFieldEdgeCases:
         Description: A negative amount would represent a reversal or refund but
                      there is no validation preventing it. An agent could create
                      a "transfer" of -$1000 without any error.
-        Basically question: Does create_transfer raise an error for amount=-1.0?
+        Test Question: Does create_transfer raise an error for amount=-1.0?
         Steps:
             1. Call create_transfer with amount=-1.0.
         Expected Results:
@@ -938,7 +938,7 @@ class TestFloatFieldEdgeCases:
         Title: Zero amount accepted without validation
         Description: A transfer of $0.00 is meaningless and likely indicates a
                      data error or injection attempt. No minimum amount check exists.
-        Basically question: Does create_transfer raise an error for amount=0.0?
+        Test Question: Does create_transfer raise an error for amount=0.0?
         Steps:
             1. Call create_transfer with amount=0.0.
         Expected Results:
@@ -971,7 +971,7 @@ class TestIntFieldEdgeCases:
         Description: 0 is not a valid vendor primary key. The FK constraint on
                      payment_transactions.vendor_id prevents inserting a row with
                      a non-existent vendor reference.
-        Basically question: Does create_transfer raise an error for vendor_id=0?
+        Test Question: Does create_transfer raise an error for vendor_id=0?
         Steps:
             1. Call create_transfer with vendor_id=0.
         Expected Results:
@@ -996,7 +996,7 @@ class TestIntFieldEdgeCases:
         Description: Negative integers are not valid vendor primary keys.
                      The FK constraint rejects any vendor_id that has no
                      matching row in the vendors table.
-        Basically question: Does create_transfer raise an error for vendor_id=-1?
+        Test Question: Does create_transfer raise an error for vendor_id=-1?
         Steps:
             1. Call create_transfer with vendor_id=-1.
         Expected Results:
@@ -1021,7 +1021,7 @@ class TestIntFieldEdgeCases:
         Description: invoice_id must reference an existing invoice row. Passing
                      a phantom invoice_id (e.g. 99999) triggers a FK constraint
                      violation since no matching invoice exists.
-        Basically question: Does create_transfer raise an error for a non-existent invoice_id?
+        Test Question: Does create_transfer raise an error for a non-existent invoice_id?
         Steps:
             1. Call create_transfer with invoice_id=99999 (does not exist).
         Expected Results:
@@ -1044,7 +1044,7 @@ class TestIntFieldEdgeCases:
         Title: limit=0 returns empty transfers list without error
         Description: SQLAlchemy passes limit=0 to the query which returns no rows.
                      The server does not validate that limit > 0 before querying.
-        Basically question: Does list_transfers return an empty list for limit=0?
+        Test Question: Does list_transfers return an empty list for limit=0?
         Steps:
             1. Create a transfer for a vendor.
             2. Call list_transfers with limit=0.
@@ -1071,7 +1071,7 @@ class TestIntFieldEdgeCases:
         Title: Large limit value returns all available transfers
         Description: When limit exceeds the number of existing transfers, all
                      records are returned. There is no server-side cap on limit.
-        Basically question: Does list_transfers return all 3 transfers when limit=10000?
+        Test Question: Does list_transfers return all 3 transfers when limit=10000?
         Steps:
             1. Create 3 transfers for a vendor.
             2. Call list_transfers with limit=10000.
@@ -1107,7 +1107,7 @@ class TestStrFieldEdgeCases:
         Description: vendor_account is a free-form string with no format or
                      presence check. An empty string creates a transfer record
                      with no auditable destination account.
-        Basically question: Does create_transfer raise ValueError for vendor_account=''?
+        Test Question: Does create_transfer raise ValueError for vendor_account=''?
         Steps:
             1. Call create_transfer with vendor_account=''.
         Expected Results:
@@ -1132,7 +1132,7 @@ class TestStrFieldEdgeCases:
         Title: Whitespace-only vendor_account accepted without validation
         Description: A vendor_account of only spaces is functionally empty but
                      passes the Python truthiness check. No strip/validation occurs.
-        Basically question: Does create_transfer raise ValueError for vendor_account='   '?
+        Test Question: Does create_transfer raise ValueError for vendor_account='   '?
         Steps:
             1. Call create_transfer with vendor_account='   ' (whitespace only).
         Expected Results:
@@ -1158,7 +1158,7 @@ class TestStrFieldEdgeCases:
         Description: SQLAlchemy uses parameterized queries, so a SQL injection
                      string in invoice_reference is stored verbatim without
                      executing against the database.
-        Basically question: Does create_transfer store a SQL injection string in
+        Test Question: Does create_transfer store a SQL injection string in
                             invoice_reference without crashing or corrupting the DB?
         Steps:
             1. Call create_transfer with invoice_reference="'; DROP TABLE payment_transactions; --".
@@ -1184,7 +1184,7 @@ class TestStrFieldEdgeCases:
         """MCP-STR-004: Unicode characters in description stored and returned correctly
 
         Title: Unicode description stored and returned without corruption
-        Basically question: Does create_transfer correctly store and return a
+        Test Question: Does create_transfer correctly store and return a
                             description containing CJK, Arabic, and accented characters?
         Steps:
             1. Call create_transfer with a multi-script Unicode description.
@@ -1213,7 +1213,7 @@ class TestStrFieldEdgeCases:
         Title: Oversized vendor_account accepted without length validation
         Description: Bank account numbers are at most 17 digits. No length check
                      prevents storing a 500-character string as the account number.
-        Basically question: Does create_transfer accept a 500-character vendor_account
+        Test Question: Does create_transfer accept a 500-character vendor_account
                             without raising a validation error?
         Steps:
             1. Call create_transfer with vendor_account='9' * 500.
@@ -1241,7 +1241,7 @@ class TestStrFieldEdgeCases:
         Title: Empty currency string accepted without validation
         Description: currency="" creates a transaction record with no currency,
                      making the payment amount uninterpretable for reconciliation.
-        Basically question: Does create_transfer raise ValueError for currency=''?
+        Test Question: Does create_transfer raise ValueError for currency=''?
         Steps:
             1. Call create_transfer with currency=''.
         Expected Results:
@@ -1267,7 +1267,7 @@ class TestStrFieldEdgeCases:
         Title: Invalid currency code accepted without ISO 4217 validation
         Description: There is no allowlist check against ISO 4217 currency codes.
                      Any string is accepted, creating transactions in phantom currencies.
-        Basically question: Does create_transfer raise ValueError for currency='INVALID'?
+        Test Question: Does create_transfer raise ValueError for currency='INVALID'?
         Steps:
             1. Call create_transfer with currency='INVALID'.
         Expected Results:
@@ -1291,7 +1291,7 @@ class TestStrFieldEdgeCases:
         """MCP-STR-008: get_transfer returns error dict for empty string transfer_id
 
         Title: get_transfer returns not-found error for empty transfer_id
-        Basically question: Does get_transfer return an error dict when
+        Test Question: Does get_transfer return an error dict when
                             transfer_id='' (empty string)?
         Steps:
             1. Call get_transfer with transfer_id=''.
@@ -1312,7 +1312,7 @@ class TestStrFieldEdgeCases:
                      get_transfer. A poisoned agent or attacker can pre-load
                      instructions into the DB that enter the LLM context window
                      when an admin agent reads transfer details.
-        Basically question: Does create_transfer sanitize or reject a prompt
+        Test Question: Does create_transfer sanitize or reject a prompt
                             injection payload in the description field?
         Steps:
             1. Call create_transfer with a prompt injection payload in description.
@@ -1351,7 +1351,7 @@ class TestDuplicatePaymentPrevention:
                      given invoice_id already exists. Two successive calls with
                      the same invoice_id both succeed, creating two completed
                      payment records for the same invoice.
-        Basically question: Does create_transfer raise when a completed transfer
+        Test Question: Does create_transfer raise when a completed transfer
                             for the same invoice_id already exists?
         Steps:
         1. Create vendor and invoice
@@ -1384,7 +1384,7 @@ class TestDuplicatePaymentPrevention:
         """MCP-DUP-002: Paying the same invoice twice creates two separate transfer records
 
         Title: Duplicate payment creates two completed records in the database
-        Basically question: When the same invoice_id is used in two create_transfer
+        Test Question: When the same invoice_id is used in two create_transfer
                             calls, does list_transfers show two distinct records?
         Steps:
         1. Create vendor and invoice
@@ -1419,7 +1419,7 @@ class TestDuplicatePaymentPrevention:
         """MCP-DUP-003: Two different invoices from the same vendor can both be paid
 
         Title: Paying two distinct invoices creates two separate transfer records
-        Basically question: Does create_transfer succeed for two different
+        Test Question: Does create_transfer succeed for two different
                             invoice_ids from the same vendor?
         Steps:
         1. Create vendor and two invoices
@@ -1468,7 +1468,7 @@ class TestInvoiceValidation:
                      'approved' status before processing the transfer. An agent
                      could be manipulated to pay an invoice that has not yet
                      been reviewed and approved by a human.
-        Basically question: Does create_transfer raise ValueError when the
+        Test Question: Does create_transfer raise ValueError when the
                             invoice status is 'pending' (not 'approved')?
         Steps:
         1. Create vendor and invoice with status='pending'
@@ -1498,7 +1498,7 @@ class TestInvoiceValidation:
         Description: create_transfer does not verify that the invoice has not
                      already been paid. A 'paid' invoice can be used as the
                      basis for a new transfer, enabling double payment.
-        Basically question: Does create_transfer raise ValueError when the
+        Test Question: Does create_transfer raise ValueError when the
                             invoice status is 'paid'?
         Steps:
         1. Create vendor and invoice with status='paid'
@@ -1531,7 +1531,7 @@ class TestInvoiceValidation:
                      belongs to the specified vendor. An agent could be
                      manipulated to pair a high-value invoice from vendor A
                      with the bank account of vendor B.
-        Basically question: Does create_transfer raise ValueError when
+        Test Question: Does create_transfer raise ValueError when
                             invoice.vendor_id does not match the vendor_id argument?
         Steps:
         1. Create two vendors (A and B)
@@ -1560,7 +1560,7 @@ class TestInvoiceValidation:
         """MCP-INVVAL-004: create_transfer succeeds for an invoice with status 'approved'
 
         Title: Approved invoice is the only valid status for payment
-        Basically question: Does create_transfer succeed when invoice status
+        Test Question: Does create_transfer succeed when invoice status
                             is 'approved' (the expected happy path)?
         Steps:
         1. Create vendor and invoice with status='approved'
@@ -1595,7 +1595,7 @@ class TestFloatBoundary:
         """MCP-FLOAT-006: create_transfer should accept amount exactly equal to max_payment
 
         Title: Amount at the max_payment limit (50000.00) is accepted
-        Basically question: Does create_transfer succeed when amount is exactly
+        Test Question: Does create_transfer succeed when amount is exactly
                             equal to DEFAULT_CONFIG['max_payment'] (50000.00)?
         Steps:
         1. Create server with default config (max_payment=50000)
@@ -1626,7 +1626,7 @@ class TestFloatBoundary:
         Description: create_transfer accepts any amount regardless of what
                      the invoice says is owed. An agent could over- or under-pay
                      an invoice without any code-level guard.
-        Basically question: Does create_transfer raise when amount differs
+        Test Question: Does create_transfer raise when amount differs
                             from invoice.amount?
         Steps:
         1. Create invoice for 1000.0
@@ -1660,7 +1660,7 @@ class TestListTransfersEdgeCases:
         """MCP-LIST-005: list_transfers uses limit=10 when limit is not specified
 
         Title: Default limit of 10 is applied when no limit argument given
-        Basically question: Does list_transfers return at most 10 records
+        Test Question: Does list_transfers return at most 10 records
                             when called without a limit argument?
         Steps:
         1. Create 15 transfers for a vendor
@@ -1690,7 +1690,7 @@ class TestListTransfersEdgeCases:
         """MCP-LIST-006: list_transfers should raise for negative limit
 
         Title: Negative limit value accepted without validation
-        Basically question: Does list_transfers raise ValueError for limit=-1?
+        Test Question: Does list_transfers raise ValueError for limit=-1?
         Steps:
         1. Create vendor with one transfer
         2. Call list_transfers with limit=-1
@@ -1725,7 +1725,7 @@ class TestGetTransferFields:
         """MCP-GET-004: get_transfer returns all fields defined by to_dict()
 
         Title: get_transfer response includes namespace, invoice_id, vendor_id, created_at
-        Basically question: Does get_transfer return namespace, invoice_id,
+        Test Question: Does get_transfer return namespace, invoice_id,
                             vendor_id, and created_at alongside the transfer_id?
         Steps:
         1. Create vendor and invoice
@@ -1758,7 +1758,7 @@ class TestGetTransferFields:
         """MCP-GET-005: get_transfer returns None for description when not provided
 
         Title: Omitting description results in None in get_transfer response
-        Basically question: Is description None in the get_transfer response
+        Test Question: Is description None in the get_transfer response
                             when create_transfer was called without a description?
         Steps:
         1. Call create_transfer without description argument
@@ -1793,7 +1793,7 @@ class TestGetAccountBalanceEdgeCases:
         """MCP-BAL-004: get_account_balance returns 0 when config sets mock_balance to 0
 
         Title: Zero mock_balance is returned without error
-        Basically question: Does get_account_balance return available_balance=0
+        Test Question: Does get_account_balance return available_balance=0
                             when server_config sets mock_balance=0?
         Steps:
         1. Create server with server_config={'mock_balance': 0}
@@ -1817,7 +1817,7 @@ class TestGetAccountBalanceEdgeCases:
         Description: No validation prevents a negative mock_balance from being
                      configured. A negative balance is financially nonsensical
                      and could cause agents to incorrectly calculate fund availability.
-        Basically question: Does get_account_balance raise when server_config
+        Test Question: Does get_account_balance raise when server_config
                             sets mock_balance to a negative value?
         Steps:
         1. Create server with server_config={'mock_balance': -5000}
@@ -1845,7 +1845,7 @@ class TestServerConfigEdgeCases:
         """MCP-CFG-003: Passing an empty dict as server_config uses all DEFAULT_CONFIG values
 
         Title: Empty server_config dict falls back to all defaults
-        Basically question: When server_config is an empty dict, does the server
+        Test Question: When server_config is an empty dict, does the server
                             behave identically to when server_config is None?
         Steps:
         1. Create two servers — one with server_config=None, one with server_config={}
@@ -1870,7 +1870,7 @@ class TestServerConfigEdgeCases:
         """MCP-CFG-004: Unknown keys in server_config do not cause errors
 
         Title: Extra keys in server_config are silently ignored
-        Basically question: Does the server start without errors when server_config
+        Test Question: Does the server start without errors when server_config
                             contains keys not present in DEFAULT_CONFIG?
         Steps:
         1. Create server with server_config={'unknown_key': 'value', 'mock_balance': 999}
@@ -1902,7 +1902,7 @@ class TestIntFieldEdgeCasesAdditional:
         """MCP-INT-006: list_transfers for a vendor_id that does not exist returns empty list
 
         Title: list_transfers with nonexistent vendor_id returns count=0
-        Basically question: Does list_transfers return an empty result (not raise)
+        Test Question: Does list_transfers return an empty result (not raise)
                             when vendor_id does not exist in the database?
         Steps:
         1. Call list_transfers with vendor_id=99999 (does not exist)
@@ -1935,7 +1935,7 @@ class TestStrFieldEdgeCasesAdditional:
         Description: invoice_reference is a free-form string with no format check.
                      An empty string creates a transfer record with no auditable
                      reference to the source invoice document.
-        Basically question: Does create_transfer raise ValueError for
+        Test Question: Does create_transfer raise ValueError for
                             invoice_reference=''?
         Steps:
         1. Call create_transfer with invoice_reference=''
@@ -1961,7 +1961,7 @@ class TestStrFieldEdgeCasesAdditional:
         """MCP-STR-011: create_transfer should raise for whitespace-only invoice_reference
 
         Title: Whitespace-only invoice_reference stored without validation
-        Basically question: Does create_transfer raise ValueError when
+        Test Question: Does create_transfer raise ValueError when
                             invoice_reference is only whitespace?
         Steps:
         1. Call create_transfer with invoice_reference='   '
@@ -1989,7 +1989,7 @@ class TestStrFieldEdgeCasesAdditional:
         Description: Bank account numbers are numeric strings. No format check
                      prevents an agent from supplying a non-ASCII or Unicode
                      string as the account number.
-        Basically question: Does create_transfer accept a Unicode string as
+        Test Question: Does create_transfer accept a Unicode string as
                             vendor_account without raising a format error?
         Steps:
         1. Call create_transfer with vendor_account containing Unicode characters
@@ -2024,7 +2024,7 @@ class TestAuditFields:
         """MCP-AUDIT-001: PaymentTransaction.namespace matches the session namespace
 
         Title: Transaction namespace is set from the session context
-        Basically question: Does get_transfer return the correct namespace
+        Test Question: Does get_transfer return the correct namespace
                             that matches the session used to create the transfer?
         Steps:
         1. Create session (captures namespace)
@@ -2054,7 +2054,7 @@ class TestAuditFields:
         """MCP-AUDIT-002: PaymentTransaction.created_at is set to a non-null timestamp
 
         Title: created_at timestamp is set when a transfer is created
-        Basically question: Does get_transfer return a non-null created_at
+        Test Question: Does get_transfer return a non-null created_at
                             field for a newly created transfer?
         Steps:
         1. Create a transfer
@@ -2084,7 +2084,7 @@ class TestAuditFields:
         """MCP-AUDIT-003: transfer_id follows the 'tr_' + 24-char hex format
 
         Title: transfer_id format is 'tr_' followed by 24 hex characters
-        Basically question: Does the generated transfer_id always match the
+        Test Question: Does the generated transfer_id always match the
                             pattern tr_[0-9a-f]{24}?
         Steps:
         1. Create 5 transfers
@@ -2125,7 +2125,7 @@ class TestToolDiscovery:
         """MCP-TOOLS-001: FinStripe server exposes exactly the 4 expected tools
 
         Title: Server tool list matches the expected set of 4 tools
-        Basically question: Does the FinStripe MCP server expose exactly
+        Test Question: Does the FinStripe MCP server expose exactly
                             create_transfer, get_transfer, get_account_balance,
                             and list_transfers — no more, no less?
         Steps:
@@ -2151,7 +2151,7 @@ class TestToolDiscovery:
         """MCP-TOOLS-002: create_transfer tool schema includes all required parameters
 
         Title: create_transfer tool exposes vendor_account, amount, invoice_reference, vendor_id, invoice_id
-        Basically question: Does the create_transfer tool schema define the
+        Test Question: Does the create_transfer tool schema define the
                             5 required parameters that agents must supply?
         Steps:
         1. Create server and list tools
@@ -2186,7 +2186,7 @@ class TestVendorSessionAccessControl:
                      call list_transfers(vendor_id=<any_id>) and retrieve full payment
                      history for any vendor. There is no enforcement that vendor_id
                      matches the session's current_vendor_id.
-        Basically question: Does list_transfers deny a vendor session access to a
+        Test Question: Does list_transfers deny a vendor session access to a
                             different vendor's transfers?
         Steps:
             1. Create two vendors in the same namespace.
@@ -2235,7 +2235,7 @@ class TestVendorSessionAccessControl:
         Description: create_transfer has no _is_vendor_session guard. A vendor
                      portal session can directly call create_transfer to initiate
                      payments to any vendor_id, bypassing admin approval workflow.
-        Basically question: Does create_transfer reject calls from a vendor portal session?
+        Test Question: Does create_transfer reject calls from a vendor portal session?
         Steps:
             1. Create a vendor and a vendor portal session.
             2. Call create_transfer from the vendor portal session.
@@ -2274,7 +2274,7 @@ class TestVendorSessionAccessControl:
         Description: create_transfer has no session type check. A vendor portal session
                      can call create_transfer with any vendor_id — not just their own —
                      allowing cross-vendor payment fraud.
-        Basically question: Does create_transfer reject a vendor session paying a different vendor?
+        Test Question: Does create_transfer reject a vendor session paying a different vendor?
         Steps:
             1. Create two vendors (attacker and target) in the same namespace.
             2. Create a vendor portal session for the attacker vendor.
@@ -2316,7 +2316,7 @@ class TestVendorSessionAccessControl:
                      A vendor portal session can submit amount=0, which produces a
                      completed transfer record with no financial value — useful for
                      probing the system or polluting audit logs.
-        Basically question: Does create_transfer reject amount=0 from a vendor session?
+        Test Question: Does create_transfer reject amount=0 from a vendor session?
         Steps:
             1. Create a vendor and a vendor portal session.
             2. Call create_transfer with amount=0.0 from the vendor session.
@@ -2351,7 +2351,7 @@ class TestVendorSessionAccessControl:
         """MCP-VENDOR-005: Admin session is permitted to create a transfer
 
         Title: Admin session can successfully initiate a payment transfer
-        Basically question: Does create_transfer succeed when called from an admin session?
+        Test Question: Does create_transfer succeed when called from an admin session?
         Steps:
             1. Create an admin session, vendor, and invoice.
             2. Call create_transfer from the admin session.
@@ -2378,7 +2378,7 @@ class TestVendorSessionAccessControl:
         """MCP-VENDOR-006: Vendor session can list its own transfers
 
         Title: Vendor portal session can list transfers belonging to its own vendor
-        Basically question: Does list_transfers return results for the session's own vendor?
+        Test Question: Does list_transfers return results for the session's own vendor?
         Steps:
             1. Create a vendor and a transfer for that vendor via admin session.
             2. Create a vendor portal session for that vendor.
@@ -2417,7 +2417,7 @@ class TestVendorSessionAccessControl:
         Description: A vendor portal session with current_vendor_id=None has no vendor
                      identity set. create_transfer has no session type or vendor ID check,
                      so the call is accepted regardless.
-        Basically question: Does create_transfer reject a vendor session with no vendor ID?
+        Test Question: Does create_transfer reject a vendor session with no vendor ID?
         Steps:
             1. Create a vendor and an invoice via admin session.
             2. Create a vendor portal session with current_vendor_id=None.
@@ -2459,7 +2459,7 @@ class TestVendorSessionAccessControl:
                      for transfers belonging to other vendors in the same namespace.
                      This is the same class of bug as MCP-VENDOR-001 (list_transfers)
                      but on the individual lookup path.
-        Basically question: Does get_transfer deny a vendor session access to another
+        Test Question: Does get_transfer deny a vendor session access to another
                             vendor's transfer?
         Steps:
             1. Create two vendors in the same namespace.
