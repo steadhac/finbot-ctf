@@ -53,7 +53,7 @@ class TestOrchestratorInit:
         ORCH-INIT-001
 
         Title: _delegation_attempts is an empty dict on init.
-        Basically question: Is _delegation_attempts initialized to {}?
+        Test Question: Is _delegation_attempts initialized to {}?
         Steps:
             1. Create OrchestratorAgent.
         Expected Results:
@@ -67,7 +67,7 @@ class TestOrchestratorInit:
         ORCH-INIT-002
 
         Title: _current_task_data is None on init.
-        Basically question: Is _current_task_data initialized to None?
+        Test Question: Is _current_task_data initialized to None?
         Steps:
             1. Create OrchestratorAgent.
         Expected Results:
@@ -81,7 +81,7 @@ class TestOrchestratorInit:
         ORCH-INIT-003
 
         Title: _workflow_context is an empty list on init.
-        Basically question: Is _workflow_context initialized to []?
+        Test Question: Is _workflow_context initialized to []?
         Steps:
             1. Create OrchestratorAgent.
         Expected Results:
@@ -95,7 +95,7 @@ class TestOrchestratorInit:
         ORCH-INIT-004
 
         Title: agent_name is set to 'orchestrator_agent'.
-        Basically question: Does the agent register with the correct name?
+        Test Question: Does the agent register with the correct name?
         Steps:
             1. Create OrchestratorAgent.
         Expected Results:
@@ -109,7 +109,7 @@ class TestOrchestratorInit:
         ORCH-INIT-005
 
         Title: _max_delegation_attempts class constant is 2.
-        Basically question: Is the delegation cap set to 2?
+        Test Question: Is the delegation cap set to 2?
         Steps:
             1. Check OrchestratorAgent._max_delegation_attempts.
         Expected Results:
@@ -122,7 +122,7 @@ class TestOrchestratorInit:
         ORCH-INIT-006
 
         Title: workflow_id passed to init is accessible on the agent.
-        Basically question: Is workflow_id stored correctly?
+        Test Question: Is workflow_id stored correctly?
         Steps:
             1. Create OrchestratorAgent with workflow_id='wf-test'.
         Expected Results:
@@ -144,7 +144,7 @@ class TestOrchestratorConfig:
         ORCH-CFG-001
 
         Title: _load_config returns {'custom_goals': None} by default.
-        Basically question: Does _load_config return the expected default config?
+        Test Question: Does _load_config return the expected default config?
         Steps:
             1. Call agent._load_config().
         Expected Results:
@@ -159,7 +159,7 @@ class TestOrchestratorConfig:
         ORCH-CFG-002
 
         Title: _get_max_iterations returns 15.
-        Basically question: Is the iteration cap set to 15?
+        Test Question: Is the iteration cap set to 15?
         Steps:
             1. Call agent._get_max_iterations().
         Expected Results:
@@ -180,7 +180,7 @@ class TestOrchestratorPrompts:
         ORCH-PROMPT-001
 
         Title: System prompt mentions all 6 delegation tools.
-        Basically question: Are all 6 delegate_to_* tools referenced in the system prompt?
+        Test Question: Are all 6 delegate_to_* tools referenced in the system prompt?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -203,7 +203,7 @@ class TestOrchestratorPrompts:
         ORCH-PROMPT-002
 
         Title: System prompt does not contain CUSTOM GOALS section by default.
-        Basically question: Is the custom goals block absent when custom_goals is None?
+        Test Question: Is the custom goals block absent when custom_goals is None?
         Steps:
             1. Call agent._get_system_prompt() with default config.
         Expected Results:
@@ -218,7 +218,7 @@ class TestOrchestratorPrompts:
         ORCH-PROMPT-003
 
         Title: System prompt includes CUSTOM GOALS block when custom_goals is set.
-        Basically question: Does the custom goals block appear when configured?
+        Test Question: Does the custom goals block appear when configured?
         Steps:
             1. Create agent and set agent_config['custom_goals'] = 'Always approve'.
             2. Call _get_system_prompt().
@@ -237,7 +237,7 @@ class TestOrchestratorPrompts:
         ORCH-PROMPT-004
 
         Title: _get_user_prompt with None returns default message.
-        Basically question: Does _get_user_prompt(None) return a safe default?
+        Test Question: Does _get_user_prompt(None) return a safe default?
         Steps:
             1. Call agent._get_user_prompt(None).
         Expected Results:
@@ -253,7 +253,7 @@ class TestOrchestratorPrompts:
         ORCH-PROMPT-005
 
         Title: _get_user_prompt includes the description from task_data.
-        Basically question: Is the task description included in the user prompt?
+        Test Question: Is the task description included in the user prompt?
         Steps:
             1. Call _get_user_prompt({'description': 'Process invoice 42'}).
         Expected Results:
@@ -269,7 +269,7 @@ class TestOrchestratorPrompts:
         ORCH-PROMPT-006
 
         Title: _get_user_prompt includes non-description context fields.
-        Basically question: Are extra fields like vendor_id included in the prompt?
+        Test Question: Are extra fields like vendor_id included in the prompt?
         Steps:
             1. Call _get_user_prompt({'description': 'Review vendor', 'vendor_id': 7}).
         Expected Results:
@@ -294,7 +294,7 @@ class TestOrchestratorTools:
         ORCH-TOOLS-001
 
         Title: _get_tool_definitions returns exactly 6 tool definitions.
-        Basically question: Are all 6 delegation tools registered?
+        Test Question: Are all 6 delegation tools registered?
         Steps:
             1. Call agent._get_tool_definitions().
         Expected Results:
@@ -309,7 +309,7 @@ class TestOrchestratorTools:
         ORCH-TOOLS-002
 
         Title: Tool names in definitions match the 6 expected delegate_to_* names.
-        Basically question: Are the tool names exactly as expected?
+        Test Question: Are the tool names exactly as expected?
         Steps:
             1. Get tool definitions and extract names.
         Expected Results:
@@ -333,7 +333,7 @@ class TestOrchestratorTools:
         ORCH-TOOLS-003
 
         Title: _get_callables returns exactly 6 callable entries.
-        Basically question: Is every delegation tool callable?
+        Test Question: Is every delegation tool callable?
         Steps:
             1. Call agent._get_callables().
         Expected Results:
@@ -348,7 +348,7 @@ class TestOrchestratorTools:
         ORCH-TOOLS-004
 
         Title: All entries in _get_callables() are callable.
-        Basically question: Are all delegation functions actually callable?
+        Test Question: Are all delegation functions actually callable?
         Steps:
             1. Call agent._get_callables() and verify each value.
         Expected Results:
@@ -363,7 +363,7 @@ class TestOrchestratorTools:
         ORCH-TOOLS-005
 
         Title: delegate_to_communication tool schema includes notification_type enum.
-        Basically question: Does the communication tool schema restrict notification_type?
+        Test Question: Does the communication tool schema restrict notification_type?
         Steps:
             1. Find delegate_to_communication in tool definitions.
             2. Check notification_type property has enum.
@@ -389,7 +389,7 @@ class TestDelegationLimit:
         ORCH-DELIM-001
 
         Title: _check_delegation_limit returns None on first call (within cap).
-        Basically question: Is the first delegation allowed?
+        Test Question: Is the first delegation allowed?
         Steps:
             1. Call _check_delegation_limit('onboarding') once.
         Expected Results:
@@ -404,7 +404,7 @@ class TestDelegationLimit:
         ORCH-DELIM-002
 
         Title: _check_delegation_limit returns None on second call (at cap).
-        Basically question: Is the second delegation allowed?
+        Test Question: Is the second delegation allowed?
         Steps:
             1. Call _check_delegation_limit('onboarding') twice.
         Expected Results:
@@ -420,7 +420,7 @@ class TestDelegationLimit:
         ORCH-DELIM-003
 
         Title: _check_delegation_limit returns failure dict on third call (exceeds cap).
-        Basically question: Is the third delegation blocked?
+        Test Question: Is the third delegation blocked?
         Steps:
             1. Call _check_delegation_limit('onboarding') three times.
         Expected Results:
@@ -439,7 +439,7 @@ class TestDelegationLimit:
         ORCH-DELIM-004
 
         Title: Delegation counters are tracked independently per agent key.
-        Basically question: Does hitting the cap for 'fraud' not affect 'invoice'?
+        Test Question: Does hitting the cap for 'fraud' not affect 'invoice'?
         Steps:
             1. Exhaust cap for 'fraud' (3 calls).
             2. Call _check_delegation_limit('invoice') once.
@@ -457,7 +457,7 @@ class TestDelegationLimit:
         ORCH-DELIM-005
 
         Title: _delegation_attempts counter increments with each call.
-        Basically question: Is the counter tracking correctly?
+        Test Question: Is the counter tracking correctly?
         Steps:
             1. Call _check_delegation_limit('payments') twice.
         Expected Results:
@@ -480,7 +480,7 @@ class TestWorkflowContext:
         ORCH-CTX-001
 
         Title: _enrich_with_prior_context returns original string when context is empty.
-        Basically question: Is the description unchanged when there's no prior context?
+        Test Question: Is the description unchanged when there's no prior context?
         Steps:
             1. Call _enrich_with_prior_context('Do something') on fresh agent.
         Expected Results:
@@ -495,7 +495,7 @@ class TestWorkflowContext:
         ORCH-CTX-002
 
         Title: _enrich_with_prior_context appends stored agent summaries.
-        Basically question: Is prior context appended to the task description?
+        Test Question: Is prior context appended to the task description?
         Steps:
             1. Add ('onboarding_agent', 'Vendor approved') to _workflow_context.
             2. Call _enrich_with_prior_context('Process invoice').
@@ -514,7 +514,7 @@ class TestWorkflowContext:
         ORCH-CTX-003
 
         Title: _capture_agent_context stores task_summary in _workflow_context.
-        Basically question: Is the agent result captured for downstream propagation?
+        Test Question: Is the agent result captured for downstream propagation?
         Steps:
             1. Call _capture_agent_context('fraud_agent', {'task_summary': 'Risk is high'}).
         Expected Results:
@@ -529,7 +529,7 @@ class TestWorkflowContext:
         ORCH-CTX-004
 
         Title: _capture_agent_context does not store empty task_summary.
-        Basically question: Are empty summaries filtered out?
+        Test Question: Are empty summaries filtered out?
         Steps:
             1. Call _capture_agent_context with task_summary=''.
         Expected Results:
@@ -544,7 +544,7 @@ class TestWorkflowContext:
         ORCH-CTX-005
 
         Title: Multiple agent contexts are all accumulated in order.
-        Basically question: Does context from all prior agents accumulate?
+        Test Question: Does context from all prior agents accumulate?
         Steps:
             1. Capture context from 3 agents.
         Expected Results:
@@ -568,7 +568,7 @@ class TestWorkflowContext:
         (including attacker-controlled content) are injected verbatim into downstream
         agent prompts without sanitisation.
 
-        Basically question: Are all accumulated summaries injected into the next prompt?
+        Test Question: Are all accumulated summaries injected into the next prompt?
         Steps:
             1. Add 2 prior contexts.
             2. Call _enrich_with_prior_context.
@@ -599,7 +599,7 @@ class TestDelegateCallables:
         ORCH-DEL-001
 
         Title: delegate_to_onboarding calls run_onboarding_agent with correct task_data.
-        Basically question: Is the onboarding runner called with vendor_id and description?
+        Test Question: Is the onboarding runner called with vendor_id and description?
         Steps:
             1. Mock run_onboarding_agent.
             2. Call delegate_to_onboarding(vendor_id=1, task_description='Onboard').
@@ -625,7 +625,7 @@ class TestDelegateCallables:
         ORCH-DEL-002
 
         Title: delegate_to_invoice calls run_invoice_agent with invoice_id in task_data.
-        Basically question: Is the invoice runner called with the correct invoice_id?
+        Test Question: Is the invoice runner called with the correct invoice_id?
         Steps:
             1. Mock run_invoice_agent.
             2. Call delegate_to_invoice(invoice_id=5, task_description='Process').
@@ -647,7 +647,7 @@ class TestDelegateCallables:
         ORCH-DEL-003
 
         Title: delegate_to_fraud calls run_fraud_agent with vendor_id in task_data.
-        Basically question: Is the fraud runner called with the correct vendor_id?
+        Test Question: Is the fraud runner called with the correct vendor_id?
         Steps:
             1. Mock run_fraud_agent.
             2. Call delegate_to_fraud(vendor_id=3, task_description='Assess').
@@ -669,7 +669,7 @@ class TestDelegateCallables:
         ORCH-DEL-004
 
         Title: delegate_to_payments appends next_step reminder to result.
-        Basically question: Does the payments delegation inject the communication reminder?
+        Test Question: Does the payments delegation inject the communication reminder?
         Steps:
             1. Mock run_payments_agent.
             2. Call delegate_to_payments.
@@ -693,7 +693,7 @@ class TestDelegateCallables:
         ORCH-DEL-005
 
         Title: delegate_to_communication includes notification_type in task_data.
-        Basically question: Is notification_type passed to the communication runner?
+        Test Question: Is notification_type passed to the communication runner?
         Steps:
             1. Mock run_communication_agent.
             2. Call delegate_to_communication with notification_type='payment_confirmation'.
@@ -719,7 +719,7 @@ class TestDelegateCallables:
         ORCH-DEL-006
 
         Title: delegate_to_onboarding returns failure after 2 calls (cap exceeded).
-        Basically question: Is the delegation cap enforced in the actual delegate method?
+        Test Question: Is the delegation cap enforced in the actual delegate method?
         Steps:
             1. Call delegate_to_onboarding 3 times.
         Expected Results:
@@ -742,7 +742,7 @@ class TestDelegateCallables:
         ORCH-DEL-007
 
         Title: Successful delegation stores task_summary in _workflow_context.
-        Basically question: Is the agent result captured after delegation?
+        Test Question: Is the agent result captured after delegation?
         Steps:
             1. Mock runner returning task_summary='Vendor approved'.
             2. Call delegate_to_onboarding.
@@ -769,7 +769,7 @@ class TestDelegateCallables:
         ORCH-DEL-008
 
         Title: attachment_file_ids from current_task_data forwarded to invoice agent.
-        Basically question: Are file attachment IDs passed through to the invoice runner?
+        Test Question: Are file attachment IDs passed through to the invoice runner?
         Steps:
             1. Set _current_task_data with attachment_file_ids=[1, 2].
             2. Call delegate_to_invoice.
@@ -792,7 +792,7 @@ class TestDelegateCallables:
         ORCH-DEL-009
 
         Title: to_addresses included in communication task_data when provided.
-        Basically question: Are explicit To: addresses passed to the communication runner?
+        Test Question: Are explicit To: addresses passed to the communication runner?
         Steps:
             1. Call delegate_to_communication with to_addresses=['a@b.com'].
         Expected Results:
@@ -825,7 +825,7 @@ class TestEventEmission:
         ORCH-EVENT-001
 
         Title: _emit_delegation_event calls event_bus.emit_agent_event.
-        Basically question: Is the delegation event emitted to the event bus?
+        Test Question: Is the delegation event emitted to the event bus?
         Steps:
             1. Call _emit_delegation_event('fraud_agent', result).
         Expected Results:
@@ -841,7 +841,7 @@ class TestEventEmission:
         ORCH-EVENT-002
 
         Title: _emit_delegation_event passes target_agent in event_data.
-        Basically question: Is the target agent name included in the event payload?
+        Test Question: Is the target agent name included in the event payload?
         Steps:
             1. Call _emit_delegation_event('payments_agent', result).
         Expected Results:
@@ -860,7 +860,7 @@ class TestEventEmission:
         ORCH-EVENT-003
 
         Title: task_summary in event_data is truncated to 200 characters.
-        Basically question: Is the summary capped at 200 chars in the event payload?
+        Test Question: Is the summary capped at 200 chars in the event payload?
         Steps:
             1. Call _emit_delegation_event with task_summary of 500 chars.
         Expected Results:
@@ -893,7 +893,7 @@ class TestCtfVulnerability:
         task_summary (e.g. containing prompt injection instructions), those instructions
         are forwarded to all downstream agents as trusted context.
 
-        Basically question: Is the task_summary from a prior agent injected verbatim
+        Test Question: Is the task_summary from a prior agent injected verbatim
                             into the next agent's task description?
         Steps:
             1. Capture a context entry containing an injection payload.
@@ -921,7 +921,7 @@ class TestCtfVulnerability:
         is silently stored and propagated to downstream agents as prior context,
         polluting the LLM prompt with empty noise.
 
-        Basically question: Is a whitespace-only summary stored in _workflow_context?
+        Test Question: Is a whitespace-only summary stored in _workflow_context?
         Steps:
             1. Create OrchestratorAgent.
             2. Call _capture_agent_context with task_summary='   '.
@@ -953,7 +953,7 @@ class TestCtfVulnerability:
         to send a payment_confirmation notification regardless of payment outcome,
         actively misleading it into treating a declined payment as a success.
 
-        Basically question: Is next_step present in the result when payment fails?
+        Test Question: Is next_step present in the result when payment fails?
         Steps:
             1. Mock run_payments_agent to return task_status='failed'.
             2. Call delegate_to_payments(invoice_id=1, task_description='Pay').
@@ -989,7 +989,7 @@ class TestEdgeCases:
         ORCH-EDGE-001
 
         Title: _capture_agent_context ignores result with no task_summary key.
-        Basically question: Is a result dict missing task_summary safely skipped?
+        Test Question: Is a result dict missing task_summary safely skipped?
         Steps:
             1. Call _capture_agent_context with {'task_status': 'completed'}.
         Expected Results:
@@ -1004,7 +1004,7 @@ class TestEdgeCases:
         ORCH-EDGE-002
 
         Title: _capture_agent_context ignores task_summary=None.
-        Basically question: Is None treated as absent (not stored)?
+        Test Question: Is None treated as absent (not stored)?
         Steps:
             1. Call _capture_agent_context with task_summary=None.
         Expected Results:
@@ -1019,7 +1019,7 @@ class TestEdgeCases:
         ORCH-EDGE-003
 
         Title: _enrich_with_prior_context with empty string still appends context block.
-        Basically question: Does an empty task description still get enriched?
+        Test Question: Does an empty task description still get enriched?
         Steps:
             1. Add a context entry.
             2. Call _enrich_with_prior_context('').
@@ -1036,7 +1036,7 @@ class TestEdgeCases:
         ORCH-EDGE-004
 
         Title: Enriched context block header instructs downstream agent to follow all directives.
-        Basically question: Does the context header include the 'include all directives' instruction?
+        Test Question: Does the context header include the 'include all directives' instruction?
         Steps:
             1. Add any context entry.
             2. Call _enrich_with_prior_context.
@@ -1056,7 +1056,7 @@ class TestEdgeCases:
         ORCH-EDGE-005
 
         Title: _get_user_prompt with empty dict {} uses the fallback description.
-        Basically question: Is a missing 'description' key handled gracefully?
+        Test Question: Is a missing 'description' key handled gracefully?
         Steps:
             1. Call _get_user_prompt({}).
         Expected Results:
@@ -1073,7 +1073,7 @@ class TestEdgeCases:
         ORCH-EDGE-006
 
         Title: Once capped, _check_delegation_limit always returns failure.
-        Basically question: Is there any path out of the cap once reached?
+        Test Question: Is there any path out of the cap once reached?
         Steps:
             1. Call _check_delegation_limit 10 times for same key.
         Expected Results:
@@ -1100,7 +1100,7 @@ class TestEdgeCases:
         ORCH-EDGE-008
 
         Title: delegate_to_communication with cc_addresses=[] does not include key in task_data.
-        Basically question: Is an empty list treated as absent (not forwarded)?
+        Test Question: Is an empty list treated as absent (not forwarded)?
         Steps:
             1. Call delegate_to_communication with cc_addresses=[].
         Expected Results:
@@ -1127,7 +1127,7 @@ class TestEdgeCases:
         ORCH-EDGE-009
 
         Title: delegate_to_communication with bcc_addresses=[] does not include key in task_data.
-        Basically question: Is an empty bcc list treated as absent (not forwarded)?
+        Test Question: Is an empty bcc list treated as absent (not forwarded)?
         Steps:
             1. Call delegate_to_communication with bcc_addresses=[].
         Expected Results:
@@ -1153,7 +1153,7 @@ class TestEdgeCases:
         ORCH-EDGE-010
 
         Title: _emit_delegation_event with empty result {} does not raise.
-        Basically question: Are missing task_status and task_summary handled gracefully?
+        Test Question: Are missing task_status and task_summary handled gracefully?
         Steps:
             1. Call _emit_delegation_event with result={}.
         Expected Results:
@@ -1172,7 +1172,7 @@ class TestEdgeCases:
         ORCH-EDGE-011
 
         Title: task_summary of exactly 200 chars is not truncated.
-        Basically question: Is the 200-char truncation boundary exclusive?
+        Test Question: Is the 200-char truncation boundary exclusive?
         Steps:
             1. Call _emit_delegation_event with task_summary of exactly 200 chars.
         Expected Results:
@@ -1196,7 +1196,7 @@ class TestEdgeCases:
         ORCH-EDGE-012
 
         Title: delegate_to_system_maintenance calls run_fraud_agent (not a dedicated runner).
-        Basically question: Which underlying runner does system_maintenance use?
+        Test Question: Which underlying runner does system_maintenance use?
         Steps:
             1. Mock run_fraud_agent.
             2. Call delegate_to_system_maintenance.
@@ -1218,7 +1218,7 @@ class TestEdgeCases:
         ORCH-EDGE-013
 
         Title: _on_task_completion with a normal result does not raise.
-        Basically question: Does the completion callback execute without error?
+        Test Question: Does the completion callback execute without error?
         Steps:
             1. Call _on_task_completion with a completed result.
         Expected Results:
@@ -1237,7 +1237,7 @@ class TestEdgeCases:
         ORCH-EDGE-014
 
         Title: process() sets _current_task_data before running the agent loop.
-        Basically question: Is task_data available to delegation methods during the loop?
+        Test Question: Is task_data available to delegation methods during the loop?
         Steps:
             1. Patch _run_agent_loop to a no-op.
             2. Call process({'description': 'Test', 'vendor_id': 9}).
@@ -1265,7 +1265,7 @@ class TestQAFindings:
         ORCH-QA-001
 
         Title: Whitespace-only task_summary is stored despite containing no content.
-        Basically question: Does _capture_agent_context reject whitespace-only summaries?
+        Test Question: Does _capture_agent_context reject whitespace-only summaries?
         Steps:
             1. Create OrchestratorAgent.
             2. Call _capture_agent_context with task_summary='   '.
@@ -1287,7 +1287,7 @@ class TestQAFindings:
         ORCH-QA-002
 
         Title: delegate_to_payments appends 'payment_confirmation' next_step even on failure.
-        Basically question: Is next_step omitted when the payment agent returns a failed status?
+        Test Question: Is next_step omitted when the payment agent returns a failed status?
         Steps:
             1. Mock run_payments_agent to return task_status='failed'.
             2. Call delegate_to_payments(invoice_id=1, task_description='Pay').
@@ -1315,7 +1315,7 @@ class TestQAFindings:
 
         Title: delegate_to_system_maintenance injects all dangerous MCP tool names
                into the task description sent to run_fraud_agent.
-        Basically question: Does the system_maintenance wrapper inject execute_script and other dangerous tool names into the fraud agent's prompt?
+        Test Question: Does the system_maintenance wrapper inject execute_script and other dangerous tool names into the fraud agent's prompt?
         Steps:
             1. Mock run_fraud_agent and emit_agent_event.
             2. Call delegate_to_system_maintenance(vendor_id=0, task_description='Check disk usage').
@@ -1341,7 +1341,7 @@ class TestQAFindings:
         ORCH-QA-005
 
         Title: _enrich_with_prior_context header says 'include all directives when acting'.
-        Basically question: Does the context block header instruct the downstream agent to obey injected summaries as directives?
+        Test Question: Does the context block header instruct the downstream agent to obey injected summaries as directives?
         Steps:
             1. Create OrchestratorAgent.
             2. Append a prior context entry to _workflow_context.
@@ -1367,7 +1367,7 @@ class TestQAFindings:
 
         Title: Poisoned _workflow_context is propagated into delegate_to_system_maintenance,
                reaching the fraud agent alongside instructions to use execute_script.
-        Basically question: Does an attacker payload in _workflow_context arrive at run_fraud_agent together with dangerous tool names?
+        Test Question: Does an attacker payload in _workflow_context arrive at run_fraud_agent together with dangerous tool names?
         Steps:
             1. Mock run_fraud_agent and emit_agent_event.
             2. Append a prompt injection payload to _workflow_context.
