@@ -96,7 +96,7 @@ class TestListVendorEmailsFilters:
         FM-REPO-001
 
         Title: list_vendor_emails filters correctly by message_type
-        Basically question: Does list_vendor_emails return only emails matching the given message_type?
+        Test Question: Does list_vendor_emails return only emails matching the given message_type?
 
         Steps:
             1. Create two vendor emails with different message types.
@@ -121,7 +121,7 @@ class TestListVendorEmailsFilters:
         FM-REPO-002
 
         Title: list_vendor_emails filters to unread emails only
-        Basically question: Does list_vendor_emails return only unread emails when is_read=False?
+        Test Question: Does list_vendor_emails return only unread emails when is_read=False?
 
         Steps:
             1. Create one read and one unread vendor email.
@@ -146,7 +146,7 @@ class TestListVendorEmailsFilters:
         FM-REPO-003
 
         Title: list_vendor_emails filters to read emails only
-        Basically question: Does list_vendor_emails return only read emails when is_read=True?
+        Test Question: Does list_vendor_emails return only read emails when is_read=True?
 
         Steps:
             1. Create one read and one unread vendor email.
@@ -178,7 +178,7 @@ class TestGetVendorEmailStats:
         FM-REPO-004
 
         Title: get_vendor_email_stats returns zeros for vendor with no emails
-        Basically question: Does get_vendor_email_stats return total=0 and unread=0 when no emails exist?
+        Test Question: Does get_vendor_email_stats return total=0 and unread=0 when no emails exist?
 
         Steps:
             1. Create a vendor with no emails.
@@ -201,7 +201,7 @@ class TestGetVendorEmailStats:
         FM-REPO-005
 
         Title: get_vendor_email_stats returns correct counts with mixed emails
-        Basically question: Does get_vendor_email_stats correctly count total, unread, and by_type?
+        Test Question: Does get_vendor_email_stats correctly count total, unread, and by_type?
 
         Steps:
             1. Create 2 unread notification emails and 1 read invoice email.
@@ -236,7 +236,7 @@ class TestGetVendorUnreadCount:
         FM-REPO-006
 
         Title: get_vendor_unread_count returns correct unread count
-        Basically question: Does get_vendor_unread_count return the number of unread vendor emails?
+        Test Question: Does get_vendor_unread_count return the number of unread vendor emails?
 
         Steps:
             1. Create 2 unread and 1 read vendor emails.
@@ -261,7 +261,7 @@ class TestGetVendorUnreadCount:
         FM-REPO-007
 
         Title: get_vendor_unread_count returns 0 when all emails are read
-        Basically question: Does get_vendor_unread_count return 0 when no unread emails exist?
+        Test Question: Does get_vendor_unread_count return 0 when no unread emails exist?
 
         Steps:
             1. Create 2 read vendor emails.
@@ -292,7 +292,7 @@ class TestMarkAllVendorAsRead:
         FM-REPO-008
 
         Title: mark_all_vendor_as_read marks all unread vendor emails as read
-        Basically question: Does mark_all_vendor_as_read update all unread vendor emails and return the count?
+        Test Question: Does mark_all_vendor_as_read update all unread vendor emails and return the count?
 
         Steps:
             1. Create 3 unread vendor emails.
@@ -318,7 +318,7 @@ class TestMarkAllVendorAsRead:
         FM-REPO-009
 
         Title: mark_all_vendor_as_read only updates unread emails
-        Basically question: Does mark_all_vendor_as_read return 0 when all emails are already read?
+        Test Question: Does mark_all_vendor_as_read return 0 when all emails are already read?
 
         Steps:
             1. Create 2 already-read vendor emails.
@@ -349,7 +349,7 @@ class TestListAdminEmailsFilters:
         FM-REPO-010
 
         Title: list_admin_emails filters correctly by message_type
-        Basically question: Does list_admin_emails return only emails matching the given message_type?
+        Test Question: Does list_admin_emails return only emails matching the given message_type?
 
         Steps:
             1. Create two admin emails with different message types.
@@ -373,7 +373,7 @@ class TestListAdminEmailsFilters:
         FM-REPO-011
 
         Title: list_admin_emails filters to unread emails when is_read=False
-        Basically question: Does list_admin_emails return only unread admin emails when is_read=False?
+        Test Question: Does list_admin_emails return only unread admin emails when is_read=False?
 
         Steps:
             1. Create one read and one unread admin email.
@@ -405,7 +405,7 @@ class TestGetAdminEmailStats:
         FM-REPO-012
 
         Title: get_admin_email_stats returns zeros when no admin emails exist
-        Basically question: Does get_admin_email_stats return total=0 and unread=0 when inbox is empty?
+        Test Question: Does get_admin_email_stats return total=0 and unread=0 when inbox is empty?
 
         Steps:
             1. Create a fresh namespace with no admin emails.
@@ -427,7 +427,7 @@ class TestGetAdminEmailStats:
         FM-REPO-013
 
         Title: get_admin_email_stats returns correct counts with mixed admin emails
-        Basically question: Does get_admin_email_stats correctly count total, unread, and by_type?
+        Test Question: Does get_admin_email_stats correctly count total, unread, and by_type?
 
         Steps:
             1. Create 2 unread notification emails and 1 read alert email.
@@ -462,7 +462,7 @@ class TestMarkAllAdminAsRead:
         FM-REPO-014
 
         Title: mark_all_admin_as_read marks all unread admin emails as read
-        Basically question: Does mark_all_admin_as_read update all unread admin emails and return the count?
+        Test Question: Does mark_all_admin_as_read update all unread admin emails and return the count?
 
         Steps:
             1. Create 3 unread admin emails.
@@ -488,7 +488,7 @@ class TestMarkAllAdminAsRead:
         FM-REPO-015
 
         Title: mark_all_admin_as_read returns 0 when all admin emails are already read
-        Basically question: Does mark_all_admin_as_read return 0 when there are no unread admin emails?
+        Test Question: Does mark_all_admin_as_read return 0 when there are no unread admin emails?
 
         Steps:
             1. Create 2 admin emails and mark them read.
@@ -520,7 +520,7 @@ class TestExternalEmails:
         FM-REPO-016
 
         Title: list_external_emails returns external inbox emails
-        Basically question: Does list_external_emails return emails with inbox_type=external?
+        Test Question: Does list_external_emails return emails with inbox_type=external?
 
         Steps:
             1. Create 2 external emails and 1 admin email.
@@ -545,7 +545,7 @@ class TestExternalEmails:
         FM-REPO-017
 
         Title: get_external_email_stats returns total and unread for external inbox
-        Basically question: Does get_external_email_stats correctly count external emails?
+        Test Question: Does get_external_email_stats correctly count external emails?
 
         Steps:
             1. Create 2 external emails (both unread by default).
@@ -569,7 +569,7 @@ class TestExternalEmails:
         FM-REPO-018
 
         Title: get_external_email_stats returns zeros when no external emails exist
-        Basically question: Does get_external_email_stats return total=0 when external inbox is empty?
+        Test Question: Does get_external_email_stats return total=0 when external inbox is empty?
 
         Steps:
             1. No external emails created.
@@ -597,7 +597,7 @@ class TestMarkAsRead:
         FM-REPO-019
 
         Title: mark_as_read returns email unchanged when already marked read
-        Basically question: Does mark_as_read return the email without modifying it when it is already read?
+        Test Question: Does mark_as_read return the email without modifying it when it is already read?
 
         Steps:
             1. Create and mark an email as read.
@@ -621,7 +621,7 @@ class TestMarkAsRead:
         FM-REPO-020
 
         Title: mark_as_read returns None for a non-existent email ID
-        Basically question: Does mark_as_read return None gracefully when the email does not exist?
+        Test Question: Does mark_as_read return None gracefully when the email does not exist?
 
         Steps:
             1. Call mark_as_read with email_id=99999.
@@ -647,7 +647,7 @@ class TestListAdminEmailsIsReadTrue:
         FM-REPO-021
 
         Title: list_admin_emails filters to read emails when is_read=True
-        Basically question: Does list_admin_emails return only read admin emails when is_read=True?
+        Test Question: Does list_admin_emails return only read admin emails when is_read=True?
 
         Steps:
             1. Create one read and one unread admin email.
@@ -679,7 +679,7 @@ class TestPagination:
         FM-REPO-022
 
         Title: list_vendor_emails respects the limit parameter
-        Basically question: Does list_vendor_emails return at most limit emails?
+        Test Question: Does list_vendor_emails return at most limit emails?
 
         Steps:
             1. Create 5 vendor emails.
@@ -703,7 +703,7 @@ class TestPagination:
         FM-REPO-023
 
         Title: list_vendor_emails respects the offset parameter
-        Basically question: Does list_vendor_emails skip emails correctly when offset is set?
+        Test Question: Does list_vendor_emails skip emails correctly when offset is set?
 
         Steps:
             1. Create 3 vendor emails.
@@ -734,7 +734,7 @@ class TestCrossVendorIsolation:
         FM-REPO-024
 
         Title: list_vendor_emails does not return another vendor's emails
-        Basically question: Does list_vendor_emails scope results strictly to the given vendor_id?
+        Test Question: Does list_vendor_emails scope results strictly to the given vendor_id?
 
         Steps:
             1. Create two vendors, each with one email.
@@ -760,7 +760,7 @@ class TestCrossVendorIsolation:
         FM-REPO-025
 
         Title: mark_all_vendor_as_read only marks the specified vendor's emails
-        Basically question: Does mark_all_vendor_as_read leave another vendor's emails unread?
+        Test Question: Does mark_all_vendor_as_read leave another vendor's emails unread?
 
         Steps:
             1. Create two vendors, each with one unread email.
@@ -786,7 +786,7 @@ class TestCrossVendorIsolation:
         FM-REPO-026
 
         Title: get_email returns None for an email belonging to a different namespace
-        Basically question: Does the namespace filter prevent cross-namespace email access via get_email?
+        Test Question: Does the namespace filter prevent cross-namespace email access via get_email?
 
         Steps:
             1. Create an email under namespace_a.
@@ -818,7 +818,7 @@ class TestEmailModel:
         FM-REPO-027
 
         Title: Email __repr__ returns expected string
-        Basically question: Does Email.__repr__ include the id, inbox_type, and message_type?
+        Test Question: Does Email.__repr__ include the id, inbox_type, and message_type?
 
         Steps:
             1. Create an admin email.
@@ -840,7 +840,7 @@ class TestEmailModel:
         FM-REPO-028
 
         Title: _parse_addresses returns None for invalid JSON
-        Basically question: Does _parse_addresses return None gracefully when the stored value is not valid JSON?
+        Test Question: Does _parse_addresses return None gracefully when the stored value is not valid JSON?
 
         Steps:
             1. Create an email.
@@ -863,7 +863,7 @@ class TestEmailModel:
         FM-REPO-029
 
         Title: to_summary_dict truncates body_preview when body exceeds preview_length
-        Basically question: Does to_summary_dict append "..." when body is longer than preview_length?
+        Test Question: Does to_summary_dict append "..." when body is longer than preview_length?
 
         Steps:
             1. Create an email with a body longer than 150 characters.

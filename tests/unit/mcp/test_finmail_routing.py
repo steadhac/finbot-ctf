@@ -71,7 +71,7 @@ class TestGetDepartmentAddresses:
         FM-RTE-001
 
         Title: get_department_addresses returns a mapping of all department addresses
-        Basically question: Does get_department_addresses return a dict with namespace-scoped addresses for all departments?
+        Test Question: Does get_department_addresses return a dict with namespace-scoped addresses for all departments?
 
         Steps:
             1. Call get_department_addresses("acme").
@@ -92,7 +92,7 @@ class TestGetDepartmentAddresses:
         FM-RTE-002
 
         Title: get_department_addresses scopes addresses to the given namespace
-        Basically question: Do all addresses returned by get_department_addresses end with @{namespace}.finbot?
+        Test Question: Do all addresses returned by get_department_addresses end with @{namespace}.finbot?
 
         Steps:
             1. Call get_department_addresses("testcorp").
@@ -115,7 +115,7 @@ class TestRouteAndDeliverUserBranch:
         FM-RTE-003
 
         Title: route_and_deliver routes a User's email address to the admin inbox
-        Basically question: Does route_and_deliver create an admin inbox email when the recipient is a registered User?
+        Test Question: Does route_and_deliver create an admin inbox email when the recipient is a registered User?
 
         Steps:
             1. Create a User with a known email in the namespace.
@@ -152,7 +152,7 @@ class TestRouteAndDeliverUserBranch:
         FM-RTE-004
 
         Title: route_and_deliver routes an unknown address to the external dead-drop inbox
-        Basically question: Does route_and_deliver store unresolvable addresses in the external inbox?
+        Test Question: Does route_and_deliver store unresolvable addresses in the external inbox?
 
         Steps:
             1. Call route_and_deliver with a completely unknown address.
