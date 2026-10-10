@@ -36,7 +36,7 @@ class TestImportFactory:
         FACT-IMP-001
 
         Title: _import_factory resolves a dotted path to a callable
-        Basically question: Does _import_factory return a callable for a valid dotted path?
+        Test Question: Does _import_factory return a callable for a valid dotted path?
 
         Steps:
             1. Call _import_factory with the finstripe server factory path.
@@ -51,7 +51,7 @@ class TestImportFactory:
         FACT-IMP-002
 
         Title: _import_factory raises ImportError for a non-existent module
-        Basically question: Does _import_factory raise when the module path does not exist?
+        Test Question: Does _import_factory raise when the module path does not exist?
 
         Steps:
             1. Call _import_factory with a dotted path to a non-existent module.
@@ -66,7 +66,7 @@ class TestImportFactory:
         FACT-IMP-003
 
         Title: _import_factory raises AttributeError if function does not exist in module
-        Basically question: Does _import_factory raise when the function name is not in the module?
+        Test Question: Does _import_factory raise when the function name is not in the module?
 
         Steps:
             1. Call _import_factory with a valid module but non-existent function name.
@@ -88,7 +88,7 @@ class TestApplyToolOverrides:
         FACT-OVR-001
 
         Title: _apply_tool_overrides with empty dict returns without touching server
-        Basically question: Does _apply_tool_overrides skip all provider calls when overrides is empty?
+        Test Question: Does _apply_tool_overrides skip all provider calls when overrides is empty?
 
         Steps:
             1. Call _apply_tool_overrides with an empty overrides dict.
@@ -104,7 +104,7 @@ class TestApplyToolOverrides:
         FACT-OVR-002
 
         Title: _apply_tool_overrides with no providers returns without error
-        Basically question: Does _apply_tool_overrides handle a server with no providers gracefully?
+        Test Question: Does _apply_tool_overrides handle a server with no providers gracefully?
 
         Steps:
             1. Create a mock server with empty providers list.
@@ -121,7 +121,7 @@ class TestApplyToolOverrides:
         FACT-OVR-003
 
         Title: _apply_tool_overrides updates tool description via provider
-        Basically question: Does _apply_tool_overrides mutate the tool description to the override value?
+        Test Question: Does _apply_tool_overrides mutate the tool description to the override value?
 
         Steps:
             1. Create a mock server with a provider that returns a mock tool.
@@ -149,7 +149,7 @@ class TestApplyToolOverrides:
         FACT-OVR-004
 
         Title: _apply_tool_overrides silently skips overrides for unknown tools
-        Basically question: Does _apply_tool_overrides swallow exceptions from get_tool without crashing?
+        Test Question: Does _apply_tool_overrides swallow exceptions from get_tool without crashing?
 
         Steps:
             1. Create a mock provider whose get_tool raises an exception.
@@ -172,7 +172,7 @@ class TestApplyToolOverrides:
         FACT-OVR-005
 
         Title: _apply_tool_overrides skips overrides that have no description key
-        Basically question: Does _apply_tool_overrides ignore override entries that lack a description field?
+        Test Question: Does _apply_tool_overrides ignore override entries that lack a description field?
 
         Steps:
             1. Call _apply_tool_overrides with an override dict missing the description key.
@@ -204,7 +204,7 @@ class TestCreateMCPServer:
         FACT-SRV-001
 
         Title: create_mcp_server returns None for an unknown server type
-        Basically question: Does create_mcp_server return None when the server type is not registered?
+        Test Question: Does create_mcp_server return None when the server type is not registered?
 
         Steps:
             1. Call create_mcp_server with server_type="unknown".
@@ -221,7 +221,7 @@ class TestCreateMCPServer:
         FACT-SRV-002
 
         Title: create_mcp_server returns None when server is disabled in DB config
-        Basically question: Does create_mcp_server return None when the DB config marks the server as disabled?
+        Test Question: Does create_mcp_server return None when the DB config marks the server as disabled?
 
         Steps:
             1. Mock MCPServerConfigRepository to return a disabled config.
@@ -248,7 +248,7 @@ class TestCreateMCPServer:
         FACT-SRV-003
 
         Title: create_mcp_server creates server with defaults when no DB config exists
-        Basically question: Does create_mcp_server return a valid server instance when there is no DB config?
+        Test Question: Does create_mcp_server return a valid server instance when there is no DB config?
 
         Steps:
             1. Mock MCPServerConfigRepository to return None (no config in DB).
@@ -272,7 +272,7 @@ class TestCreateMCPServer:
         FACT-SRV-004
 
         Title: create_mcp_server creates server when DB config is enabled with no overrides
-        Basically question: Does create_mcp_server return a server when DB config is enabled but has no tool overrides?
+        Test Question: Does create_mcp_server return a server when DB config is enabled but has no tool overrides?
 
         Steps:
             1. Mock MCPServerConfigRepository to return an enabled config with no tool overrides.
@@ -301,7 +301,7 @@ class TestCreateMCPServer:
         FACT-SRV-005
 
         Title: create_mcp_server applies tool overrides from DB config
-        Basically question: Does create_mcp_server call _apply_tool_overrides when the DB config contains overrides?
+        Test Question: Does create_mcp_server call _apply_tool_overrides when the DB config contains overrides?
 
         Steps:
             1. Mock DB config with a tool override for "create_transfer".
@@ -334,7 +334,7 @@ class TestCreateMCPServer:
         FACT-SRV-006
 
         Title: create_mcp_server succeeds for all registered server types
-        Basically question: Does create_mcp_server return a valid server for every registered server type?
+        Test Question: Does create_mcp_server return a valid server for every registered server type?
 
         Steps:
             1. For each known server type, call create_mcp_server with no DB config.
@@ -363,7 +363,7 @@ class TestMCPToolProviderInit:
         PROV-INIT-001
 
         Title: MCPToolProvider initializes with correct default state
-        Basically question: Does a freshly created MCPToolProvider start disconnected with zero tools?
+        Test Question: Does a freshly created MCPToolProvider start disconnected with zero tools?
 
         Steps:
             1. Create MCPToolProvider with a mock server.
@@ -383,7 +383,7 @@ class TestMCPToolProviderInit:
         PROV-INIT-002
 
         Title: MCPToolProvider uses 'unknown_agent' when agent_name is not provided
-        Basically question: Does MCPToolProvider default agent_name to 'unknown_agent' when omitted?
+        Test Question: Does MCPToolProvider default agent_name to 'unknown_agent' when omitted?
 
         Steps:
             1. Create MCPToolProvider without agent_name.
@@ -402,7 +402,7 @@ class TestMCPToolProviderConnect:
         PROV-CON-001
 
         Title: connect() discovers tools and sets is_connected=True
-        Basically question: Does connect() correctly discover and namespace tools from a connected MCP server?
+        Test Question: Does connect() correctly discover and namespace tools from a connected MCP server?
 
         Steps:
             1. Create MCPToolProvider with a mock FastMCP server.
@@ -447,7 +447,7 @@ class TestMCPToolProviderConnect:
         PROV-CON-002
 
         Title: connect() logs exception and continues when a server fails to connect
-        Basically question: Does connect() swallow connection errors and remain stable with zero tools?
+        Test Question: Does connect() swallow connection errors and remain stable with zero tools?
 
         Steps:
             1. Mock Client to raise an exception on __aenter__.
@@ -480,7 +480,7 @@ class TestMCPToolProviderDisconnect:
         PROV-DIS-001
 
         Title: disconnect() clears clients and tools and sets is_connected=False
-        Basically question: Does disconnect() fully reset the provider state after being connected?
+        Test Question: Does disconnect() fully reset the provider state after being connected?
 
         Steps:
             1. Manually set _connected=True and add a mock client.
@@ -508,7 +508,7 @@ class TestMCPToolProviderDisconnect:
         PROV-DIS-002
 
         Title: disconnect() swallows exceptions from client.__aexit__
-        Basically question: Does disconnect() handle client teardown errors without raising?
+        Test Question: Does disconnect() handle client teardown errors without raising?
 
         Steps:
             1. Add a mock client whose __aexit__ raises an exception.
@@ -535,7 +535,7 @@ class TestMCPToolProviderDefinitions:
         PROV-DEF-001
 
         Title: get_tool_definitions returns OpenAI function-calling format
-        Basically question: Does get_tool_definitions produce valid OpenAI-compatible tool schemas?
+        Test Question: Does get_tool_definitions produce valid OpenAI-compatible tool schemas?
 
         Steps:
             1. Manually populate _tools with one tool entry.
@@ -569,7 +569,7 @@ class TestMCPToolProviderDefinitions:
         PROV-DEF-002
 
         Title: get_callables returns one async callable per discovered tool
-        Basically question: Does get_callables return a callable for each tool in the provider?
+        Test Question: Does get_callables return a callable for each tool in the provider?
 
         Steps:
             1. Manually populate _tools with two tool entries.
@@ -606,7 +606,7 @@ class TestMCPToolProviderCallTool:
         PROV-CALL-001
 
         Title: call_mcp_tool returns tool output on success
-        Basically question: Does call_mcp_tool return the tool result data when the MCP client call succeeds?
+        Test Question: Does call_mcp_tool return the tool result data when the MCP client call succeeds?
 
         Steps:
             1. Set up a connected provider with a mock client.
@@ -647,7 +647,7 @@ class TestMCPToolProviderCallTool:
         PROV-CALL-002
 
         Title: call_mcp_tool returns error dict when client raises exception
-        Basically question: Does call_mcp_tool return {"error": "..."} instead of raising when the client fails?
+        Test Question: Does call_mcp_tool return {"error": "..."} instead of raising when the client fails?
 
         Steps:
             1. Set up a connected provider with a mock client that raises.
@@ -683,7 +683,7 @@ class TestMCPToolProviderCallTool:
         PROV-CALL-003
 
         Title: call_mcp_tool returns error when server client is not connected
-        Basically question: Does call_mcp_tool return a "not connected" error when no client exists for the server?
+        Test Question: Does call_mcp_tool return a "not connected" error when no client exists for the server?
 
         Steps:
             1. Set up a provider with no client for the server.
@@ -718,7 +718,7 @@ class TestMCPToolProviderActivityLog:
         PROV-LOG-001
 
         Title: _log_activity swallows DB exceptions silently
-        Basically question: Does _log_activity continue without raising when the database is unavailable?
+        Test Question: Does _log_activity continue without raising when the database is unavailable?
 
         Steps:
             1. Mock db_session to raise an exception.
@@ -744,7 +744,7 @@ class TestSafeSerialize:
         PROV-SER-001
 
         Title: _safe_serialize handles list values recursively
-        Basically question: Does _safe_serialize return a list with each element serialized?
+        Test Question: Does _safe_serialize return a list with each element serialized?
 
         Steps:
             1. Call _safe_serialize with a list containing mixed types.
@@ -762,7 +762,7 @@ class TestSafeSerialize:
         PROV-SER-002
 
         Title: _safe_serialize converts tuple to list
-        Basically question: Does _safe_serialize treat tuples the same as lists?
+        Test Question: Does _safe_serialize treat tuples the same as lists?
 
         Steps:
             1. Call _safe_serialize with a tuple.
@@ -780,7 +780,7 @@ class TestSafeSerialize:
         PROV-SER-003
 
         Title: _safe_serialize falls back to str() for unknown types
-        Basically question: Does _safe_serialize convert arbitrary objects to their string representation?
+        Test Question: Does _safe_serialize convert arbitrary objects to their string representation?
 
         Steps:
             1. Call _safe_serialize with a custom object.
