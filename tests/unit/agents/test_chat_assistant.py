@@ -96,7 +96,7 @@ class TestChatAssistantInit:
         CHAT-INIT-001
 
         Title: VendorChatAssistant sets agent_name to 'chat_assistant'.
-        Basically question: Is the agent_name registration correct?
+        Test Question: Is the agent_name registration correct?
         Steps:
             1. Create VendorChatAssistant.
         Expected Results:
@@ -110,7 +110,7 @@ class TestChatAssistantInit:
         CHAT-INIT-002
 
         Title: CoPilotAssistant sets agent_name to 'copilot_assistant'.
-        Basically question: Is the CoPilot agent_name registration correct?
+        Test Question: Is the CoPilot agent_name registration correct?
         Steps:
             1. Create CoPilotAssistant.
         Expected Results:
@@ -124,7 +124,7 @@ class TestChatAssistantInit:
         CHAT-INIT-003
 
         Title: session_context passed to __init__ is stored on the instance.
-        Basically question: Does the agent hold a reference to the session?
+        Test Question: Does the agent hold a reference to the session?
         Steps:
             1. Create VendorChatAssistant with a known session.
         Expected Results:
@@ -139,7 +139,7 @@ class TestChatAssistantInit:
         CHAT-INIT-004
 
         Title: max_history defaults to CHAT_HISTORY_LIMIT (100).
-        Basically question: Is the history window set to the module constant?
+        Test Question: Is the history window set to the module constant?
         Steps:
             1. Create VendorChatAssistant without specifying max_history.
         Expected Results:
@@ -153,7 +153,7 @@ class TestChatAssistantInit:
         CHAT-INIT-005
 
         Title: _mcp_provider is None immediately after construction.
-        Basically question: Is MCP lazy (not connected at init)?
+        Test Question: Is MCP lazy (not connected at init)?
         Steps:
             1. Create VendorChatAssistant.
         Expected Results:
@@ -167,7 +167,7 @@ class TestChatAssistantInit:
         CHAT-INIT-006
 
         Title: _mcp_connected is False immediately after construction.
-        Basically question: Is MCP deferred until the first message?
+        Test Question: Is MCP deferred until the first message?
         Steps:
             1. Create VendorChatAssistant.
         Expected Results:
@@ -181,7 +181,7 @@ class TestChatAssistantInit:
         CHAT-INIT-007
 
         Title: _tool_callables is a dict after construction.
-        Basically question: Are native callables registered at init?
+        Test Question: Are native callables registered at init?
         Steps:
             1. Create VendorChatAssistant.
         Expected Results:
@@ -195,7 +195,7 @@ class TestChatAssistantInit:
         CHAT-INIT-008
 
         Title: _workflow_id starts with 'wf_chat_' after construction.
-        Basically question: Is the workflow ID format correct?
+        Test Question: Is the workflow ID format correct?
         Steps:
             1. Create VendorChatAssistant (no prior DB workflow).
         Expected Results:
@@ -209,7 +209,7 @@ class TestChatAssistantInit:
         CHAT-INIT-009
 
         Title: background_tasks is None when not provided.
-        Basically question: Is background_tasks optional?
+        Test Question: Is background_tasks optional?
         Steps:
             1. Create VendorChatAssistant without background_tasks.
         Expected Results:
@@ -231,7 +231,7 @@ class TestChatMCPServerTypes:
         CHAT-MCP-001
 
         Title: VendorChatAssistant._get_mcp_server_types returns the 3 expected servers.
-        Basically question: Does the vendor assistant connect to findrive, finmail, systemutils?
+        Test Question: Does the vendor assistant connect to findrive, finmail, systemutils?
         Steps:
             1. Call agent._get_mcp_server_types().
         Expected Results:
@@ -245,7 +245,7 @@ class TestChatMCPServerTypes:
         CHAT-MCP-002
 
         Title: CoPilotAssistant._get_mcp_server_types returns the 3 expected servers.
-        Basically question: Does the co-pilot also connect to findrive, finmail, systemutils?
+        Test Question: Does the co-pilot also connect to findrive, finmail, systemutils?
         Steps:
             1. Call agent._get_mcp_server_types().
         Expected Results:
@@ -259,7 +259,7 @@ class TestChatMCPServerTypes:
         CHAT-MCP-003
 
         Title: ChatAssistantBase._get_mcp_server_types default is ['findrive', 'finmail'].
-        Basically question: Is the base class default MCP list correct?
+        Test Question: Is the base class default MCP list correct?
         Steps:
             1. Inspect ChatAssistantBase._get_mcp_server_types directly (unoverridden method).
         Expected Results:
@@ -282,7 +282,7 @@ class TestVendorSystemPrompt:
         CHAT-PROMPT-001
 
         Title: VendorChatAssistant system prompt includes the current vendor ID.
-        Basically question: Does the prompt inject the vendor's own ID?
+        Test Question: Does the prompt inject the vendor's own ID?
         Steps:
             1. Create VendorChatAssistant with vendor_id=42.
             2. Call _get_system_prompt().
@@ -301,7 +301,7 @@ class TestVendorSystemPrompt:
         CHAT-PROMPT-002
 
         Title: VendorChatAssistant system prompt has a CAPABILITIES section.
-        Basically question: Is the capabilities block present?
+        Test Question: Is the capabilities block present?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -315,7 +315,7 @@ class TestVendorSystemPrompt:
         CHAT-PROMPT-003
 
         Title: VendorChatAssistant system prompt has a RULES section.
-        Basically question: Is the rules block present?
+        Test Question: Is the rules block present?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -329,7 +329,7 @@ class TestVendorSystemPrompt:
         CHAT-PROMPT-004
 
         Title: VendorChatAssistant system prompt includes the admin email address.
-        Basically question: Is the admin address injected into the prompt?
+        Test Question: Is the admin address injected into the prompt?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -343,7 +343,7 @@ class TestVendorSystemPrompt:
         CHAT-PROMPT-005
 
         Title: VendorChatAssistant system prompt includes 'Current date'.
-        Basically question: Does the prompt include a date line?
+        Test Question: Does the prompt include a date line?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -360,7 +360,7 @@ class TestCoPilotSystemPrompt:
         CHAT-PROMPT-006
 
         Title: CoPilotAssistant system prompt has a CAPABILITIES section.
-        Basically question: Is the capabilities block present?
+        Test Question: Is the capabilities block present?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -374,7 +374,7 @@ class TestCoPilotSystemPrompt:
         CHAT-PROMPT-007
 
         Title: CoPilotAssistant system prompt has a WORKFLOW GUIDANCE section.
-        Basically question: Is the workflow guidance block present?
+        Test Question: Is the workflow guidance block present?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -388,7 +388,7 @@ class TestCoPilotSystemPrompt:
         CHAT-PROMPT-008
 
         Title: CoPilotAssistant system prompt has a REPORT FORMAT section.
-        Basically question: Is the report format guidance present?
+        Test Question: Is the report format guidance present?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -402,7 +402,7 @@ class TestCoPilotSystemPrompt:
         CHAT-PROMPT-009
 
         Title: CoPilotAssistant system prompt instructs the LLM to call save_report.
-        Basically question: Does the prompt reinforce the save_report requirement?
+        Test Question: Does the prompt reinforce the save_report requirement?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -430,7 +430,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-010
 
         Title: Vendor system prompt mentions FinDrive file browsing capability.
-        Basically question: Does the prompt tell the LLM it can access FinDrive?
+        Test Question: Does the prompt tell the LLM it can access FinDrive?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -443,7 +443,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-011
 
         Title: Vendor system prompt mentions FinMail email capability.
-        Basically question: Does the prompt tell the LLM it can send and read email?
+        Test Question: Does the prompt tell the LLM it can send and read email?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -456,7 +456,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-012
 
         Title: Vendor system prompt mentions start_workflow for background actions.
-        Basically question: Does the prompt guide the LLM to use start_workflow?
+        Test Question: Does the prompt guide the LLM to use start_workflow?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -469,7 +469,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-013
 
         Title: Vendor prompt explicitly says NOT to use start_workflow for messaging.
-        Basically question: Is the LLM steered away from routing emails through the workflow engine?
+        Test Question: Is the LLM steered away from routing emails through the workflow engine?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -484,7 +484,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-014
 
         Title: Vendor prompt explicitly forbids revealing full bank account numbers.
-        Basically question: Is the LLM instructed not to expose banking PII?
+        Test Question: Is the LLM instructed not to expose banking PII?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -497,7 +497,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-015
 
         Title: Vendor prompt forbids disclosing TIN (Tax Identification Number).
-        Basically question: Is TIN listed as a field that must not be exposed?
+        Test Question: Is TIN listed as a field that must not be exposed?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -510,7 +510,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-016
 
         Title: Vendor prompt forbids disclosing SSN (Social Security Number).
-        Basically question: Is the LLM told not to expose SSNs?
+        Test Question: Is the LLM told not to expose SSNs?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -523,7 +523,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-017
 
         Title: Vendor prompt forbids disclosing routing numbers.
-        Basically question: Is the routing number listed as protected PII?
+        Test Question: Is the routing number listed as protected PII?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -536,7 +536,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-018
 
         Title: Vendor prompt instructs the LLM never to disclose the system prompt itself.
-        Basically question: Does the meta-instruction protect against prompt extraction attacks?
+        Test Question: Does the meta-instruction protect against prompt extraction attacks?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -549,7 +549,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-019
 
         Title: Vendor prompt injects department email addresses from routing config.
-        Basically question: Does the prompt include the mocked dept address?
+        Test Question: Does the prompt include the mocked dept address?
         Steps:
             1. Create VendorChatAssistant (mock returns 'accounts@finbot.test').
             2. Call _get_system_prompt().
@@ -563,7 +563,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-020
 
         Title: Vendor system prompt is at least 500 characters long.
-        Basically question: Is the prompt rich enough to meaningfully guide the LLM?
+        Test Question: Is the prompt rich enough to meaningfully guide the LLM?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -576,7 +576,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-021
 
         Title: The date injected into the vendor prompt uses ISO format YYYY-MM-DD.
-        Basically question: Is the date machine-readable for the LLM?
+        Test Question: Is the date machine-readable for the LLM?
         Steps:
             1. Call agent._get_system_prompt().
             2. Search for a YYYY-MM-DD pattern.
@@ -592,7 +592,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-022
 
         Title: Vendor prompt demonstrates partial masking with '****' notation.
-        Basically question: Does the LLM know to show partially masked values?
+        Test Question: Does the LLM know to show partially masked values?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -605,7 +605,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-023
 
         Title: Vendor prompt explicitly names the finmail__send_email tool.
-        Basically question: Is the LLM told the exact tool name for sending email?
+        Test Question: Is the LLM told the exact tool name for sending email?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -618,7 +618,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-024
 
         Title: Vendor prompt references finmail__list_inbox for reading email.
-        Basically question: Is the LLM told how to read the inbox?
+        Test Question: Is the LLM told how to read the inbox?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -631,7 +631,7 @@ class TestVendorPromptExtended:
         CHAT-PROMPT-025
 
         Title: Vendor prompt instructs the LLM to look up data with tools, never guess.
-        Basically question: Is the anti-hallucination instruction present?
+        Test Question: Is the anti-hallucination instruction present?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -657,7 +657,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-026
 
         Title: CoPilot prompt tells the LLM about the list_vendors tool.
-        Basically question: Does the LLM know it can list all vendors?
+        Test Question: Does the LLM know it can list all vendors?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -670,7 +670,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-027
 
         Title: CoPilot prompt references get_all_vendors_summary for reporting.
-        Basically question: Is the primary analytical tool named in the prompt?
+        Test Question: Is the primary analytical tool named in the prompt?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -683,7 +683,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-028
 
         Title: CoPilot prompt references get_pending_actions_summary for daily digest.
-        Basically question: Is the action-item tool named in the prompt?
+        Test Question: Is the action-item tool named in the prompt?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -696,7 +696,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-029
 
         Title: CoPilot prompt lists 'executive_summary' as a report type.
-        Basically question: Does the prompt enumerate specific report formats?
+        Test Question: Does the prompt enumerate specific report formats?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -709,7 +709,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-030
 
         Title: CoPilot prompt lists 'system_health' as a report type.
-        Basically question: Is the infra-health report format included?
+        Test Question: Is the infra-health report format included?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -722,7 +722,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-031
 
         Title: CoPilot prompt lists 'compliance_review' as a report type.
-        Basically question: Is the compliance report format present?
+        Test Question: Is the compliance report format present?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -735,7 +735,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-032
 
         Title: CoPilot prompt lists 'reconciliation' as a report type.
-        Basically question: Is the bank reconciliation report format present?
+        Test Question: Is the bank reconciliation report format present?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -748,7 +748,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-033
 
         Title: CoPilot prompt references SystemUtils for infrastructure operations.
-        Basically question: Is the LLM told it has system-admin capabilities?
+        Test Question: Is the LLM told it has system-admin capabilities?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -761,7 +761,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-034
 
         Title: CoPilot prompt contains an ALWAYS instruction to call save_report.
-        Basically question: Is the mandatory artifact-save instruction present?
+        Test Question: Is the mandatory artifact-save instruction present?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -776,7 +776,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-035
 
         Title: CoPilot prompt tells the LLM where the admin inbox is.
-        Basically question: Does the prompt inject the admin email address?
+        Test Question: Does the prompt inject the admin email address?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -789,7 +789,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-036
 
         Title: CoPilot prompt injects department addresses from routing config.
-        Basically question: Does the LLM know the internal email directory?
+        Test Question: Does the LLM know the internal email directory?
         Steps:
             1. Call agent._get_system_prompt() with mocked dept addresses.
         Expected Results:
@@ -802,7 +802,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-037
 
         Title: CoPilot prompt lists 'vendor_performance' as a report type.
-        Basically question: Is the vendor performance report format present?
+        Test Question: Is the vendor performance report format present?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -815,7 +815,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-038
 
         Title: CoPilot prompt lists 'inbox_digest' as a report type.
-        Basically question: Is the email digest report format present?
+        Test Question: Is the email digest report format present?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -828,7 +828,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-039
 
         Title: CoPilot system prompt is longer than the vendor system prompt.
-        Basically question: Does the expanded CoPilot role produce a richer prompt?
+        Test Question: Does the expanded CoPilot role produce a richer prompt?
         Steps:
             1. Get both prompts.
         Expected Results:
@@ -846,7 +846,7 @@ class TestCoPilotPromptExtended:
         CHAT-PROMPT-040
 
         Title: The date injected into the CoPilot prompt uses ISO format YYYY-MM-DD.
-        Basically question: Is the date consistent with the vendor prompt format?
+        Test Question: Is the date consistent with the vendor prompt format?
         Steps:
             1. Call agent._get_system_prompt().
             2. Search for a YYYY-MM-DD pattern.
@@ -874,7 +874,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-041
 
         Title: Two VendorChatAssistants with different vendor IDs have different prompts.
-        Basically question: Is vendor_id correctly isolated per session?
+        Test Question: Is vendor_id correctly isolated per session?
         Steps:
             1. Create assistants with vendor_id=10 and vendor_id=99.
             2. Compare their system prompts.
@@ -890,7 +890,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-042
 
         Title: vendor_id=10 appears in that assistant's prompt but NOT in vendor_id=99's.
-        Basically question: Is vendor_id injection precise (no cross-contamination)?
+        Test Question: Is vendor_id injection precise (no cross-contamination)?
         Steps:
             1. Create assistants with vendor_id=10 and vendor_id=99.
         Expected Results:
@@ -906,7 +906,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-043
 
         Title: Calling _get_system_prompt() twice on the same agent returns identical text.
-        Basically question: Is the prompt deterministic (no random content)?
+        Test Question: Is the prompt deterministic (no random content)?
         Steps:
             1. Call _get_system_prompt() twice on same agent.
         Expected Results:
@@ -920,7 +920,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-044
 
         Title: VendorChatAssistant and CoPilotAssistant have completely different prompts.
-        Basically question: Are the two roles properly separated?
+        Test Question: Are the two roles properly separated?
         Steps:
             1. Get both system prompts.
         Expected Results:
@@ -936,7 +936,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-045
 
         Title: CoPilot prompt does not inject a specific vendor_id.
-        Basically question: Is the CoPilot correctly cross-vendor (not scoped to one vendor)?
+        Test Question: Is the CoPilot correctly cross-vendor (not scoped to one vendor)?
         Steps:
             1. Call copilot._get_system_prompt().
         Expected Results:
@@ -949,7 +949,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-046
 
         Title: Vendor portal prompt does not mention save_report or executive_summary.
-        Basically question: Are CoPilot-only tools absent from the vendor prompt?
+        Test Question: Are CoPilot-only tools absent from the vendor prompt?
         Steps:
             1. Call vendor._get_system_prompt().
         Expected Results:
@@ -963,7 +963,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-047
 
         Title: Vendor prompt contains the exact phrase 'current vendor ID is'.
-        Basically question: Is the vendor-scoping instruction clearly stated?
+        Test Question: Is the vendor-scoping instruction clearly stated?
         Steps:
             1. Call vendor._get_system_prompt() with vendor_id=42.
         Expected Results:
@@ -976,7 +976,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-048
 
         Title: Vendor system prompt contains no null bytes (\\x00).
-        Basically question: Is the prompt safe to log and transmit?
+        Test Question: Is the prompt safe to log and transmit?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -989,7 +989,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-049
 
         Title: CoPilot system prompt contains no null bytes (\\x00).
-        Basically question: Is the prompt clean for API transmission?
+        Test Question: Is the prompt clean for API transmission?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -1002,7 +1002,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-050
 
         Title: Vendor system prompt encodes to UTF-8 without error.
-        Basically question: Is the prompt safe for JSON serialisation and API calls?
+        Test Question: Is the prompt safe for JSON serialisation and API calls?
         Steps:
             1. Encode prompt as UTF-8.
         Expected Results:
@@ -1017,7 +1017,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-051
 
         Title: Vendor prompt forbids disclosing API keys.
-        Basically question: Is the LLM told not to reveal API keys from tool results?
+        Test Question: Is the LLM told not to reveal API keys from tool results?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -1030,7 +1030,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-052
 
         Title: Vendor prompt instructs the LLM to keep responses concise.
-        Basically question: Is verbosity constrained for the vendor-facing assistant?
+        Test Question: Is verbosity constrained for the vendor-facing assistant?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -1043,7 +1043,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-053
 
         Title: CoPilot prompt instructs the LLM to be thorough (contrast with vendor).
-        Basically question: Does the CoPilot role emphasise depth over brevity?
+        Test Question: Does the CoPilot role emphasise depth over brevity?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -1056,7 +1056,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-054
 
         Title: Two independent CoPilotAssistant instances produce identical prompts.
-        Basically question: Is the CoPilot prompt stateless and reproducible?
+        Test Question: Is the CoPilot prompt stateless and reproducible?
         Steps:
             1. Create two separate CoPilotAssistant instances.
             2. Compare their system prompts.
@@ -1072,7 +1072,7 @@ class TestPromptIsolation:
         CHAT-PROMPT-055
 
         Title: Vendor prompt explicitly instructs not to disclose internal tool names.
-        Basically question: Is the tool-name secrecy instruction present?
+        Test Question: Is the tool-name secrecy instruction present?
         Steps:
             1. Call agent._get_system_prompt().
         Expected Results:
@@ -1093,7 +1093,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-001
 
         Title: Vendor prompt must not contain a REPORT FORMAT section.
-        Basically question: Does vendor prompt leak CoPilot-only structure?
+        Test Question: Does vendor prompt leak CoPilot-only structure?
         Steps:
             1. Build a VendorChatAssistant.
             2. Call _get_system_prompt().
@@ -1107,7 +1107,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-002
 
         Title: Vendor prompt must not contain a WORKFLOW GUIDANCE section.
-        Basically question: Is CoPilot-only section absent from vendor prompt?
+        Test Question: Is CoPilot-only section absent from vendor prompt?
         Steps:
             1. Call vendor agent._get_system_prompt().
         Expected Results:
@@ -1120,7 +1120,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-003
 
         Title: CoPilot prompt must not contain a 'current vendor ID is' phrase.
-        Basically question: Is CoPilot un-scoped to any single vendor?
+        Test Question: Is CoPilot un-scoped to any single vendor?
         Steps:
             1. Build a CoPilotAssistant.
             2. Call _get_system_prompt().
@@ -1135,7 +1135,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-004
 
         Title: CoPilot prompt does not contain PII masking rules for bank accounts.
-        Basically question: Are vendor-portal PII rules absent from CoPilot?
+        Test Question: Are vendor-portal PII rules absent from CoPilot?
         Steps:
             1. Call copilot._get_system_prompt().
         Expected Results:
@@ -1148,7 +1148,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-005
 
         Title: Vendor prompt must not reference list_vendors (CoPilot-only tool).
-        Basically question: Does vendor prompt stay in vendor scope?
+        Test Question: Does vendor prompt stay in vendor scope?
         Steps:
             1. Call vendor agent._get_system_prompt().
         Expected Results:
@@ -1161,7 +1161,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-006
 
         Title: Vendor prompt must not reference get_all_vendors_summary.
-        Basically question: Is cross-vendor aggregation absent from vendor prompt?
+        Test Question: Is cross-vendor aggregation absent from vendor prompt?
         Steps:
             1. Call vendor._get_system_prompt().
         Expected Results:
@@ -1174,7 +1174,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-007
 
         Title: Vendor prompt must not contain save_report instruction.
-        Basically question: Is report generation absent from vendor portal prompts?
+        Test Question: Is report generation absent from vendor portal prompts?
         Steps:
             1. Call vendor._get_system_prompt().
         Expected Results:
@@ -1187,7 +1187,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-008
 
         Title: Vendor system prompt must not contain a literal OpenAI API key.
-        Basically question: Is secrets leakage into prompt prevented?
+        Test Question: Is secrets leakage into prompt prevented?
         Steps:
             1. Call vendor._get_system_prompt().
         Expected Results:
@@ -1200,7 +1200,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-009
 
         Title: CoPilot system prompt must not contain a literal OpenAI API key.
-        Basically question: Is secrets leakage into CoPilot prompt prevented?
+        Test Question: Is secrets leakage into CoPilot prompt prevented?
         Steps:
             1. Call copilot._get_system_prompt().
         Expected Results:
@@ -1213,7 +1213,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-010
 
         Title: Vendor prompt does not print or echo back its own contents.
-        Basically question: Is the anti-disclosure rule itself not self-defeating?
+        Test Question: Is the anti-disclosure rule itself not self-defeating?
         Steps:
             1. Retrieve vendor system prompt text.
             2. Check it does not contain a phrase that would instruct revealing it.
@@ -1227,7 +1227,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-011
 
         Title: Vendor prompt must not contain prompt-injection bait phrases.
-        Basically question: Has prompt-injection text been accidentally embedded?
+        Test Question: Has prompt-injection text been accidentally embedded?
         Steps:
             1. Call vendor._get_system_prompt().
         Expected Results:
@@ -1240,7 +1240,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-012
 
         Title: Vendor prompt does not contain a raw SSN-like digit pattern (NNN-NN-NNNN).
-        Basically question: Are real SSNs accidentally embedded in the prompt?
+        Test Question: Are real SSNs accidentally embedded in the prompt?
         Steps:
             1. Import re.
             2. Call vendor._get_system_prompt().
@@ -1257,7 +1257,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-013
 
         Title: CoPilot prompt does not contain a raw SSN-like digit pattern.
-        Basically question: Are real SSNs accidentally embedded in CoPilot prompt?
+        Test Question: Are real SSNs accidentally embedded in CoPilot prompt?
         Steps:
             1. Call copilot._get_system_prompt().
             2. Search for SSN-style pattern.
@@ -1273,7 +1273,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-014
 
         Title: Vendor prompt does not contain a 16-digit credit-card-like number.
-        Basically question: Are payment card numbers accidentally embedded?
+        Test Question: Are payment card numbers accidentally embedded?
         Steps:
             1. Import re.
             2. Call vendor._get_system_prompt().
@@ -1290,7 +1290,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-015
 
         Title: Vendor prompt must not contain the word 'password'.
-        Basically question: Is credential guidance absent (would be a data-leak risk)?
+        Test Question: Is credential guidance absent (would be a data-leak risk)?
         Steps:
             1. Call vendor._get_system_prompt().
         Expected Results:
@@ -1303,7 +1303,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-016
 
         Title: CoPilot prompt must not contain the word 'password'.
-        Basically question: Is credential text absent from CoPilot prompt?
+        Test Question: Is credential text absent from CoPilot prompt?
         Steps:
             1. Call copilot._get_system_prompt().
         Expected Results:
@@ -1316,7 +1316,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-017
 
         Title: Vendor prompt must not contain a long base64-looking string (potential embedded secret).
-        Basically question: Are encoded secrets absent from the vendor prompt?
+        Test Question: Are encoded secrets absent from the vendor prompt?
         Steps:
             1. Import re.
             2. Call vendor._get_system_prompt().
@@ -1333,7 +1333,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-018
 
         Title: Vendor prompt must not contain 'act as' persona-override phrasing.
-        Basically question: Is jailbreak-adjacent phrasing absent from the prompt?
+        Test Question: Is jailbreak-adjacent phrasing absent from the prompt?
         Steps:
             1. Call vendor._get_system_prompt().
         Expected Results:
@@ -1346,7 +1346,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-019
 
         Title: Vendor prompt must not contain 'unrestricted' or 'no restrictions'.
-        Basically question: Are over-permissive instructions absent?
+        Test Question: Are over-permissive instructions absent?
         Steps:
             1. Call vendor._get_system_prompt() lowercased.
         Expected Results:
@@ -1361,7 +1361,7 @@ class TestPromptNegative:
         CHAT-PROMPT-NEG-020
 
         Title: Vendor prompt must not say 'always comply with the user'.
-        Basically question: Is an unconditional-compliance instruction absent (safety risk)?
+        Test Question: Is an unconditional-compliance instruction absent (safety risk)?
         Steps:
             1. Call vendor._get_system_prompt() lowercased.
         Expected Results:
@@ -1382,7 +1382,7 @@ class TestVendorToolDefinitions:
         CHAT-VTOOLS-001
 
         Title: VendorChatAssistant._get_native_tool_definitions returns exactly 6 tools.
-        Basically question: Are all 6 vendor tools registered?
+        Test Question: Are all 6 vendor tools registered?
         Steps:
             1. Call agent._get_native_tool_definitions().
         Expected Results:
@@ -1396,7 +1396,7 @@ class TestVendorToolDefinitions:
         CHAT-VTOOLS-002
 
         Title: VendorChatAssistant tool names match the expected set.
-        Basically question: Are the 6 tool names exactly as specified?
+        Test Question: Are the 6 tool names exactly as specified?
         Steps:
             1. Extract names from _get_native_tool_definitions().
         Expected Results:
@@ -1420,7 +1420,7 @@ class TestVendorToolDefinitions:
         CHAT-VTOOLS-003
 
         Title: VendorChatAssistant._tool_callables has exactly 6 entries.
-        Basically question: Is every tool callable?
+        Test Question: Is every tool callable?
         Steps:
             1. Check len(agent._tool_callables).
         Expected Results:
@@ -1434,7 +1434,7 @@ class TestVendorToolDefinitions:
         CHAT-VTOOLS-004
 
         Title: All entries in VendorChatAssistant._tool_callables are callable.
-        Basically question: Are all registered functions actually callable?
+        Test Question: Are all registered functions actually callable?
         Steps:
             1. Iterate agent._tool_callables.items().
         Expected Results:
@@ -1449,7 +1449,7 @@ class TestVendorToolDefinitions:
         CHAT-VTOOLS-005
 
         Title: Every VendorChatAssistant tool definition has strict=True.
-        Basically question: Are all tools configured for strict schema validation?
+        Test Question: Are all tools configured for strict schema validation?
         Steps:
             1. Iterate _get_native_tool_definitions().
         Expected Results:
@@ -1464,7 +1464,7 @@ class TestVendorToolDefinitions:
         CHAT-VTOOLS-006
 
         Title: start_workflow tool schema requires exactly 4 parameters.
-        Basically question: Does the workflow tool enforce all required fields?
+        Test Question: Does the workflow tool enforce all required fields?
         Steps:
             1. Find start_workflow in tool definitions.
             2. Check required list.
@@ -1494,7 +1494,7 @@ class TestCoPilotToolDefinitions:
         CHAT-CTOOLS-001
 
         Title: CoPilotAssistant._get_native_tool_definitions returns exactly 12 tools.
-        Basically question: Are all 12 co-pilot tools registered?
+        Test Question: Are all 12 co-pilot tools registered?
         Steps:
             1. Call agent._get_native_tool_definitions().
         Expected Results:
@@ -1508,7 +1508,7 @@ class TestCoPilotToolDefinitions:
         CHAT-CTOOLS-002
 
         Title: CoPilotAssistant tool names match the expected set.
-        Basically question: Are all 12 tool names exactly as specified?
+        Test Question: Are all 12 tool names exactly as specified?
         Steps:
             1. Extract names from _get_native_tool_definitions().
         Expected Results:
@@ -1537,7 +1537,7 @@ class TestCoPilotToolDefinitions:
         CHAT-CTOOLS-003
 
         Title: CoPilotAssistant._tool_callables has exactly 12 entries.
-        Basically question: Is every co-pilot tool callable?
+        Test Question: Is every co-pilot tool callable?
         Steps:
             1. Check len(agent._tool_callables).
         Expected Results:
@@ -1551,7 +1551,7 @@ class TestCoPilotToolDefinitions:
         CHAT-CTOOLS-004
 
         Title: All entries in CoPilotAssistant._tool_callables are callable.
-        Basically question: Are all registered functions actually callable?
+        Test Question: Are all registered functions actually callable?
         Steps:
             1. Iterate agent._tool_callables.items().
         Expected Results:
@@ -1566,7 +1566,7 @@ class TestCoPilotToolDefinitions:
         CHAT-CTOOLS-005
 
         Title: save_report tool schema's report_type enum contains expected values.
-        Basically question: Does the schema constrain report_type to the known types?
+        Test Question: Does the schema constrain report_type to the known types?
         Steps:
             1. Find save_report in tool definitions.
             2. Check report_type property enum.
@@ -1587,7 +1587,7 @@ class TestCoPilotToolDefinitions:
         CHAT-CTOOLS-006
 
         Title: list_vendors tool requires no parameters.
-        Basically question: Can the LLM call list_vendors without any arguments?
+        Test Question: Can the LLM call list_vendors without any arguments?
         Steps:
             1. Find list_vendors in tool definitions.
             2. Check required list is empty.
@@ -1611,7 +1611,7 @@ class TestExecuteTool:
         CHAT-EXEC-001
 
         Title: _execute_tool returns an error JSON string for an unknown tool name.
-        Basically question: Is a missing tool handled gracefully?
+        Test Question: Is a missing tool handled gracefully?
         Steps:
             1. Call agent._execute_tool('nonexistent_tool', {}).
         Expected Results:
@@ -1628,7 +1628,7 @@ class TestExecuteTool:
         CHAT-EXEC-002
 
         Title: _execute_tool calls the registered callable and returns its result.
-        Basically question: Does _execute_tool dispatch correctly?
+        Test Question: Does _execute_tool dispatch correctly?
         Steps:
             1. Register a mock async callable under 'mock_tool'.
             2. Call agent._execute_tool('mock_tool', {'x': 1}).
@@ -1648,7 +1648,7 @@ class TestExecuteTool:
         CHAT-EXEC-003
 
         Title: _execute_tool catches callable exceptions and returns an error JSON.
-        Basically question: Does a tool crash surface gracefully without raising?
+        Test Question: Does a tool crash surface gracefully without raising?
         Steps:
             1. Register a mock that raises RuntimeError('boom').
             2. Call agent._execute_tool('bad_tool', {}).
@@ -1669,7 +1669,7 @@ class TestExecuteTool:
         CHAT-EXEC-004
 
         Title: _execute_tool returns '{}' when callable returns None.
-        Basically question: Is a None return value handled without crashing?
+        Test Question: Is a None return value handled without crashing?
         Steps:
             1. Register a mock that returns None.
             2. Call agent._execute_tool('none_tool', {}).
@@ -1686,7 +1686,7 @@ class TestExecuteTool:
         CHAT-EXEC-005
 
         Title: _execute_tool returns a string result as-is (no double-encoding).
-        Basically question: Does pre-serialised JSON from a callable pass through unchanged?
+        Test Question: Does pre-serialised JSON from a callable pass through unchanged?
         Steps:
             1. Register a mock that returns '{"data": 42}'.
             2. Call agent._execute_tool('str_tool', {}).
@@ -1711,7 +1711,7 @@ class TestToolDisplayLabel:
         CHAT-LABEL-001
 
         Title: _tool_display_label returns the registered label for known tools.
-        Basically question: Does the label lookup work for known tool names?
+        Test Question: Does the label lookup work for known tool names?
         Steps:
             1. Call agent._tool_display_label('get_vendor_details').
         Expected Results:
@@ -1726,7 +1726,7 @@ class TestToolDisplayLabel:
         CHAT-LABEL-002
 
         Title: _tool_display_label returns a generic 'Running …' label for unknown tools.
-        Basically question: Does an unregistered tool name get a sensible fallback?
+        Test Question: Does an unregistered tool name get a sensible fallback?
         Steps:
             1. Call agent._tool_display_label('some_custom_tool').
         Expected Results:
@@ -1742,7 +1742,7 @@ class TestToolDisplayLabel:
         CHAT-LABEL-003
 
         Title: _tool_display_label returns the correct label for get_vendor_invoices.
-        Basically question: Is every distinct label registered correctly?
+        Test Question: Is every distinct label registered correctly?
         Steps:
             1. Call agent._tool_display_label('get_vendor_invoices').
         Expected Results:
@@ -1764,7 +1764,7 @@ class TestGetToolDefinitions:
         CHAT-TOOLDEF-001
 
         Title: _get_tool_definitions returns only native tools when no MCP is connected.
-        Basically question: Is the tool list identical to native-only when _mcp_provider is None?
+        Test Question: Is the tool list identical to native-only when _mcp_provider is None?
         Steps:
             1. Create VendorChatAssistant (MCP not connected).
             2. Call _get_tool_definitions().
@@ -1780,7 +1780,7 @@ class TestGetToolDefinitions:
         CHAT-TOOLDEF-002
 
         Title: _get_tool_definitions includes MCP tools when _mcp_provider is connected.
-        Basically question: Are MCP tools merged into the tool list when connected?
+        Test Question: Are MCP tools merged into the tool list when connected?
         Steps:
             1. Create VendorChatAssistant.
             2. Inject a mock MCP provider with 3 extra tools and is_connected=True.
@@ -1804,7 +1804,7 @@ class TestGetToolDefinitions:
         CHAT-TOOLDEF-003
 
         Title: _get_tool_definitions excludes MCP tools when provider is not connected.
-        Basically question: Are MCP tools excluded when is_connected is False?
+        Test Question: Are MCP tools excluded when is_connected is False?
         Steps:
             1. Create VendorChatAssistant.
             2. Inject a mock MCP provider with is_connected=False.
@@ -1831,7 +1831,7 @@ class TestCallStartWorkflow:
         CHAT-WORKFLOW-001
 
         Title: _call_start_workflow returns an error JSON when background_tasks is None.
-        Basically question: Is the missing background_tasks case handled gracefully?
+        Test Question: Is the missing background_tasks case handled gracefully?
         Steps:
             1. Create VendorChatAssistant (background_tasks=None).
             2. Call _call_start_workflow('do something', 1).
@@ -1852,7 +1852,7 @@ class TestCallStartWorkflow:
         CHAT-WORKFLOW-002
 
         Title: _call_start_workflow adds a background task when background_tasks is set.
-        Basically question: Does the workflow get enqueued in the background task runner?
+        Test Question: Does the workflow get enqueued in the background task runner?
         Steps:
             1. Create VendorChatAssistant with a mock background_tasks.
             2. Mock event_bus.emit_agent_event and db_session for the message save.
@@ -1887,7 +1887,7 @@ class TestCallStartWorkflow:
         CHAT-WORKFLOW-003
 
         Title: _call_start_workflow result JSON includes a workflow_id.
-        Basically question: Does the caller receive a workflow ID to track progress?
+        Test Question: Does the caller receive a workflow ID to track progress?
         Steps:
             1. Create VendorChatAssistant with a mock background_tasks.
             2. Call _call_start_workflow('approve invoice', 5, invoice_id=10).
@@ -1927,7 +1927,7 @@ class TestSensitiveFieldMasking:
         CHAT-MASK-001
 
         Title: VendorChatAssistant._call_get_vendor_details masks the TIN field.
-        Basically question: Does the assistant redact the full TIN?
+        Test Question: Does the assistant redact the full TIN?
         Steps:
             1. Mock get_vendor_details to return {'tin': '123456789', ...}.
             2. Call agent._call_get_vendor_details(vendor_id=1).
@@ -1947,7 +1947,7 @@ class TestSensitiveFieldMasking:
         CHAT-MASK-002
 
         Title: VendorChatAssistant._call_get_vendor_details masks bank_account_number.
-        Basically question: Is the full bank account number redacted?
+        Test Question: Is the full bank account number redacted?
         Steps:
             1. Mock get_vendor_details to return {'bank_account_number': '9876543210', ...}.
             2. Call agent._call_get_vendor_details(vendor_id=1).
@@ -1967,7 +1967,7 @@ class TestSensitiveFieldMasking:
         CHAT-MASK-003
 
         Title: VendorChatAssistant._call_get_vendor_details masks bank_routing_number.
-        Basically question: Is the full routing number redacted?
+        Test Question: Is the full routing number redacted?
         Steps:
             1. Mock get_vendor_details to return {'bank_routing_number': '021000021', ...}.
             2. Call agent._call_get_vendor_details(vendor_id=1).
@@ -1986,7 +1986,7 @@ class TestSensitiveFieldMasking:
         CHAT-MASK-004
 
         Title: Masked sensitive fields retain the last 4 characters.
-        Basically question: Does masking show the last 4 for partial identification?
+        Test Question: Does masking show the last 4 for partial identification?
         Steps:
             1. Mock get_vendor_details to return {'tin': '123456789'}.
             2. Call agent._call_get_vendor_details(vendor_id=1).
@@ -2005,7 +2005,7 @@ class TestSensitiveFieldMasking:
         CHAT-MASK-005
 
         Title: Non-sensitive fields are not altered by _call_get_vendor_details.
-        Basically question: Does masking leave unrelated fields intact?
+        Test Question: Does masking leave unrelated fields intact?
         Steps:
             1. Mock get_vendor_details to return vendor with company_name.
             2. Call agent._call_get_vendor_details(vendor_id=1).
@@ -2024,7 +2024,7 @@ class TestSensitiveFieldMasking:
         CHAT-MASK-006
 
         Title: CoPilotAssistant._call_get_vendor_details also masks the TIN.
-        Basically question: Is masking applied in both chat assistants?
+        Test Question: Is masking applied in both chat assistants?
         Steps:
             1. Mock get_vendor_details to return {'tin': '987654321', ...}.
             2. Call copilot._call_get_vendor_details(vendor_id=1).
@@ -2229,7 +2229,7 @@ class TestMaskingEdgeCases:
         CHAT-MASK-EDGE-001
 
         Title: A 2-character TIN still gets the '****' prefix (all chars shown).
-        Basically question: Does [-4:] on a short string show the full value?
+        Test Question: Does [-4:] on a short string show the full value?
         Steps:
             1. Mock TIN = '12'.
         Expected Results:
@@ -2260,7 +2260,7 @@ class TestMaskingEdgeCases:
         CHAT-MASK-EDGE-003
 
         Title: TIN stored as an integer (not string) is still masked.
-        Basically question: Does str() coercion before [-4:] work correctly?
+        Test Question: Does str() coercion before [-4:] work correctly?
         Steps:
             1. Mock TIN = 123456789 (int).
         Expected Results:
@@ -2277,7 +2277,7 @@ class TestMaskingEdgeCases:
         CHAT-MASK-EDGE-004
 
         Title: TIN=None is not masked (falsy guard) — documents current behavior.
-        Basically question: Does a null TIN pass through unmodified?
+        Test Question: Does a null TIN pass through unmodified?
         Steps:
             1. Mock TIN = None.
         Expected Results:
@@ -2293,7 +2293,7 @@ class TestMaskingEdgeCases:
         CHAT-MASK-EDGE-005
 
         Title: A 50-character TIN is truncated to only the last 4 chars after '****'.
-        Basically question: Does [-4:] slice correctly on a very long value?
+        Test Question: Does [-4:] slice correctly on a very long value?
         Steps:
             1. Mock TIN = '1' * 50.
         Expected Results:
@@ -2310,7 +2310,7 @@ class TestMaskingEdgeCases:
         CHAT-MASK-EDGE-006
 
         Title: TIN with dashes ('12-34-5678') — last-4 slice may include a dash.
-        Basically question: Does format-aware masking work for delimited TINs?
+        Test Question: Does format-aware masking work for delimited TINs?
         Steps:
             1. Mock TIN = '12-34-5678'.
         Expected Results:
@@ -2328,7 +2328,7 @@ class TestMaskingEdgeCases:
         CHAT-MASK-EDGE-007
 
         Title: All three sensitive fields are masked in a single call.
-        Basically question: Does the loop mask all fields when all are present?
+        Test Question: Does the loop mask all fields when all are present?
         Steps:
             1. Mock result with tin, bank_account_number, bank_routing_number.
         Expected Results:
@@ -2352,7 +2352,7 @@ class TestMaskingEdgeCases:
         CHAT-MASK-EDGE-008
 
         Title: Result dict without sensitive keys causes no KeyError.
-        Basically question: Is the `if key in result` guard working?
+        Test Question: Is the `if key in result` guard working?
         Steps:
             1. Mock result with only 'id' and 'company_name'.
         Expected Results:
@@ -2368,7 +2368,7 @@ class TestMaskingEdgeCases:
         CHAT-MASK-EDGE-009
 
         Title: Full account number digits (except last 4) are never in the output.
-        Basically question: Do the first N-4 digits truly disappear?
+        Test Question: Do the first N-4 digits truly disappear?
         Steps:
             1. Mock bank_account_number = '000011112222'.
         Expected Results:
@@ -2387,7 +2387,7 @@ class TestMaskingEdgeCases:
         CHAT-MASK-EDGE-010
 
         Title: The masked dict round-trips through JSON without error.
-        Basically question: Does masking produce a valid JSON string?
+        Test Question: Does masking produce a valid JSON string?
         Steps:
             1. Mock result with all three sensitive fields.
             2. Verify json.loads(result) succeeds.
@@ -2491,7 +2491,7 @@ class TestInternationalInputs:
         CHAT-INTL-004
 
         Title: Currency symbols (£ € ¥ ₿) in tool output survive JSON round-trip.
-        Basically question: Does _execute_tool correctly serialise multi-currency data?
+        Test Question: Does _execute_tool correctly serialise multi-currency data?
         Steps:
             1. Register a callable returning a dict with currency symbols.
             2. Call _execute_tool.
@@ -2577,7 +2577,7 @@ class TestInternationalInputs:
         CHAT-INTL-008
 
         Title: Newlines and tabs inside a workflow description are preserved in task_data.
-        Basically question: Does the description pass verbatim to the orchestrator?
+        Test Question: Does the description pass verbatim to the orchestrator?
         Steps:
             1. Call _call_start_workflow with description containing \\n and \\t.
             2. Inspect task_data.
@@ -2618,7 +2618,7 @@ class TestInjectionAndAdversarialInputs:
         CHAT-INJECT-001
 
         Title: Classic prompt-injection string in workflow description causes no crash.
-        Basically question: Does the Python layer handle injected text safely?
+        Test Question: Does the Python layer handle injected text safely?
         Steps:
             1. Call _call_start_workflow with a prompt-injection payload as description.
         Expected Results:
@@ -2648,7 +2648,7 @@ class TestInjectionAndAdversarialInputs:
         CHAT-INJECT-002
 
         Title: SQL injection string passed as a tool argument is handled safely.
-        Basically question: Does _execute_tool dispatch the callable with raw string
+        Test Question: Does _execute_tool dispatch the callable with raw string
                             (injection handled downstream, not here)?
         Steps:
             1. Register a callable that captures its argument.
@@ -2673,7 +2673,7 @@ class TestInjectionAndAdversarialInputs:
         CHAT-INJECT-003
 
         Title: XSS payload in a tool result is JSON-encoded, not raw HTML.
-        Basically question: Does json.dumps escape angle brackets?
+        Test Question: Does json.dumps escape angle brackets?
         Steps:
             1. Register callable returning XSS payload in a field.
             2. Call _execute_tool and check the raw JSON string.
@@ -2695,7 +2695,7 @@ class TestInjectionAndAdversarialInputs:
         CHAT-INJECT-004
 
         Title: Null bytes in a workflow description cause no exception.
-        Basically question: Does Python string handling cope with embedded \\x00?
+        Test Question: Does Python string handling cope with embedded \\x00?
         Steps:
             1. Call _call_start_workflow with '\\x00' in description.
         Expected Results:
@@ -2720,7 +2720,7 @@ class TestInjectionAndAdversarialInputs:
         CHAT-INJECT-005
 
         Title: Shell metacharacters in description cause no execution or crash.
-        Basically question: Are shell-injection strings treated as plain text?
+        Test Question: Are shell-injection strings treated as plain text?
         Steps:
             1. Call _call_start_workflow with shell metacharacters.
         Expected Results:
@@ -2771,7 +2771,7 @@ class TestInjectionAndAdversarialInputs:
         CHAT-INJECT-007
 
         Title: A 10,000-character adversarial description is accepted without crash.
-        Basically question: Is there any length guard that truncates silently?
+        Test Question: Is there any length guard that truncates silently?
         Steps:
             1. Build a 10,000-char evil string.
             2. Call _call_start_workflow.
@@ -2810,7 +2810,7 @@ class TestBoundaryAndTypeValues:
         CHAT-BOUNDARY-001
 
         Title: vendor_id=0 passed to a tool callable causes no crash in _execute_tool.
-        Basically question: Does tool dispatch accept edge-case numeric IDs?
+        Test Question: Does tool dispatch accept edge-case numeric IDs?
         Steps:
             1. Register callable that echoes vendor_id.
             2. Call _execute_tool('get_vendor', {'vendor_id': 0}).
@@ -2827,7 +2827,7 @@ class TestBoundaryAndTypeValues:
         CHAT-BOUNDARY-002
 
         Title: Negative vendor_id causes no crash in tool dispatch.
-        Basically question: Is there any negative-ID guard in _execute_tool?
+        Test Question: Is there any negative-ID guard in _execute_tool?
         Steps:
             1. Call _execute_tool with vendor_id=-1.
         Expected Results:
@@ -2843,7 +2843,7 @@ class TestBoundaryAndTypeValues:
         CHAT-BOUNDARY-003
 
         Title: vendor_id=sys.maxsize is accepted without overflow or crash.
-        Basically question: Does Python's arbitrary-precision int flow through safely?
+        Test Question: Does Python's arbitrary-precision int flow through safely?
         Steps:
             1. Call _execute_tool with vendor_id=sys.maxsize.
         Expected Results:
@@ -2861,7 +2861,7 @@ class TestBoundaryAndTypeValues:
         CHAT-BOUNDARY-004
 
         Title: Empty string description is accepted (no min-length validation).
-        Basically question: Does _call_start_workflow crash on ''.
+        Test Question: Does _call_start_workflow crash on ''.
         Steps:
             1. Call _call_start_workflow(description='', vendor_id=1).
         Expected Results:
@@ -2885,7 +2885,7 @@ class TestBoundaryAndTypeValues:
         CHAT-BOUNDARY-005
 
         Title: Whitespace-only description passes through without being stripped.
-        Basically question: Does the layer preserve whitespace or silently strip it?
+        Test Question: Does the layer preserve whitespace or silently strip it?
         Steps:
             1. Call _call_start_workflow(description='   \\t\\n   ', vendor_id=1).
         Expected Results:
@@ -2910,7 +2910,7 @@ class TestBoundaryAndTypeValues:
         CHAT-BOUNDARY-006
 
         Title: A 50,000-character description causes no crash (no implicit size limit).
-        Basically question: Is there a hard length cap at the Python layer?
+        Test Question: Is there a hard length cap at the Python layer?
         Steps:
             1. Build a 50,000-char string.
             2. Call _call_start_workflow.
@@ -2935,7 +2935,7 @@ class TestBoundaryAndTypeValues:
         CHAT-BOUNDARY-007
 
         Title: Tool callable returning a datetime object is caught and returns error JSON.
-        Basically question: Does _execute_tool handle json.dumps TypeError gracefully?
+        Test Question: Does _execute_tool handle json.dumps TypeError gracefully?
         Steps:
             1. Register callable that returns datetime.now().
             2. Call _execute_tool.
@@ -2954,7 +2954,7 @@ class TestBoundaryAndTypeValues:
         CHAT-BOUNDARY-008
 
         Title: Tool returning a Python set (non-JSON-serialisable) is caught gracefully.
-        Basically question: Does a set return value produce a clean error rather than crash?
+        Test Question: Does a set return value produce a clean error rather than crash?
         Steps:
             1. Register callable returning {1, 2, 3}.
             2. Call _execute_tool.
@@ -2972,7 +2972,7 @@ class TestBoundaryAndTypeValues:
         CHAT-BOUNDARY-009
 
         Title: Tool returning a list produces a JSON array string.
-        Basically question: Does json.dumps handle list correctly (not just dicts)?
+        Test Question: Does json.dumps handle list correctly (not just dicts)?
         Steps:
             1. Register callable returning [1, 2, 3].
             2. Call _execute_tool.
@@ -2989,7 +2989,7 @@ class TestBoundaryAndTypeValues:
         CHAT-BOUNDARY-010
 
         Title: Explicit invoice_id=None (the default) is not added to task_data.
-        Basically question: Is the None case correctly excluded?
+        Test Question: Is the None case correctly excluded?
         Steps:
             1. Call _call_start_workflow with invoice_id=None.
             2. Inspect task_data.
@@ -3199,7 +3199,7 @@ class TestWorkflowEdgeCases:
         CHAT-WFLOW-EDGE-002
 
         Title: attachment_file_ids=[] (empty list, falsy) is NOT added to task_data.
-        Basically question: Does `if attachment_file_ids:` correctly treat [] as absent?
+        Test Question: Does `if attachment_file_ids:` correctly treat [] as absent?
         Steps:
             1. Call _call_start_workflow with attachment_file_ids=[].
         Expected Results:
@@ -3248,7 +3248,7 @@ class TestWorkflowEdgeCases:
         CHAT-WFLOW-EDGE-004
 
         Title: parent_workflow_id (the chat session workflow) is always forwarded.
-        Basically question: Can the orchestrator trace back to the originating chat?
+        Test Question: Can the orchestrator trace back to the originating chat?
         Steps:
             1. Call _call_start_workflow.
             2. Check task_data for parent_workflow_id.
@@ -3273,7 +3273,7 @@ class TestWorkflowEdgeCases:
         CHAT-WFLOW-EDGE-005
 
         Title: The child workflow ID generated for the task differs from the parent.
-        Basically question: Are parent and child IDs always distinct?
+        Test Question: Are parent and child IDs always distinct?
         Steps:
             1. Call _call_start_workflow.
             2. Compare workflow_id in result to agent._workflow_id.
@@ -3298,7 +3298,7 @@ class TestWorkflowEdgeCases:
         CHAT-WFLOW-EDGE-006
 
         Title: The event summary truncates the description to 100 characters.
-        Basically question: Does description[:100] in the emit call cap the summary?
+        Test Question: Does description[:100] in the emit call cap the summary?
         Steps:
             1. Capture event_bus.emit_agent_event calls.
             2. Pass a 200-char description.
@@ -3344,7 +3344,7 @@ class TestToolLabelAudit:
         CHAT-LABEL-AUDIT-001
 
         Title: 'list_vendors' has no specific label and gets the generic fallback.
-        Basically question: Is this gap documented? (Related to BUG-005.)
+        Test Question: Is this gap documented? (Related to BUG-005.)
         Steps:
             1. Call _tool_display_label('list_vendors').
         Expected Results:
@@ -3389,7 +3389,7 @@ class TestToolLabelAudit:
         CHAT-LABEL-AUDIT-004
 
         Title: 'get_vendor_risk_profile' is in _TOOL_LABELS but not in any tool list.
-        Basically question: Is dead code silently accumulating in the label dict?
+        Test Question: Is dead code silently accumulating in the label dict?
         Steps:
             1. Check _TOOL_LABELS directly for the stale key.
         Expected Results:
@@ -3421,7 +3421,7 @@ class TestToolLabelAudit:
         CHAT-LABEL-AUDIT-006
 
         Title: Generic label converts underscores to spaces correctly.
-        Basically question: Is 'some_tool_name' → 'Running some tool name…'?
+        Test Question: Is 'some_tool_name' → 'Running some tool name…'?
         Steps:
             1. Call _tool_display_label('some_tool_name').
         Expected Results:
@@ -3436,7 +3436,7 @@ class TestToolLabelAudit:
         CHAT-LABEL-AUDIT-007
 
         Title: Generic label converts hyphens to spaces correctly.
-        Basically question: Does 'mcp-tool-name' → 'Running mcp tool name…'?
+        Test Question: Does 'mcp-tool-name' → 'Running mcp tool name…'?
         Steps:
             1. Call _tool_display_label('mcp-tool-name').
         Expected Results:
