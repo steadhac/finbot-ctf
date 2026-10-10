@@ -88,7 +88,7 @@ class TestListForInvoice:
         FS-REPO-001
 
         Title: list_for_invoice returns transactions for the given invoice
-        Basically question: Does list_for_invoice return only transactions tied to the specified invoice_id?
+        Test Question: Does list_for_invoice return only transactions tied to the specified invoice_id?
 
         Steps:
             1. Create two invoices and one transaction each.
@@ -115,7 +115,7 @@ class TestListForInvoice:
         FS-REPO-002
 
         Title: list_for_invoice returns empty list when invoice has no transactions
-        Basically question: Does list_for_invoice return an empty list for an invoice with no transactions?
+        Test Question: Does list_for_invoice return an empty list for an invoice with no transactions?
 
         Steps:
             1. Create an invoice with no transactions.
@@ -137,7 +137,7 @@ class TestListForInvoice:
         FS-REPO-003
 
         Title: list_for_invoice returns all transactions for an invoice with multiple payments
-        Basically question: Does list_for_invoice return all transactions when an invoice has more than one?
+        Test Question: Does list_for_invoice return all transactions when an invoice has more than one?
 
         Steps:
             1. Create one invoice and two transactions against it.
@@ -169,7 +169,7 @@ class TestUpdateStatus:
         FS-REPO-004
 
         Title: update_status updates the transaction status and returns the transaction
-        Basically question: Does update_status correctly change the status field and return the updated transaction?
+        Test Question: Does update_status correctly change the status field and return the updated transaction?
 
         Steps:
             1. Create a transaction with status="pending".
@@ -194,7 +194,7 @@ class TestUpdateStatus:
         FS-REPO-005
 
         Title: update_status persists the new status to the database
-        Basically question: Is the status change durable — does a re-fetch reflect the updated status?
+        Test Question: Is the status change durable — does a re-fetch reflect the updated status?
 
         Steps:
             1. Create a transaction with status="pending".
@@ -219,7 +219,7 @@ class TestUpdateStatus:
         FS-REPO-006
 
         Title: update_status returns None when transfer_id does not exist
-        Basically question: Does update_status return None gracefully when no transaction matches the transfer_id?
+        Test Question: Does update_status return None gracefully when no transaction matches the transfer_id?
 
         Steps:
             1. Call update_status with a transfer_id that does not exist.
@@ -245,7 +245,7 @@ class TestGetByTransferId:
         FS-REPO-007
 
         Title: get_by_transfer_id returns the matching transaction
-        Basically question: Does get_by_transfer_id return the correct transaction for a known transfer_id?
+        Test Question: Does get_by_transfer_id return the correct transaction for a known transfer_id?
 
         Steps:
             1. Create a transaction with transfer_id="TXN-GET-001".
@@ -269,7 +269,7 @@ class TestGetByTransferId:
         FS-REPO-008
 
         Title: get_by_transfer_id returns None for an unknown transfer_id
-        Basically question: Does get_by_transfer_id return None gracefully when no match exists?
+        Test Question: Does get_by_transfer_id return None gracefully when no match exists?
 
         Steps:
             1. Call get_by_transfer_id with a transfer_id that does not exist.
@@ -295,7 +295,7 @@ class TestListForVendor:
         FS-REPO-009
 
         Title: list_for_vendor respects the limit parameter
-        Basically question: Does list_for_vendor return at most limit transactions?
+        Test Question: Does list_for_vendor return at most limit transactions?
 
         Steps:
             1. Create 5 transactions for a vendor.
@@ -320,7 +320,7 @@ class TestListForVendor:
         FS-REPO-010
 
         Title: list_for_vendor respects the offset parameter
-        Basically question: Does list_for_vendor skip transactions correctly when offset is set?
+        Test Question: Does list_for_vendor skip transactions correctly when offset is set?
 
         Steps:
             1. Create 3 transactions for a vendor.
@@ -345,7 +345,7 @@ class TestListForVendor:
         FS-REPO-011
 
         Title: list_for_vendor does not return another vendor's transactions
-        Basically question: Does list_for_vendor scope results strictly to the given vendor_id?
+        Test Question: Does list_for_vendor scope results strictly to the given vendor_id?
 
         Steps:
             1. Create two vendors, each with one transaction.
@@ -373,7 +373,7 @@ class TestListForVendor:
         FS-REPO-012
 
         Title: get_by_transfer_id returns None for a transaction in a different namespace
-        Basically question: Does the namespace filter prevent cross-namespace transaction access?
+        Test Question: Does the namespace filter prevent cross-namespace transaction access?
 
         Steps:
             1. Create a transaction under namespace_a.
